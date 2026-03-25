@@ -34,6 +34,57 @@
 
 ---
 
+## Journal sources expansion (`journal_grader` branch)
+
+Design documents: `docs/journal_sources_design.md` (architecture) and `docs/journal_implementation_plan.md` (step-by-step).
+
+- [ ] **1. `fetch_journals.py`** — new shared script
+  - Hardcode the 11-journal config list (APS ×4, Nature ×5, Science, Nano Letters)
+  - Per-publisher article filtering (APS: URL pattern + errata exclusion; Nature: `/articles/` path; Science: DOI pattern; ACS: pass-all)
+  - Abstract scraping via `requests` + `BeautifulSoup` (per-publisher CSS selectors in design doc)
+  - Soft failure on scraping error: keep paper with RSS snippet, log warning
+  - `time.sleep(0.5)` between HTTP requests
+  - Output schema: same as `today_papers.json` + `source` field
+  - CLI: `--output` (required), `--date` (logging only)
+  - Test each publisher's filtering and scraping in isolation before wiring up
+
+- [ ] **2. `run_pipeline.py`** — add `--journals` argument
+  - Load journal papers and merge with arXiv papers before triage (arXiv first)
+  - Add `source` line to `_paper_block()` output (optional field, only if present)
+  - No other logic changes — merged list flows through triage → scoring unchanged
+
+- [ ] **3. `prompts/triage.txt`** — add SOURCE FIELD section
+  - See exact text in `docs/journal_sources_design.md` (Triage and scoring prompt updates section)
+
+- [ ] **4. `prompts/scoring.txt`** — add SOURCE FIELD section + "top venue" tag
+  - See exact text in `docs/journal_sources_design.md`
+
+- [ ] **5. `run_daily.py`** — accept and forward `--journals`
+  - Add `--journals` arg, pass it to `run_pipeline.py` if the file exists
+
+- [ ] **6. `run_all_users.py`** — run shared journal fetch before user loop
+  - Derive `today_str` at top of `main()` from `args.date or date.today().isoformat()`
+  - Run `fetch_journals.py --output data/YYYY-MM-DD/journal_papers.json` once
+  - If it fails: log warning, continue arXiv-only (do not pass `--journals` to users)
+  - Add `--no-journals` flag to skip journal fetch (testing)
+  - Add `--journals` flag to supply a pre-built path (re-runs)
+
+- [ ] **7. `build_digest_pdf.py`** — two fixes + source badge
+  - Replace `arxiv_url()` with `paper_url()`: DOIs (`10.*`) → `https://doi.org/{doi}`, else arXiv URL
+  - URL-encode `paper_id` in `rate_url()` using `urllib.parse.quote(paper_id, safe="")`
+  - Add source badge (small pill, same row as score badge) for papers with `source` field
+
+- [ ] **8. `environment.yml`** — add `beautifulsoup4` and `lxml`
+
+- [ ] **9. End-to-end test + deploy**
+  - Run `python fetch_journals.py --output /tmp/journals.json` and inspect output
+  - Run `python run_all_users.py --no-email --user yuval` and inspect PDF
+  - Verify rating URL for a journal paper is correctly percent-encoded
+  - Verify clicking title in PDF opens `doi.org` link
+  - `scp` updated files to server, `pip install beautifulsoup4 lxml`, restart if needed
+
+---
+
 ## Upcoming
 
 - [ ] **April 1st** — Check monthly profile refiner ran successfully:
