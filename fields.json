@@ -1,0 +1,96 @@
+{
+  "cond-mat": {
+    "arxiv_category": "cond-mat",
+    "description": "Condensed matter physics",
+    "journals": [
+      {
+        "name": "PRL",
+        "url": "http://feeds.aps.org/rss/recent/prl.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRB",
+        "url": "http://feeds.aps.org/rss/recent/prb.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRX",
+        "url": "http://feeds.aps.org/rss/recent/prx.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRXQuantum",
+        "url": "http://feeds.aps.org/rss/recent/prxquantum.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "condensed-matter physics",
+          "electronic properties",
+          "magnetic properties",
+          "superconducting",
+          "topological matter",
+          "spintronics",
+          "two-dimensional materials",
+          "quantum hall",
+          "nanoscale materials",
+          "nanoscience and technology"
+        ]
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatMat",
+        "url": "https://www.nature.com/nmat.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatNano",
+        "url": "https://www.nature.com/nnano.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "condensed-matter physics",
+          "electronic properties",
+          "magnetic properties",
+          "superconducting",
+          "topological matter",
+          "spintronics",
+          "two-dimensional materials",
+          "quantum hall",
+          "nanoscale materials",
+          "nanoscience and technology"
+        ]
+      },
+      {
+        "name": "Science",
+        "url": "https://feeds.science.org/rss/science.xml",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "NanoLett",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "publisher": "acs",
+        "tag_filter": null
+      }
+    ]
+  }
+}
