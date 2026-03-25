@@ -1,0 +1,32 @@
+# Environment files — never commit credentials
+.env
+*.env
+
+# User data — runtime, personal, sensitive
+users/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Generated files
+*.pdf
+*.xlsx
+data/
+
+# Logs
+*.log
+
+# Gunicorn
+gunicorn.ctl
+
+# OS
+.DS_Store
+Thumbs.db

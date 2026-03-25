@@ -1,0 +1,10 @@
+feedparser
+anthropic
+openpyxl
+requests
+python-dotenv
+matplotlib
+pylatexenc
+reportlab
+flask
+gunicorn
