@@ -96,6 +96,8 @@ def _paper_block(i: int, paper: dict, include_triage: bool = False) -> str:
     lines = [f"[{i}]"]
     if include_triage:
         lines.append(f"triage: {paper.get('triage', 'unknown')}")
+    if paper.get("source"):
+        lines.append(f"source: {paper['source']}")
     lines += [
         f"arxiv_id: {paper['arxiv_id']}",
         f"title: {paper['title']}",
