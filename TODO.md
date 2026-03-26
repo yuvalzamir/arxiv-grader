@@ -1,5 +1,43 @@
 # TODO
 
+## Triage tuning — too aggressive
+
+**Observed:** 145 papers in (81 arXiv + 64 journals), only 6 passed (high: 3, medium: 3, low: 139).
+That's a 4% pass rate — way too low. Target is ~15–25 papers passed to scoring.
+
+**Root cause:** The prompt is over-constrained for two reasons:
+1. **Journal papers have no subcategories**, so signal 3 (subcategory+topic) never fires for them.
+   Only keyword hits and author matches work — making journal triage much harsher than arXiv.
+2. **"Medium" bar too high overall** — rule 4 ("topic adjacency alone → always low") is probably
+   correct in spirit but the model is applying it too broadly, even when there's clear field overlap.
+
+**Proposed fixes (pick one or combine):**
+
+- **A. Relax medium for journal papers** — since journals have no subcategories, allow
+  broad field-level relevance (paper is clearly in condensed matter / 2D materials space)
+  to qualify as medium, even without a specific keyword hit. The triage cap (max 10 journals)
+  already bounds the cost.
+
+- **B. Add a 4th signal: research area match** — if the paper topic broadly overlaps a
+  grade 1–4 research area (not just grade 1–4 keyword), treat it as a medium signal.
+  Currently research areas only count via the subcategory+topic rule.
+
+- **C. Increase triage caps** — raise arXiv cap from 20→30 and journal cap from 10→15,
+  which gives the scoring agent more to work with without changing the prompt.
+
+- **D. Raise the false-negative penalty** — strengthen the CRITICAL note: "When in doubt,
+  prefer medium over low. The scoring agent will filter further."
+
+**Recommendation:** Combine B + D. Add research area name match as a standalone medium
+signal (currently it's only valid combined with subcategory), and strengthen the false-negative
+warning. Also consider C (bumping caps) independently.
+
+**Files to change:**
+- `prompts/triage.txt` — relax medium definition, strengthen false-negative note
+- `run_pipeline.py` — optionally adjust `MAX_TRIAGE_PASS` / `MAX_TRIAGE_PASS_JOURNAL`
+
+---
+
 ## `fetch_journals.py` — open issues
 
 - [x] **4. Nature main wasteful scraping** — fixed: `d41586` DOI prefix filter in `NatureScraper.editorial_filter` drops news/views before page fetch. Saves ~45 unnecessary HTTP requests per run.
