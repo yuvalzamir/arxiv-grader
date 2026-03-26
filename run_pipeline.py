@@ -109,7 +109,8 @@ def _paper_block(i: int, paper: dict, include_triage: bool = False) -> str:
 
 
 def build_triage_message(papers: list[dict], profile: dict) -> str:
-    categories = profile.get("field", "not specified")
+    subcategories = profile.get("arxiv_subcategories", [])
+    categories = ", ".join(subcategories) if subcategories else profile.get("field", "not specified")
 
     header = (
         f"TASTE PROFILE\n"
