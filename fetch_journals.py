@@ -230,12 +230,24 @@ def main():
     if not args.since:
         _save_watermarks(watermarks)
 
+    # Deduplicate by arxiv_id (DOI or URL) — a paper can appear in multiple
+    # feeds (e.g. two PRL section feeds). Keep first occurrence.
+    seen_ids = set()
+    deduped = []
+    for paper in all_papers:
+        pid = paper["arxiv_id"]
+        if pid not in seen_ids:
+            seen_ids.add(pid)
+            deduped.append(paper)
+    if len(deduped) < len(all_papers):
+        log.info("Deduplication: removed %d duplicate(s).", len(all_papers) - len(deduped))
+
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
-        json.dump(all_papers, f, indent=2)
+        json.dump(deduped, f, indent=2)
 
-    log.info("Wrote %d total papers to %s", len(all_papers), args.output)
+    log.info("Wrote %d total papers to %s", len(deduped), args.output)
 
 
 if __name__ == "__main__":
