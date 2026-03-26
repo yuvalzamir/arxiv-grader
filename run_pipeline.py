@@ -29,8 +29,8 @@ PROMPTS_DIR = Path(__file__).parent / "prompts"
 TRIAGE_MODEL  = "claude-haiku-4-5-20251001"
 SCORING_MODEL = "claude-sonnet-4-6"
 LIKED_PAPERS_WINDOW = 5   # how many recent liked papers to show the scoring agent
-MAX_TRIAGE_PASS         = 20  # hard cap on arXiv papers forwarded to scoring
-MAX_TRIAGE_PASS_JOURNAL = 10  # hard cap on journal papers forwarded to scoring
+MAX_TRIAGE_PASS         = 15  # hard cap on arXiv papers forwarded to scoring
+MAX_TRIAGE_PASS_JOURNAL = 15  # hard cap on journal papers forwarded to scoring
 
 BATCH_POLL_INTERVAL = 15   # seconds between batch status checks
 BATCH_TIMEOUT       = 3600 # give up after 1 hour
@@ -253,75 +253,98 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
 # Stage 1 — Triage (Haiku)
 # ---------------------------------------------------------------------------
 
-def run_triage(papers: list[dict], profile: dict, system_prompt: str) -> list[dict]:
+def _run_single_triage(
+    papers: list[dict], profile: dict, system_prompt: str, label: str
+) -> list[tuple[dict, str]]:
     """
-    Run the triage agent. Returns only high- and medium-classified papers,
-    with a 'triage' field added.
+    Run one triage batch for a list of papers.
+    Returns a list of (paper, triage_label) pairs in ranked order (best first),
+    including all labels (high, medium, low).
     """
     client = Anthropic()
     user_message = build_triage_message(papers, profile)
 
-    log.info("Running triage on %d papers (model: %s)...", len(papers), TRIAGE_MODEL)
-
+    log.info("%s: running on %d papers (model: %s)...", label, len(papers), TRIAGE_MODEL)
     response = _submit_and_poll(
-        client, "triage", TRIAGE_MODEL, 4096, system_prompt, user_message, "Triage",
+        client, label.lower().replace("-", "_"), TRIAGE_MODEL, 4096,
+        system_prompt, user_message, label,
     )
 
-    # Parse "N: label" lines in output order — output order is the ranking.
-    # First occurrence of each paper index wins; duplicates are ignored.
-    ranked_labels: list[tuple[int, str]] = []
-    seen_indices: set[int] = set()
+    ranked: list[tuple[dict, str]] = []
+    seen: set[int] = set()
     counts = {"high": 0, "medium": 0, "low": 0}
+    paper_by_index = {i + 1: p for i, p in enumerate(papers)}
+
     for line in response.content[0].text.strip().splitlines():
         m = re.match(r"\[?(\d+)\]?\s*[-:]\s*(high|medium|low)", line.strip(), re.IGNORECASE)
         if m:
-            idx, label = int(m.group(1)), m.group(2).lower()
-            if idx in seen_indices:
+            idx, lbl = int(m.group(1)), m.group(2).lower()
+            if idx in seen or idx not in paper_by_index:
                 continue
-            seen_indices.add(idx)
-            ranked_labels.append((idx, label))
-            counts[label] = counts.get(label, 0) + 1
+            seen.add(idx)
+            ranked.append((paper_by_index[idx], lbl))
+            counts[lbl] = counts.get(lbl, 0) + 1
 
-    if not ranked_labels:
-        log.error("Triage output contained no parseable labels. Raw response:\n%s",
-                  response.content[0].text[:800])
+    if not ranked:
+        log.error("%s: output contained no parseable labels. Raw response:\n%s",
+                  label, response.content[0].text[:800])
         sys.exit(1)
 
-    log.info(
-        "Triage results — high: %d, medium: %d, low: %d",
-        counts["high"], counts["medium"], counts["low"],
-    )
+    log.info("%s results — high: %d, medium: %d, low: %d",
+             label, counts["high"], counts["medium"], counts["low"])
+    return ranked
 
-    # Build index lookup: paper number (1-based) → paper dict.
-    paper_by_index = {i + 1: paper for i, paper in enumerate(papers)}
 
-    # Walk ranked output in order; apply separate caps for arXiv and journal papers.
-    # A paper is a journal paper if it has a non-empty "source" field.
+def run_triage(
+    papers: list[dict], profile: dict,
+    system_prompt: str, journal_system_prompt: str,
+) -> list[dict]:
+    """
+    Run triage in two separate batches (arXiv and journals) to avoid
+    cross-pool calibration effects. Returns only high/medium papers with
+    'triage' field added, capped independently per source type.
+    """
+    arxiv_papers  = [p for p in papers if not p.get("source")]
+    journal_papers = [p for p in papers if p.get("source")]
+
+    arxiv_ranked:  list[tuple[dict, str]] = []
+    journal_ranked: list[tuple[dict, str]] = []
+
+    if arxiv_papers:
+        arxiv_ranked = _run_single_triage(
+            arxiv_papers, profile, system_prompt, "Triage-arXiv"
+        )
+    if journal_papers:
+        journal_ranked = _run_single_triage(
+            journal_papers, profile, journal_system_prompt, "Triage-journals"
+        )
+
+    # Apply caps independently for each source type.
     filtered = []
     arxiv_count = journal_count = 0
-    for idx, label in ranked_labels:
-        if label not in ("high", "medium"):
-            continue
-        if idx not in paper_by_index:
-            continue
-        paper = paper_by_index[idx]
-        if paper.get("source"):
-            if journal_count >= MAX_TRIAGE_PASS_JOURNAL:
-                continue
-            journal_count += 1
-        else:
-            if arxiv_count >= MAX_TRIAGE_PASS:
-                continue
-            arxiv_count += 1
-        filtered.append({**paper, "triage": label})
+    arxiv_qualifying = journal_qualifying = 0
 
-    qualifying = counts["high"] + counts["medium"]
+    for paper, label in arxiv_ranked:
+        if label in ("high", "medium"):
+            arxiv_qualifying += 1
+            if arxiv_count < MAX_TRIAGE_PASS:
+                filtered.append({**paper, "triage": label})
+                arxiv_count += 1
+
+    for paper, label in journal_ranked:
+        if label in ("high", "medium"):
+            journal_qualifying += 1
+            if journal_count < MAX_TRIAGE_PASS_JOURNAL:
+                filtered.append({**paper, "triage": label})
+                journal_count += 1
+
+    not_forwarded = (arxiv_qualifying - arxiv_count) + (journal_qualifying - journal_count)
     log.info(
         "%d papers passed triage (arXiv: %d/%d, journals: %d/%d; %d qualifying not forwarded).",
         len(filtered),
         arxiv_count, MAX_TRIAGE_PASS,
         journal_count, MAX_TRIAGE_PASS_JOURNAL,
-        qualifying - len(filtered),
+        not_forwarded,
     )
     return filtered
 
@@ -421,11 +444,12 @@ def main():
         sys.exit(0)
 
     # Load prompts.
-    triage_prompt  = load_prompt("triage.txt")
-    scoring_prompt = load_prompt("scoring.txt")
+    triage_prompt         = load_prompt("triage.txt")
+    triage_journal_prompt = load_prompt("triage_journals.txt")
+    scoring_prompt        = load_prompt("scoring.txt")
 
     # --- Stage 1: triage ---
-    filtered = run_triage(papers, profile, triage_prompt)
+    filtered = run_triage(papers, profile, triage_prompt, triage_journal_prompt)
 
     with open(args.filtered, "w", encoding="utf-8") as f:
         json.dump(filtered, f, indent=2, ensure_ascii=False)
