@@ -1,5 +1,19 @@
 # TODO
 
+## `fetch_journals.py` — open issues
+
+- [x] **4. Nature main wasteful scraping** — fixed: `d41586` DOI prefix filter in `NatureScraper.editorial_filter` drops news/views before page fetch. Saves ~45 unnecessary HTTP requests per run.
+- [x] **5. Science RSS summary quality** — switched to eTOC feed (full last issue, 42 papers). Abstracts fetched via Semantic Scholar API (free, plain text). 20/42 papers get full abstracts; 22 editorial/opinion pieces fall back to short RSS summaries and are handled by triage.
+- [x] **8. PRB publication lag** — not a lag; PRB simply didn't publish on March 25. Zero-paper days are normal and expected.
+- [ ] **8b. Science date handling** — eTOC feed gives the full last issue; all 42 entries share the issue date (e.g. March 19). Date filter will return 0 on non-issue days. Need to decide: skip date filter for Science, or always include the most recent issue regardless of date.
+- [x] **8b. Science date handling** — eTOC feed gives the full last issue; all entries share the issue date. Watermark handles this correctly — Science papers are picked up once per week when the new issue appears.
+- [x] **8 (watermark)** — replaced fixed `--date` logic with per-journal watermark (`journal_watermarks.json`, keyed by RSS URL). Watermark advances to `min(max_entry_date, yesterday)` to prevent today's papers from being skipped tomorrow. `--since` flag overrides for manual re-runs without updating watermarks.
+- [ ] **1/6. Duplicate papers across feeds** — two PRL entries share the same `source` name; a paper appearing in both feeds would be duplicated in `scraped_journals.json`. Add paper-level deduplication by DOI/arxiv_id.
+- [ ] **2. `import re` inside `_split_author_string()`** — move to module level (already fixed in rewrite).
+- [ ] **7. `requirements.txt` / `environment.yml`** — add `beautifulsoup4`, `lxml`, `feedparser`, `requests`.
+
+---
+
 ## Completed ✓
 
 - [x] `fetch_papers.py` — arXiv RSS fetch and parse

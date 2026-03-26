@@ -5,7 +5,13 @@
     "journals": [
       {
         "name": "PRL",
-        "url": "http://feeds.aps.org/rss/recent/prl.xml",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-CondensedMatterStructureetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",
         "publisher": "aps",
         "tag_filter": null
       },
@@ -64,31 +70,14 @@
       },
       {
         "name": "NatComms",
-        "url": "https://www.nature.com/ncomms.rss",
+        "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "condensed-matter physics",
-          "electronic properties",
-          "magnetic properties",
-          "superconducting",
-          "topological matter",
-          "spintronics",
-          "two-dimensional materials",
-          "quantum hall",
-          "nanoscale materials",
-          "nanoscience and technology"
-        ]
-      },
-      {
-        "name": "Science",
-        "url": "https://feeds.science.org/rss/science.xml",
-        "publisher": "science",
         "tag_filter": null
       },
       {
-        "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
-        "publisher": "acs",
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
         "tag_filter": null
       }
     ]
