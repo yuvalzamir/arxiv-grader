@@ -8,9 +8,9 @@
 - [ ] **8b. Science date handling** — eTOC feed gives the full last issue; all 42 entries share the issue date (e.g. March 19). Date filter will return 0 on non-issue days. Need to decide: skip date filter for Science, or always include the most recent issue regardless of date.
 - [x] **8b. Science date handling** — eTOC feed gives the full last issue; all entries share the issue date. Watermark handles this correctly — Science papers are picked up once per week when the new issue appears.
 - [x] **8 (watermark)** — replaced fixed `--date` logic with per-journal watermark (`journal_watermarks.json`, keyed by RSS URL). Watermark advances to `min(max_entry_date, yesterday)` to prevent today's papers from being skipped tomorrow. `--since` flag overrides for manual re-runs without updating watermarks.
-- [ ] **1/6. Duplicate papers across feeds** — two PRL entries share the same `source` name; a paper appearing in both feeds would be duplicated in `scraped_journals.json`. Add paper-level deduplication by DOI/arxiv_id.
-- [ ] **2. `import re` inside `_split_author_string()`** — move to module level (already fixed in rewrite).
-- [ ] **7. `requirements.txt` / `environment.yml`** — add `beautifulsoup4`, `lxml`, `feedparser`, `requests`.
+- [x] **1/6. Duplicate papers across feeds** — deduplication by `arxiv_id` added to `main()` in `fetch_journals.py` after all journals scraped.
+- [x] **2. `import re` inside `_split_author_string()`** — already at module level in the rewrite.
+- [x] **7. `requirements.txt`** — added `beautifulsoup4`, `lxml` (feedparser and requests were already present).
 
 ---
 
