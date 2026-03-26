@@ -49,4 +49,9 @@ class NatureScraper(BaseScraper):
             for m in soup.find_all("meta", {"name": "dc.subject"})
             if m.get("content")
         ]
-        return {"abstract": abstract, "subject_tags": subject_tags}
+        authors = [
+            m.get("content", "")
+            for m in soup.find_all("meta", {"name": "citation_author"})
+            if m.get("content")
+        ]
+        return {"abstract": abstract, "subject_tags": subject_tags, "authors": authors}

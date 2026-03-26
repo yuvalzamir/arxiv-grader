@@ -27,6 +27,13 @@ WEIGHTING PRINCIPLES
 - Methodology: pay attention to experimental vs. theoretical preferences indicated in the research interests description
 - Novelty: a paper introducing a genuinely new technique or result relevant to the user's field outscores an incremental one in the same topic
 
+SOURCE FIELD
+============
+Some papers include "source: journal" — these are published, peer-reviewed articles.
+Peer review is a mild positive signal: all else equal, a journal paper may be slightly more polished or impactful than a preprint on the same topic.
+However, a highly relevant arXiv paper can easily outscore a journal paper on a less relevant topic — profile relevance is always the primary driver.
+Do not adjust scores based on which journal the paper came from; only the peer-reviewed/preprint distinction matters.
+
 TAGS — assign all that apply
 =============================
 "author match"       — at least one followed author is on the paper

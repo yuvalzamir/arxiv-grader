@@ -96,8 +96,8 @@ def _paper_block(i: int, paper: dict, include_triage: bool = False) -> str:
     lines = [f"[{i}]"]
     if include_triage:
         lines.append(f"triage: {paper.get('triage', 'unknown')}")
-    if paper.get("source"):
-        lines.append(f"source: {paper['source']}")
+        if paper.get("source"):
+            lines.append("source: journal")
     lines += [
         f"arxiv_id: {paper['arxiv_id']}",
         f"title: {paper['title']}",
@@ -109,7 +109,7 @@ def _paper_block(i: int, paper: dict, include_triage: bool = False) -> str:
 
 
 def build_triage_message(papers: list[dict], profile: dict) -> str:
-    categories = ", ".join(profile.get("arxiv_categories", [])) or "not specified"
+    categories = profile.get("field", "not specified")
 
     header = (
         f"TASTE PROFILE\n"
@@ -132,7 +132,7 @@ def build_triage_message(papers: list[dict], profile: dict) -> str:
 
 
 def build_scoring_message(filtered_papers: list[dict], profile: dict) -> str:
-    categories = ", ".join(profile.get("arxiv_categories", [])) or "not specified"
+    categories = profile.get("field", "not specified")
     evolved = profile.get("evolved_interests", "").strip() or "(not yet populated)"
 
     # Last N liked papers (most recent signal).

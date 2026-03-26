@@ -326,14 +326,13 @@ def collect_inputs() -> dict:
     print("  arXiv Grader — Profile Setup")
     print("=" * 58)
 
-    # --- Part 1: arXiv categories ---
+    # --- Part 1: Research field ---
     print()
-    print("Part 1 of 4 — arXiv categories")
-    print("Which arXiv listing pages are you interested in?")
-    print("Enter one or more categories, comma-separated.")
-    print("Examples: cond-mat  |  cond-mat.str-el  |  quant-ph  |  cs.AI")
-    raw_cats = input("  > ").strip()
-    categories = [c.strip() for c in raw_cats.split(",") if c.strip()]
+    print("Part 1 of 4 — Research field")
+    print("What field are you in? Use the arXiv naming scheme.")
+    print("Examples: cond-mat  |  astro-ph  |  quant-ph  |  cs.AI")
+    field = input("  > ").strip()
+    categories = [field]
 
     # --- Part 2: Free-text research interests ---
     print()
@@ -377,6 +376,7 @@ def collect_inputs() -> dict:
                 print(f"  Found {len(paper_links)} paper(s): {', '.join(parts)}.")
 
     return {
+        "field": field,
         "categories": categories,
         "interests_text": interests_text,
         "researchers": researchers,
@@ -634,7 +634,7 @@ def assemble_profile(rankings: dict, inputs: dict, papers: list[dict]) -> dict:
         })
 
     return {
-        "arxiv_categories": inputs["categories"],
+        "field": inputs["field"],
         "interests_description": inputs["interests_text"],
         "keywords": rankings.get("keywords", []),
         "research_areas": rankings.get("research_areas", []),

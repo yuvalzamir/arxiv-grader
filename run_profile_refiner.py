@@ -303,7 +303,7 @@ def build_refiner_message(profile: dict, recent_ratings: list[dict]) -> str:
     profile_block = (
         f"CURRENT TASTE PROFILE\n"
         f"=====================\n"
-        f"Monitored categories: {', '.join(profile.get('arxiv_categories', []))}\n\n"
+        f"Monitored categories: {profile.get('field', 'unknown')}\n\n"
         f"Research interests:\n{profile.get('interests_description', '(not provided)')}\n\n"
         f"Keywords (grade 1 = most relevant, grade 7 = fading):\n{_keywords_str(profile.get('keywords', []))}\n\n"
         f"Research areas (grade 1 = most relevant, grade 7 = fading):\n{_areas_str(profile.get('research_areas', []))}\n\n"

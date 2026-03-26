@@ -209,12 +209,16 @@ def main():
     data_dir  = user_dir / "data"
     profile   = user_dir / "taste_profile.json"
 
-    # Read arXiv category from profile (default to cond-mat if missing)
+    # Derive arXiv fetch category from fields.json using the profile's field.
     try:
         _profile_data = json.loads(profile.read_text(encoding="utf-8"))
-        _categories = _profile_data.get("arxiv_categories", ["cond-mat"])
-        arxiv_category = _categories[0] if _categories else "cond-mat"
-    except (FileNotFoundError, json.JSONDecodeError, IndexError):
+        _field = _profile_data.get("field", "cond-mat")
+        _fields_data = json.loads((BASE_DIR / "fields.json").read_text(encoding="utf-8"))
+        if _field in _fields_data:
+            arxiv_category = _fields_data[_field]["arxiv_category"]
+        else:
+            arxiv_category = _field  # field name is the category (e.g. "quant-ph")
+    except (FileNotFoundError, json.JSONDecodeError):
         arxiv_category = "cond-mat"
 
     today_str     = args.date or date.today().isoformat()
@@ -296,6 +300,8 @@ def main():
     ]
     if rating_base_url:
         pdf_cmd += ["--base-url", rating_base_url]
+    if args.journals and Path(args.journals).exists():
+        pdf_cmd += ["--journals", args.journals]
 
     run(pdf_cmd, step="pdf")
 
