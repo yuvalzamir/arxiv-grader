@@ -191,6 +191,10 @@ def main():
         "--skip-archive", action="store_true",
         help="Skip archiving yesterday's ratings.",
     )
+    parser.add_argument(
+        "--journals", default=None,
+        help="Path to filtered journal papers JSON to merge with arXiv papers.",
+    )
     args = parser.parse_args()
 
     user_dir = Path(args.user_dir)
@@ -268,16 +272,16 @@ def main():
     # ------------------------------------------------------------------
     # Step 4: Run grading pipeline (triage → scoring)
     # ------------------------------------------------------------------
-    run(
-        [
-            sys.executable, "run_pipeline.py",
-            "--papers",   str(papers_path),
-            "--profile",  str(profile),
-            "--filtered", str(filtered_path),
-            "--scored",   str(scored_path),
-        ],
-        step="grade",
-    )
+    grade_cmd = [
+        sys.executable, "run_pipeline.py",
+        "--papers",   str(papers_path),
+        "--profile",  str(profile),
+        "--filtered", str(filtered_path),
+        "--scored",   str(scored_path),
+    ]
+    if args.journals and Path(args.journals).exists():
+        grade_cmd += ["--journals", args.journals]
+    run(grade_cmd, step="grade")
 
     # ------------------------------------------------------------------
     # Step 5: Build PDF digest
