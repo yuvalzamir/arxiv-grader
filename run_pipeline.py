@@ -221,7 +221,16 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
 
     deadline = time.time() + BATCH_TIMEOUT
     while True:
-        batch = client.messages.batches.retrieve(batch.id)
+        for attempt in range(3):
+            try:
+                batch = client.messages.batches.retrieve(batch.id)
+                break
+            except json.JSONDecodeError as e:
+                if attempt == 2:
+                    log.error("%s: batch retrieve returned empty/malformed body after 3 attempts: %s", label, e)
+                    sys.exit(1)
+                log.warning("%s: batch retrieve returned empty body (attempt %d), retrying in 5s...", label, attempt + 1)
+                time.sleep(5)
         if batch.processing_status == "ended":
             break
         if time.time() > deadline:
