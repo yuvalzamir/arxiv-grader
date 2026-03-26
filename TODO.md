@@ -84,6 +84,15 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 
 ---
 
+## Pending
+
+- [ ] **Shared data folder cleanup** — delete `data/YYYY-MM-DD/` daily after the run.
+  The shared journal scrape folder (`BASE_DIR/data/`) accumulates one folder per day.
+  Simplest fix: delete the folder at the end of `run_all_users.py` (after all users done),
+  or add a `--keep-days` style cleanup similar to the per-user data folders.
+
+---
+
 ## Upcoming
 
 - [ ] **April 1st** — Check monthly profile refiner ran successfully:

@@ -166,7 +166,7 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
             "arxiv_id":      arxiv_id,
             "title":         getattr(entry, "title", "").strip(),
             "abstract":      abstract,
-            "authors":       _parse_authors(entry),
+            "authors":       result.get("authors") or _parse_authors(entry),
             "subcategories": [],
             "source":        journal["name"],
             "subject_tags":  result["subject_tags"],
