@@ -110,6 +110,16 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 
 ---
 
+## Crash handling (`crash_handle` branch)
+
+- [ ] **Audit all pipeline entry points** for unhandled exceptions that silently kill a run
+- [ ] **Retry transient API errors** — wrap `_submit_and_poll()` poll loop to retry on `JSONDecodeError` (empty-body 200 responses from Anthropic Batch API) ✓ done in `main`
+- [ ] **Notify on failure** — send an alert email (or log prominently) when `run_all_users.py` exits with failures, so crashes don't go unnoticed until the next morning
+- [ ] **Graceful per-user isolation** — if one user's pipeline crashes, other users should still complete (verify `ThreadPoolExecutor` exception handling in `run_all_users.py`)
+- [ ] **Server deployment process** — server doesn't use git; document/automate `scp` deploy step so fixes reach the server reliably
+
+---
+
 ## Known rough edges (monitor, no action needed now)
 
 - On Tuesdays, arXiv feed has 120–165 papers due to weekend accumulation — triage already handles this well (ranked cap of 20 keeps scoring cost bounded)
