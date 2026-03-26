@@ -29,7 +29,8 @@ PROMPTS_DIR = Path(__file__).parent / "prompts"
 TRIAGE_MODEL  = "claude-haiku-4-5-20251001"
 SCORING_MODEL = "claude-sonnet-4-6"
 LIKED_PAPERS_WINDOW = 5   # how many recent liked papers to show the scoring agent
-MAX_TRIAGE_PASS = 20      # hard cap on papers forwarded to the scoring stage
+MAX_TRIAGE_PASS         = 20  # hard cap on arXiv papers forwarded to scoring
+MAX_TRIAGE_PASS_JOURNAL = 10  # hard cap on journal papers forwarded to scoring
 
 BATCH_POLL_INTERVAL = 15   # seconds between batch status checks
 BATCH_TIMEOUT       = 3600 # give up after 1 hour
@@ -291,28 +292,34 @@ def run_triage(papers: list[dict], profile: dict, system_prompt: str) -> list[di
     # Build index lookup: paper number (1-based) → paper dict.
     paper_by_index = {i + 1: paper for i, paper in enumerate(papers)}
 
-    # Walk ranked output in order; keep high/medium up to MAX_TRIAGE_PASS.
+    # Walk ranked output in order; apply separate caps for arXiv and journal papers.
+    # A paper is a journal paper if it has a non-empty "source" field.
     filtered = []
-    capped = False
+    arxiv_count = journal_count = 0
     for idx, label in ranked_labels:
         if label not in ("high", "medium"):
             continue
         if idx not in paper_by_index:
             continue
-        filtered.append({**paper_by_index[idx], "triage": label})
-        if len(filtered) >= MAX_TRIAGE_PASS:
-            capped = True
-            break
+        paper = paper_by_index[idx]
+        if paper.get("source"):
+            if journal_count >= MAX_TRIAGE_PASS_JOURNAL:
+                continue
+            journal_count += 1
+        else:
+            if arxiv_count >= MAX_TRIAGE_PASS:
+                continue
+            arxiv_count += 1
+        filtered.append({**paper, "triage": label})
 
-    if capped:
-        log.info(
-            "%d papers passed triage (capped at %d; %d qualifying papers not forwarded).",
-            len(filtered), MAX_TRIAGE_PASS,
-            counts["high"] + counts["medium"] - len(filtered),
-        )
-    else:
-        log.info("%d papers passed triage (high + medium, under the %d cap).",
-                 len(filtered), MAX_TRIAGE_PASS)
+    qualifying = counts["high"] + counts["medium"]
+    log.info(
+        "%d papers passed triage (arXiv: %d/%d, journals: %d/%d; %d qualifying not forwarded).",
+        len(filtered),
+        arxiv_count, MAX_TRIAGE_PASS,
+        journal_count, MAX_TRIAGE_PASS_JOURNAL,
+        qualifying - len(filtered),
+    )
     return filtered
 
 
