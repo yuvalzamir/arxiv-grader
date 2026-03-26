@@ -19,6 +19,7 @@ Usage:
 import argparse
 import json
 import logging
+import shutil
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -159,6 +160,7 @@ def main():
     # --- Journal scrape (daily pipeline only) ---
     # Maps user name → path to their field's filtered journal file (or None).
     user_journals: dict[str, Path | None] = {u.name: None for u in users}
+    shared_data_dir: Path | None = None
 
     if not args.refine and not args.no_journals:
         date_str = args.date or date.today().isoformat()
@@ -233,6 +235,11 @@ def main():
     for name, ok in results.items():
         print(f"  {name:20s}  {'OK' if ok else 'FAILED'}")
     print()
+
+    # Clean up shared journal data folder — not needed after all users have run.
+    if shared_data_dir and shared_data_dir.exists():
+        shutil.rmtree(shared_data_dir)
+        log.info("Removed shared data folder: %s", shared_data_dir)
 
     if not all(results.values()):
         sys.exit(1)
