@@ -390,6 +390,10 @@ def main():
         "--scored", default="scored_papers.json",
         help="Output path for scoring results (default: scored_papers.json)",
     )
+    parser.add_argument(
+        "--journals", default=None,
+        help="Optional path to filtered journal papers JSON to merge before triage.",
+    )
     args = parser.parse_args()
 
     # Check API key before doing anything.
@@ -404,7 +408,12 @@ def main():
     # Load inputs.
     papers  = load_json(args.papers)
     profile = load_json(args.profile)
-    log.info("Loaded %d papers from %s", len(papers), args.papers)
+    log.info("Loaded %d arXiv papers from %s", len(papers), args.papers)
+
+    if args.journals:
+        journal_papers = load_json(args.journals)
+        log.info("Loaded %d journal papers from %s", len(journal_papers), args.journals)
+        papers = papers + journal_papers  # arXiv first
 
     if not papers:
         log.warning("No papers found in %s. Exiting.", args.papers)
