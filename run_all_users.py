@@ -19,11 +19,14 @@ Usage:
 import argparse
 import json
 import logging
+import os
 import shutil
+import smtplib
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
+from email.mime.text import MIMEText
 from pathlib import Path
 
 BASE_DIR  = Path(__file__).parent
@@ -124,6 +127,54 @@ def run_for_user(user_dir: Path, script: str, extra_args: list[str]) -> bool:
         return False
     log.info("--- [%s] Done ---", user_dir.name)
     return True
+
+
+def _send_batch_fallback_alert(
+    fallback_reports: dict[str, list[dict]],
+    results: dict[str, bool],
+    date_str: str,
+) -> None:
+    """Send an alert email when batch API timeouts triggered automatic fallback."""
+    smtp_host = os.environ.get("EMAIL_SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("EMAIL_SMTP_PORT", "587"))
+    smtp_user = os.environ.get("EMAIL_SMTP_USER", "")
+    smtp_pass = os.environ.get("EMAIL_SMTP_PASSWORD", "")
+    from_addr = os.environ.get("EMAIL_FROM", smtp_user)
+    to_addr   = "yuval.zamir@icfo.eu"
+
+    lines = [
+        f"Batch API timeout(s) occurred during the {date_str} run.",
+        "The pipeline automatically retried with the synchronous API.",
+        "",
+        "Affected users:",
+    ]
+    for user, events in fallback_reports.items():
+        run_status = "OK" if results.get(user) else "FAILED"
+        lines.append(f"\n  {user}  (overall run: {run_status})")
+        for ev in events:
+            stage = ev.get("stage", "?")
+            nb_ok = ev.get("no_batch_succeeded")
+            nb_str = "succeeded" if nb_ok else "FAILED"
+            lines.append(f"    - {stage}: batch timed out → no-batch {nb_str}")
+
+    lines += ["", f"Full logs: /var/log/arxiv-grader/daily.log"]
+    body = "\n".join(lines)
+
+    msg = MIMEText(body)
+    msg["Subject"] = f"[Incoming Science] Batch API fallback — {date_str}"
+    msg["From"]    = from_addr
+    msg["To"]      = to_addr
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(from_addr, [to_addr], msg.as_string())
+        log.info("Batch fallback alert sent to %s", to_addr)
+    except Exception as e:
+        log.error("Failed to send batch fallback alert: %s", e)
 
 
 def main():
@@ -243,6 +294,20 @@ def main():
     if shared_data_dir and shared_data_dir.exists():
         shutil.rmtree(shared_data_dir)
         log.info("Removed shared data folder: %s", shared_data_dir)
+
+    # Check for batch API fallback reports and send alert if any.
+    if not args.refine:
+        date_str = args.date or date.today().isoformat()
+        fallback_reports: dict[str, list[dict]] = {}
+        for user_dir in users:
+            fallback_file = user_dir / "data" / date_str / "batch_fallback.json"
+            if fallback_file.exists():
+                try:
+                    fallback_reports[user_dir.name] = json.loads(fallback_file.read_text())
+                except Exception:
+                    pass
+        if fallback_reports:
+            _send_batch_fallback_alert(fallback_reports, results, date_str)
 
     if not all(results.values()):
         sys.exit(1)

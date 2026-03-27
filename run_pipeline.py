@@ -37,6 +37,12 @@ MAX_TRIAGE_PASS_JOURNAL = 15  # hard cap on journal papers forwarded to scoring
 BATCH_POLL_INTERVAL = 15   # seconds between batch status checks
 BATCH_TIMEOUT       = 3600 # give up after 1 hour
 
+ALERT_EMAIL = "yuval.zamir@icfo.eu"  # recipient for batch-timeout alerts
+
+
+class BatchTimeoutError(Exception):
+    """Raised when the Batch API job exceeds BATCH_TIMEOUT."""
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-8s  %(message)s",
@@ -229,6 +235,14 @@ def parse_json_response(text: str, label: str) -> list | dict:
 # Batch API helper
 # ---------------------------------------------------------------------------
 
+def _record_fallback(debug_dir: Path, stage: str, no_batch_succeeded: bool) -> None:
+    """Append a fallback event to batch_fallback.json in the data folder."""
+    fallback_path = debug_dir / "batch_fallback.json"
+    events = json.loads(fallback_path.read_text()) if fallback_path.exists() else []
+    events.append({"stage": stage, "no_batch_succeeded": no_batch_succeeded})
+    fallback_path.write_text(json.dumps(events, indent=2))
+
+
 def _call_direct(client: Anthropic, model: str, max_tokens: int,
                  system: str, user_message: str, label: str):
     """Call the messages API directly (synchronous, no batch queue)."""
@@ -276,7 +290,7 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
             break
         if time.time() > deadline:
             log.error("%s: batch timed out after %d seconds.", label, BATCH_TIMEOUT)
-            sys.exit(1)
+            raise BatchTimeoutError(label)
         time.sleep(BATCH_POLL_INTERVAL)
 
     for result in client.messages.batches.results(batch.id):
@@ -321,13 +335,28 @@ def _run_single_triage(
         log.info("%s: prompt saved to %s", label, debug_path)
 
     log.info("%s: running on %d papers (model: %s)...", label, len(papers), TRIAGE_MODEL)
-    if use_batch:
-        response = _submit_and_poll(
-            client, label.lower().replace("-", "_"), TRIAGE_MODEL, 4096,
-            system_prompt, user_message, label,
-        )
-    else:
-        response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
+    no_batch_succeeded = None
+    try:
+        if use_batch:
+            response = _submit_and_poll(
+                client, label.lower().replace("-", "_"), TRIAGE_MODEL, 4096,
+                system_prompt, user_message, label,
+            )
+        else:
+            response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
+    except BatchTimeoutError:
+        log.warning("%s: batch timed out — retrying with direct API...", label)
+        try:
+            response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
+            no_batch_succeeded = True
+        except Exception as e:
+            no_batch_succeeded = False
+            if debug_dir:
+                _record_fallback(debug_dir, label, no_batch_succeeded)
+            log.error("%s: direct API also failed: %s", label, e)
+            sys.exit(1)
+    if no_batch_succeeded is not None and debug_dir:
+        _record_fallback(debug_dir, label, no_batch_succeeded)
 
     ranked: list[tuple[dict, str]] = []
     seen: set[int] = set()
@@ -431,12 +460,27 @@ def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, 
 
     log.info("Scoring %d papers (model: %s)...", len(filtered_papers), SCORING_MODEL)
 
-    if use_batch:
-        response = _submit_and_poll(
-            client, "scoring", SCORING_MODEL, 8192, system_prompt, user_message, "Scoring",
-        )
-    else:
-        response = _call_direct(client, SCORING_MODEL, 8192, system_prompt, user_message, "Scoring")
+    no_batch_succeeded = None
+    try:
+        if use_batch:
+            response = _submit_and_poll(
+                client, "scoring", SCORING_MODEL, 8192, system_prompt, user_message, "Scoring",
+            )
+        else:
+            response = _call_direct(client, SCORING_MODEL, 8192, system_prompt, user_message, "Scoring")
+    except BatchTimeoutError:
+        log.warning("Scoring: batch timed out — retrying with direct API...")
+        try:
+            response = _call_direct(client, SCORING_MODEL, 8192, system_prompt, user_message, "Scoring")
+            no_batch_succeeded = True
+        except Exception as e:
+            no_batch_succeeded = False
+            if debug_dir:
+                _record_fallback(debug_dir, "Scoring", no_batch_succeeded)
+            log.error("Scoring: direct API also failed: %s", e)
+            sys.exit(1)
+    if no_batch_succeeded is not None and debug_dir:
+        _record_fallback(debug_dir, "Scoring", no_batch_succeeded)
 
     scores = parse_json_response(response.content[0].text.strip(), "scoring")
     if not isinstance(scores, list):
