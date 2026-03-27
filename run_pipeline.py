@@ -229,6 +229,21 @@ def parse_json_response(text: str, label: str) -> list | dict:
 # Batch API helper
 # ---------------------------------------------------------------------------
 
+def _call_direct(client: Anthropic, model: str, max_tokens: int,
+                 system: str, user_message: str, label: str):
+    """Call the messages API directly (synchronous, no batch queue)."""
+    log.info("%s: calling API directly (no-batch mode)...", label)
+    msg = client.messages.create(
+        model=model,
+        max_tokens=max_tokens,
+        system=system,
+        messages=[{"role": "user", "content": user_message}],
+    )
+    log.info("%s done. (input: %d tokens, output: %d tokens)",
+             label, msg.usage.input_tokens, msg.usage.output_tokens)
+    return msg
+
+
 def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: int,
                      system: str, user_message: str, label: str):
     """Submit a single-request batch, poll until complete, return the Message object."""
@@ -286,7 +301,7 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
 
 def _run_single_triage(
     papers: list[dict], profile: dict, system_prompt: str, label: str,
-    debug_dir: Path | None = None,
+    debug_dir: Path | None = None, use_batch: bool = True,
 ) -> list[tuple[dict, str]]:
     """
     Run one triage batch for a list of papers.
@@ -306,10 +321,13 @@ def _run_single_triage(
         log.info("%s: prompt saved to %s", label, debug_path)
 
     log.info("%s: running on %d papers (model: %s)...", label, len(papers), TRIAGE_MODEL)
-    response = _submit_and_poll(
-        client, label.lower().replace("-", "_"), TRIAGE_MODEL, 4096,
-        system_prompt, user_message, label,
-    )
+    if use_batch:
+        response = _submit_and_poll(
+            client, label.lower().replace("-", "_"), TRIAGE_MODEL, 4096,
+            system_prompt, user_message, label,
+        )
+    else:
+        response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
 
     ranked: list[tuple[dict, str]] = []
     seen: set[int] = set()
@@ -339,7 +357,7 @@ def _run_single_triage(
 def run_triage(
     papers: list[dict], profile: dict,
     system_prompt: str, journal_system_prompt: str,
-    debug_dir: Path | None = None,
+    debug_dir: Path | None = None, use_batch: bool = True,
 ) -> list[dict]:
     """
     Run triage in two separate batches (arXiv and journals) to avoid
@@ -354,11 +372,11 @@ def run_triage(
 
     if arxiv_papers:
         arxiv_ranked = _run_single_triage(
-            arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir
+            arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, use_batch
         )
     if journal_papers:
         journal_ranked = _run_single_triage(
-            journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir
+            journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, use_batch
         )
 
     # Apply caps independently for each source type.
@@ -395,7 +413,7 @@ def run_triage(
 # Stage 2 — Scoring (Sonnet)
 # ---------------------------------------------------------------------------
 
-def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, archive: list[dict] | None = None, debug_dir: Path | None = None) -> list[dict]:
+def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, archive: list[dict] | None = None, debug_dir: Path | None = None, use_batch: bool = True) -> list[dict]:
     """
     Run the scoring agent. Returns filtered_papers with score, justification,
     and tags merged in, sorted by score descending.
@@ -413,9 +431,12 @@ def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, 
 
     log.info("Scoring %d papers (model: %s)...", len(filtered_papers), SCORING_MODEL)
 
-    response = _submit_and_poll(
-        client, "scoring", SCORING_MODEL, 8192, system_prompt, user_message, "Scoring",
-    )
+    if use_batch:
+        response = _submit_and_poll(
+            client, "scoring", SCORING_MODEL, 8192, system_prompt, user_message, "Scoring",
+        )
+    else:
+        response = _call_direct(client, SCORING_MODEL, 8192, system_prompt, user_message, "Scoring")
 
     scores = parse_json_response(response.content[0].text.strip(), "scoring")
     if not isinstance(scores, list):
@@ -472,6 +493,10 @@ def main():
         "--archive", default=None,
         help="Optional path to archive.json for sampling excellent-rated papers.",
     )
+    parser.add_argument(
+        "--no-batch", action="store_true",
+        help="Use synchronous API instead of Batch API (faster, no queue, 2x cost).",
+    )
     args = parser.parse_args()
 
     # Check API key before doing anything.
@@ -505,7 +530,8 @@ def main():
 
     # --- Stage 1: triage ---
     debug_dir = Path(args.filtered).parent
-    filtered = run_triage(papers, profile, triage_prompt, triage_journal_prompt, debug_dir)
+    use_batch = not args.no_batch
+    filtered = run_triage(papers, profile, triage_prompt, triage_journal_prompt, debug_dir, use_batch)
 
     with open(args.filtered, "w", encoding="utf-8") as f:
         json.dump(filtered, f, indent=2, ensure_ascii=False)
@@ -516,7 +542,7 @@ def main():
         sys.exit(0)
 
     # --- Stage 2: scoring ---
-    scored = run_scoring(filtered, profile, scoring_prompt, archive, debug_dir)
+    scored = run_scoring(filtered, profile, scoring_prompt, archive, debug_dir, use_batch)
 
     with open(args.scored, "w", encoding="utf-8") as f:
         json.dump(scored, f, indent=2, ensure_ascii=False)
