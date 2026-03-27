@@ -732,7 +732,8 @@ def edit_grades(items: list[dict], key: str) -> list[dict]:
 def reorder_authors(items: list[dict]) -> list[dict]:
     """
     Show the current author ranking and let the user type a new order.
-    Unlisted authors are appended at the end in their original relative order.
+    Unlisted existing authors are appended at the end in their original order.
+    New names (not in the current list) are added as new authors.
     """
     sorted_items = sorted(items, key=lambda x: x["rank"])
 
@@ -742,6 +743,7 @@ def reorder_authors(items: list[dict]) -> list[dict]:
 
     print()
     print("Enter new order as comma-separated names.")
+    print("New names not in the list will be added as new authors.")
     print("Unlisted authors keep their relative position at the end.")
     print("Press Enter to keep the current order.")
     raw = input("  > ").strip()
@@ -761,7 +763,11 @@ def reorder_authors(items: list[dict]) -> list[dict]:
         if match:
             reordered.append({"name": match["name"], "rank": rank})
             mentioned.add(match["name"].lower())
-            rank += 1
+        else:
+            # New author not previously in the list — add them.
+            reordered.append({"name": name, "rank": rank})
+            mentioned.add(name.lower())
+        rank += 1
 
     for item in sorted_items:
         if item["name"].lower() not in mentioned:
