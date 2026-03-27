@@ -12,9 +12,12 @@ Subject tags: not available → always []
 import logging
 import re
 
+import requests
 from bs4 import BeautifulSoup
 
 from .base import BaseScraper
+
+_S2_API = "https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}?fields=abstract"
 
 log = logging.getLogger(__name__)
 
@@ -39,10 +42,25 @@ class APSScraper(BaseScraper):
         return True
 
     def scrape_article(self, url: str) -> dict:
+        # Try Semantic Scholar first — reliable, no IP blocking issues.
+        doi_match = re.search(r"10\.\d{4}/\S+", url)
+        if doi_match:
+            try:
+                resp = requests.get(_S2_API.format(doi=doi_match.group()), timeout=10)
+                if resp.status_code == 200:
+                    abstract = resp.json().get("abstract") or ""
+                    if abstract:
+                        return {"abstract": abstract, "subject_tags": []}
+            except Exception:
+                pass
+
+        # Fallback: direct APS page scrape.
         response = self.get(url)
-        if response is None:
-            return {"abstract": "", "subject_tags": []}
-        soup = BeautifulSoup(response.text, "lxml")
-        section = soup.find("section", {"id": "abstract-section"})
-        abstract = section.get_text(separator=" ", strip=True).removeprefix("Abstract").strip() if section else ""
-        return {"abstract": abstract, "subject_tags": []}
+        if response is not None:
+            soup = BeautifulSoup(response.text, "lxml")
+            section = soup.find("section", {"id": "abstract-section"})
+            abstract = section.get_text(separator=" ", strip=True).removeprefix("Abstract").strip() if section else ""
+            if abstract:
+                return {"abstract": abstract, "subject_tags": []}
+
+        return {"abstract": "", "subject_tags": []}
