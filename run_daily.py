@@ -106,9 +106,9 @@ def send_email(pdf_path: Path, today_str: str) -> None:
     smtp_pass = _SMTP_PASSWORD
     from_addr = _EMAIL_FROM
 
-    subject = f"arXiv cond-mat digest — {today_str}"
+    subject = f"Incoming Science — {today_str}"
     body = (
-        f"Your daily arXiv cond-mat digest is attached.\n\n"
+        f"Your daily scientific literature digest is attached.\n\n"
         f"Date: {today_str}\n"
         f"Open the PDF, tap rating buttons on papers that catch your eye.\n"
     )
