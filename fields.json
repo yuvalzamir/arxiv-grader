@@ -1,0 +1,85 @@
+{
+  "cond-mat": {
+    "arxiv_category": "cond-mat",
+    "description": "Condensed matter physics",
+    "journals": [
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-CondensedMatterStructureetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRB",
+        "url": "http://feeds.aps.org/rss/recent/prb.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRX",
+        "url": "http://feeds.aps.org/rss/recent/prx.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRXQuantum",
+        "url": "http://feeds.aps.org/rss/recent/prxquantum.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "condensed-matter physics",
+          "electronic properties",
+          "magnetic properties",
+          "superconducting",
+          "topological matter",
+          "spintronics",
+          "two-dimensional materials",
+          "quantum hall",
+          "nanoscale materials",
+          "nanoscience and technology"
+        ]
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatMat",
+        "url": "https://www.nature.com/nmat.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatNano",
+        "url": "https://www.nature.com/nnano.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      }
+    ]
+  }
+}

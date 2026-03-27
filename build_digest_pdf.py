@@ -3,7 +3,8 @@
 build_digest_pdf.py — Generate the daily arXiv cond-mat digest PDF.
 
 Reads scored_papers.json (graded, sorted by score desc) and today_papers.json
-(all papers), writes a styled PDF: scored papers on top, unscored below a divider.
+(all arXiv papers), writes a styled PDF: scored papers on top, unscored below a divider.
+Within each section, journal papers come first, then arXiv papers.
 Rating buttons are styled hyperlinks pointing to the /rate endpoint.
 
 Usage:
@@ -16,6 +17,7 @@ import sys
 import argparse
 from datetime import date
 from pathlib import Path
+from urllib.parse import quote
 
 import os
 import matplotlib
@@ -71,13 +73,17 @@ def score_color(score: int):
     return C["score_low"]
 
 
-def arxiv_url(paper_id: str) -> str:
+def paper_url(paper_id: str) -> str:
+    """Return a link URL: doi.org for DOIs (10.*), arxiv.org otherwise."""
+    if paper_id.startswith("10."):
+        return f"https://doi.org/{paper_id}"
     base = paper_id.split("v")[0]
     return f"https://arxiv.org/abs/{base}"
 
 
 def rate_url(paper_id: str, rating: str, date_str: str) -> str:
-    url = f"{RATE_BASE_URL}?paper_id={paper_id}&rating={rating}&date={date_str}"
+    encoded_id = quote(paper_id, safe="")
+    url = f"{RATE_BASE_URL}?paper_id={encoded_id}&rating={rating}&date={date_str}"
     if RATE_USER:
         url += f"&user={RATE_USER}"
     return url
@@ -205,6 +211,12 @@ def make_styles() -> dict:
             fontName="DejaVuSans-Bold", fontSize=14, leading=20,
             textColor=C["text_dark"], spaceBefore=4, spaceAfter=2,
         ),
+        "subsection_header": ParagraphStyle(
+            "subsection_header",
+            fontName="DejaVuSans-Bold", fontSize=11, leading=16,
+            textColor=C["text_mid"], spaceBefore=6, spaceAfter=2,
+            keepWithNext=1,
+        ),
         "title": ParagraphStyle(
             "title",
             fontName="DejaVuSans-Bold", fontSize=13, leading=18,
@@ -252,7 +264,7 @@ def make_styles() -> dict:
 
 def title_table(paper: dict, styles: dict, scored: bool) -> Table:
     """Coloured title band, optionally with a score badge on the left."""
-    url = arxiv_url(paper["arxiv_id"])
+    url = paper_url(paper["arxiv_id"])
     title_para = Paragraph(
         f'<a href="{url}" color="#2C2826">{delatex_markup(paper.get("title", "Untitled"))}</a>',
         styles["title"],
@@ -292,9 +304,19 @@ def title_table(paper: dict, styles: dict, scored: bool) -> Table:
 
 
 def author_table(paper: dict, styles: dict) -> Table:
-    """Lighter beige author band."""
+    """Lighter beige author band with source label (journal name or arXiv subcategory)."""
     authors_text = safe(", ".join(paper.get("authors", [])) or "Unknown authors")
-    para = Paragraph(authors_text, styles["authors"])
+
+    source = paper.get("source", "")
+    subcats = paper.get("subcategories", [])
+    if source:
+        label = f'  <font size="8">[{safe(source)}]</font>'
+    elif subcats:
+        label = f'  <font size="8">[{safe(subcats[0])}]</font>'
+    else:
+        label = ""
+
+    para = Paragraph(authors_text + label, styles["authors"])
     t = Table([[para]], colWidths=[COL_W])
     t.setStyle(TableStyle([
         ("BACKGROUND",    (0, 0), (0, 0), C["author_bg"]),
@@ -339,6 +361,14 @@ def rating_table(paper_id: str, date_str: str, styles: dict) -> Table:
 
 def separator():
     return HRFlowable(width=COL_W, thickness=0.5, color=C["divider"], spaceAfter=8)
+
+
+def subsection_divider(label: str, count: int, styles: dict) -> list:
+    """Subsection header (e.g. 'Journals (3)' or 'arXiv (17)')."""
+    return [
+        Paragraph(f"{label}  ({count})", styles["subsection_header"]),
+        Spacer(1, 2 * mm),
+    ]
 
 
 # ── Paper blocks ──────────────────────────────────────────────────────────────
@@ -392,13 +422,25 @@ def draw_background(canvas, doc):
 
 # ── Main builder ──────────────────────────────────────────────────────────────
 
-def build_pdf(scored_path: str, papers_path: str, output_path: str):
+def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_path: str | None = None):
     register_fonts()
     scored = json.loads(Path(scored_path).read_text(encoding="utf-8"))
-    all_papers = json.loads(Path(papers_path).read_text(encoding="utf-8"))
+    all_arxiv = json.loads(Path(papers_path).read_text(encoding="utf-8"))
+    all_journals = json.loads(Path(journals_path).read_text(encoding="utf-8")) if journals_path else []
 
     scored_ids = {p["arxiv_id"] for p in scored}
-    unscored = [p for p in all_papers if p["arxiv_id"] not in scored_ids]
+
+    # Split scored into journal and arXiv (already sorted by score desc)
+    scored_journals = [p for p in scored if p.get("source")]
+    scored_arxiv    = [p for p in scored if not p.get("source")]
+
+    # Unscored: everything not in scored
+    unscored_journals = [p for p in all_journals if p["arxiv_id"] not in scored_ids]
+    unscored_arxiv    = [p for p in all_arxiv    if p["arxiv_id"] not in scored_ids]
+
+    total_papers = len(all_arxiv) + len(all_journals)
+    total_scored = len(scored)
+    total_unscored = len(unscored_arxiv) + len(unscored_journals)
 
     styles = make_styles()
     d = date.today()
@@ -411,20 +453,30 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str):
         topMargin=MARGIN, bottomMargin=MARGIN,
     )
 
-    total_papers = len(all_papers)
     story = [
         Spacer(1, 4 * mm),
         Paragraph("arXiv cond-mat digest", styles["page_title"]),
         Paragraph(date_str, styles["page_date"]),
-        Paragraph(f"{total_papers} papers today  ·  {len(scored)} scored  ·  {len(unscored)} unscored", styles["page_date"]),
+        Paragraph(
+            f"{total_papers} papers today  ·  {total_scored} scored  ·  {total_unscored} unscored",
+            styles["page_date"],
+        ),
         HRFlowable(width=COL_W, thickness=1, color=C["divider"], spaceAfter=6),
         Spacer(1, 4 * mm),
-        Paragraph(f"Top Papers  ({len(scored)})", styles["section_header"]),
+        Paragraph(f"Top Papers  ({total_scored})", styles["section_header"]),
         Spacer(1, 3 * mm),
     ]
 
-    for paper in scored:  # already sorted by score desc from run_pipeline.py
-        story.append(scored_block(paper, d.isoformat(), styles))
+    # ── Scored: journals first, then arXiv ────────────────────────────────────
+    if scored_journals:
+        story += subsection_divider("Journals", len(scored_journals), styles)
+        for paper in scored_journals:
+            story.append(scored_block(paper, d.isoformat(), styles))
+
+    if scored_arxiv:
+        story += subsection_divider("arXiv", len(scored_arxiv), styles)
+        for paper in scored_arxiv:
+            story.append(scored_block(paper, d.isoformat(), styles))
 
     # ── Section divider ───────────────────────────────────────────────────────
     story.append(Spacer(1, 6 * mm))
@@ -440,15 +492,23 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str):
     story += [
         div_row,
         Spacer(1, 4 * mm),
-        Paragraph(f"Browse  ({len(unscored)} papers)", styles["section_header"]),
+        Paragraph(f"Browse  ({total_unscored} papers)", styles["section_header"]),
         Spacer(1, 3 * mm),
     ]
 
-    for paper in unscored:
-        story.append(unscored_block(paper, d.isoformat(), styles))
+    # ── Unscored: journals first, then arXiv ──────────────────────────────────
+    if unscored_journals:
+        story += subsection_divider("Journals", len(unscored_journals), styles)
+        for paper in unscored_journals:
+            story.append(unscored_block(paper, d.isoformat(), styles))
+
+    if unscored_arxiv:
+        story += subsection_divider("arXiv", len(unscored_arxiv), styles)
+        for paper in unscored_arxiv:
+            story.append(unscored_block(paper, d.isoformat(), styles))
 
     doc.build(story, onFirstPage=draw_background, onLaterPages=draw_background)
-    print(f"Digest → {output_path}  ({len(scored)} scored, {len(unscored)} unscored)")
+    print(f"Digest → {output_path}  ({total_scored} scored, {total_unscored} unscored)")
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
@@ -456,7 +516,8 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str):
 def main():
     p = argparse.ArgumentParser(description="Build daily arXiv digest PDF")
     p.add_argument("--scored",    default="scored_papers.json",          help="Scored papers JSON")
-    p.add_argument("--papers",    default="today_papers.json",           help="All papers JSON")
+    p.add_argument("--papers",    default="today_papers.json",           help="All arXiv papers JSON")
+    p.add_argument("--journals",  default=None,                          help="All journal papers JSON (optional)")
     p.add_argument("--output",    default=None,                          help="Output PDF path")
     p.add_argument("--base-url",  default=None,                          help="Override rating base URL (e.g. http://localhost:5000/rate)")
     p.add_argument("--user",      default=None,                          help="Username embedded in rating URLs (e.g. alice)")
@@ -479,7 +540,7 @@ def main():
             print(f"Error: {f} not found", file=sys.stderr)
         sys.exit(1)
 
-    build_pdf(args.scored, args.papers, args.output)
+    build_pdf(args.scored, args.papers, args.output, journals_path=args.journals)
 
 
 if __name__ == "__main__":

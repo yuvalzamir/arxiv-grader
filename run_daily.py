@@ -191,6 +191,10 @@ def main():
         "--skip-archive", action="store_true",
         help="Skip archiving yesterday's ratings.",
     )
+    parser.add_argument(
+        "--journals", default=None,
+        help="Path to filtered journal papers JSON to merge with arXiv papers.",
+    )
     args = parser.parse_args()
 
     user_dir = Path(args.user_dir)
@@ -205,12 +209,16 @@ def main():
     data_dir  = user_dir / "data"
     profile   = user_dir / "taste_profile.json"
 
-    # Read arXiv category from profile (default to cond-mat if missing)
+    # Derive arXiv fetch category from fields.json using the profile's field.
     try:
         _profile_data = json.loads(profile.read_text(encoding="utf-8"))
-        _categories = _profile_data.get("arxiv_categories", ["cond-mat"])
-        arxiv_category = _categories[0] if _categories else "cond-mat"
-    except (FileNotFoundError, json.JSONDecodeError, IndexError):
+        _field = _profile_data.get("field", "cond-mat")
+        _fields_data = json.loads((BASE_DIR / "fields.json").read_text(encoding="utf-8"))
+        if _field in _fields_data:
+            arxiv_category = _fields_data[_field]["arxiv_category"]
+        else:
+            arxiv_category = _field  # field name is the category (e.g. "quant-ph")
+    except (FileNotFoundError, json.JSONDecodeError):
         arxiv_category = "cond-mat"
 
     today_str     = args.date or date.today().isoformat()
@@ -268,16 +276,18 @@ def main():
     # ------------------------------------------------------------------
     # Step 4: Run grading pipeline (triage → scoring)
     # ------------------------------------------------------------------
-    run(
-        [
-            sys.executable, "run_pipeline.py",
-            "--papers",   str(papers_path),
-            "--profile",  str(profile),
-            "--filtered", str(filtered_path),
-            "--scored",   str(scored_path),
-        ],
-        step="grade",
-    )
+    archive_path = user_dir / "archive.json"
+    grade_cmd = [
+        sys.executable, "run_pipeline.py",
+        "--papers",   str(papers_path),
+        "--profile",  str(profile),
+        "--filtered", str(filtered_path),
+        "--scored",   str(scored_path),
+        "--archive",  str(archive_path),
+    ]
+    if args.journals and Path(args.journals).exists():
+        grade_cmd += ["--journals", args.journals]
+    run(grade_cmd, step="grade")
 
     # ------------------------------------------------------------------
     # Step 5: Build PDF digest
@@ -292,6 +302,8 @@ def main():
     ]
     if rating_base_url:
         pdf_cmd += ["--base-url", rating_base_url]
+    if args.journals and Path(args.journals).exists():
+        pdf_cmd += ["--journals", args.journals]
 
     run(pdf_cmd, step="pdf")
 
