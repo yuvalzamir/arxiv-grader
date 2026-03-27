@@ -384,7 +384,7 @@ def run_triage(
 # Stage 2 — Scoring (Sonnet)
 # ---------------------------------------------------------------------------
 
-def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str) -> list[dict]:
+def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, archive: list[dict] | None = None) -> list[dict]:
     """
     Run the scoring agent. Returns filtered_papers with score, justification,
     and tags merged in, sorted by score descending.
@@ -496,7 +496,7 @@ def main():
         sys.exit(0)
 
     # --- Stage 2: scoring ---
-    scored = run_scoring(filtered, profile, scoring_prompt)
+    scored = run_scoring(filtered, profile, scoring_prompt, archive)
 
     with open(args.scored, "w", encoding="utf-8") as f:
         json.dump(scored, f, indent=2, ensure_ascii=False)
