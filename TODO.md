@@ -114,8 +114,7 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ## Pending
 
-- [ ] **Shared data folder cleanup** — delete `data/YYYY-MM-DD/` daily after the run.
-  The shared journal scrape folder (`BASE_DIR/data/`) accumulates one folder per day.
+- [x] **Shared data folder cleanup** — `run_daily.py` has `cleanup_old_folders()` (default: keep 14 days). Confirmed working. Note: this cleans per-user `users/<name>/data/` folders; the shared `data/` folder (journal scrape) is cleaned by `run_all_users.py` after each run.
 - [ ] **Journal triage tuning** — monitor first live run (2026-03-28 morning). Target 5–10 journals/day.
 - [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token).
 
