@@ -285,7 +285,8 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
 # ---------------------------------------------------------------------------
 
 def _run_single_triage(
-    papers: list[dict], profile: dict, system_prompt: str, label: str
+    papers: list[dict], profile: dict, system_prompt: str, label: str,
+    debug_dir: Path | None = None,
 ) -> list[tuple[dict, str]]:
     """
     Run one triage batch for a list of papers.
@@ -294,6 +295,15 @@ def _run_single_triage(
     """
     client = Anthropic()
     user_message = build_triage_message(papers, profile)
+
+    if debug_dir:
+        slug = label.lower().replace("-", "_")
+        debug_path = debug_dir / f"{slug}_input.txt"
+        debug_path.write_text(
+            f"=== SYSTEM ===\n{system_prompt}\n\n=== USER ===\n{user_message}",
+            encoding="utf-8",
+        )
+        log.info("%s: prompt saved to %s", label, debug_path)
 
     log.info("%s: running on %d papers (model: %s)...", label, len(papers), TRIAGE_MODEL)
     response = _submit_and_poll(
@@ -329,6 +339,7 @@ def _run_single_triage(
 def run_triage(
     papers: list[dict], profile: dict,
     system_prompt: str, journal_system_prompt: str,
+    debug_dir: Path | None = None,
 ) -> list[dict]:
     """
     Run triage in two separate batches (arXiv and journals) to avoid
@@ -343,11 +354,11 @@ def run_triage(
 
     if arxiv_papers:
         arxiv_ranked = _run_single_triage(
-            arxiv_papers, profile, system_prompt, "Triage-arXiv"
+            arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir
         )
     if journal_papers:
         journal_ranked = _run_single_triage(
-            journal_papers, profile, journal_system_prompt, "Triage-journals"
+            journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir
         )
 
     # Apply caps independently for each source type.
@@ -384,13 +395,21 @@ def run_triage(
 # Stage 2 — Scoring (Sonnet)
 # ---------------------------------------------------------------------------
 
-def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, archive: list[dict] | None = None) -> list[dict]:
+def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, archive: list[dict] | None = None, debug_dir: Path | None = None) -> list[dict]:
     """
     Run the scoring agent. Returns filtered_papers with score, justification,
     and tags merged in, sorted by score descending.
     """
     client = Anthropic()
     user_message = build_scoring_message(filtered_papers, profile, archive)
+
+    if debug_dir:
+        debug_path = debug_dir / "scoring_input.txt"
+        debug_path.write_text(
+            f"=== SYSTEM ===\n{system_prompt}\n\n=== USER ===\n{user_message}",
+            encoding="utf-8",
+        )
+        log.info("Scoring: prompt saved to %s", debug_path)
 
     log.info("Scoring %d papers (model: %s)...", len(filtered_papers), SCORING_MODEL)
 
@@ -485,7 +504,8 @@ def main():
     scoring_prompt        = load_prompt("scoring.txt")
 
     # --- Stage 1: triage ---
-    filtered = run_triage(papers, profile, triage_prompt, triage_journal_prompt)
+    debug_dir = Path(args.filtered).parent
+    filtered = run_triage(papers, profile, triage_prompt, triage_journal_prompt, debug_dir)
 
     with open(args.filtered, "w", encoding="utf-8") as f:
         json.dump(filtered, f, indent=2, ensure_ascii=False)
@@ -496,7 +516,7 @@ def main():
         sys.exit(0)
 
     # --- Stage 2: scoring ---
-    scored = run_scoring(filtered, profile, scoring_prompt, archive)
+    scored = run_scoring(filtered, profile, scoring_prompt, archive, debug_dir)
 
     with open(args.scored, "w", encoding="utf-8") as f:
         json.dump(scored, f, indent=2, ensure_ascii=False)
