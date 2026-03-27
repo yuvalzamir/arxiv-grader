@@ -89,18 +89,40 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 
 ---
 
+## Completed post-deploy (2026-03-27) ✓
+
+- [x] **`run_pipeline.py` — archive NameError** — `run_scoring()` was referencing `archive` as a free variable; fixed by passing it as a parameter.
+- [x] **`create_profile.py` — empty archive on onboarding** — creates `archive.json = []` alongside `taste_profile.json` on first save, so new users don't hit NameError on first run.
+- [x] **`run_pipeline.py` — debug prompt files** — triage and scoring prompts (system + user) are written to `triage_arxiv_input.txt`, `triage_journals_input.txt`, `scoring_input.txt` in the data folder on every run.
+- [x] **`run_pipeline.py` — `--no-batch` flag** — `_call_direct()` added; pass `--no-batch` to bypass Batch API queue and use synchronous messages API (2x cost, instant response). Threaded through `run_daily.py` and `run_all_users.py`.
+
+---
+
+## APS abstract scraping — investigated 2026-03-27
+
+Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`).
+
+- Semantic Scholar: no APS abstracts (licensing restriction — `abstract` is null even when paper is indexed)
+- CrossRef: no APS abstracts (APS doesn't deposit them)
+- OpenAlex: same — no abstracts for fresh APS papers
+- Direct APS scrape: 403 on Hetzner IP (`link.aps.org` uses Cloudflare bot protection with JS challenge)
+- Cloudflare Worker proxy: attempted but failed — APS itself runs Cloudflare, Worker fetch can't pass JS challenge
+- **Resolution: accept truncated RSS abstracts** (~2–3 sentences, sufficient for triage). ICFO institutional APS access may help — check with library if APS whitelists IP ranges or provides API token.
+
+---
+
 ## Pending
 
 - [ ] **Shared data folder cleanup** — delete `data/YYYY-MM-DD/` daily after the run.
   The shared journal scrape folder (`BASE_DIR/data/`) accumulates one folder per day.
 - [ ] **Journal triage tuning** — monitor first live run (2026-03-28 morning). Target 5–10 journals/day.
-- [ ] **APS scraping** — switched to Semantic Scholar API first; monitor for coverage gaps.
+- [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token).
 
 ---
 
 ## Upcoming
 
-- [ ] **April 1st** — Check monthly profile refiner ran successfully:
+- [ ] **April 2nd** — Check monthly profile refiner ran successfully (runs 2nd of month 06:30 UTC):
   ```bash
   cat /var/log/arxiv-grader/refiner.log
   cat /opt/arxiv-grader/users/yuval/taste_profile.json
@@ -111,7 +133,8 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 ## Known rough edges (monitor, no action needed now)
 
 - Cron changed to Mon–Fri 05:30 UTC (was Tue–Sat) — Friday arXiv data now delivered Monday
-- APS 403 errors on direct scrape from Hetzner IP — mitigated by Semantic Scholar primary
+- APS abstracts truncated (RSS fallback) — Hetzner IP blocked by APS Cloudflare protection
 - On Mondays, arXiv feed has 120–165 papers due to weekend accumulation — triage cap of 15 handles this
 - Scoring agent `max_tokens=8192` — sufficient for up to ~30 filtered papers (cap 15+15)
 - Cron UTC offset: `TZ=Europe/Madrid` set in crontab — handles summer/winter time automatically
+- Anthropic Batch API (Sonnet) can get stuck during incidents — use `--no-batch` flag as fallback
