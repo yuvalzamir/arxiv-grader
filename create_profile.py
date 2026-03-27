@@ -856,6 +856,12 @@ def main():
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(profile, f, indent=2, ensure_ascii=False)
             log.info("Profile saved to %s", output_path)
+            # Create an empty archive.json alongside the profile if it doesn't exist.
+            archive_path = Path(output_path).parent / "archive.json"
+            if not archive_path.exists():
+                with open(archive_path, "w", encoding="utf-8") as f:
+                    json.dump([], f)
+                log.info("Created empty archive at %s", archive_path)
             break
         elif choice == "e":
             profile = edit_rankings(profile)
