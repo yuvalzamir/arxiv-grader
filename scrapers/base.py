@@ -14,7 +14,7 @@ import requests
 
 log = logging.getLogger(__name__)
 
-HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; arxiv-grader/1.0)"}
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
 REQUEST_TIMEOUT = 15
 SLEEP_BETWEEN_REQUESTS = 1.5
 
