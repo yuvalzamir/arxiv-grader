@@ -145,6 +145,7 @@ def main():
     parser.add_argument("--skip-dedup",   action="store_true", help="Skip deduplication step.")
     parser.add_argument("--skip-archive", action="store_true", help="Skip archive step.")
     parser.add_argument("--no-journals",  action="store_true", help="Skip journal scraping.")
+    parser.add_argument("--no-batch",     action="store_true", help="Use synchronous API instead of Batch API.")
     # Refiner flags (passed through to run_profile_refiner.py)
     parser.add_argument("--dry-run", action="store_true", help="(refine only) Don't write profile.")
     parser.add_argument("--days",    type=int, default=None, help="(refine only) Days of history to use.")
@@ -214,6 +215,8 @@ def main():
             base_extra_args.append("--skip-dedup")
         if args.skip_archive:
             base_extra_args.append("--skip-archive")
+        if args.no_batch:
+            base_extra_args.append("--no-batch")
 
     results: dict[str, bool] = {}
     with ThreadPoolExecutor(max_workers=len(users)) as executor:
