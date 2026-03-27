@@ -67,12 +67,6 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 
 - [x] **4. `run_pipeline.py`** — complete. `--journals` arg merges journal papers before triage (arXiv first). Separate triage batches with independent caps: arXiv 15, journals 15. `source` field added to `_paper_block()`.
 
-- [ ] **5. `prompts/triage.txt`** — add SOURCE FIELD section
-  - See exact text in `docs/journal_sources_design.md`
-
-- [ ] **6. `prompts/scoring.txt`** — add SOURCE FIELD section + "top venue" tag
-  - See exact text in `docs/journal_sources_design.md`
-
 - [x] **7. `run_daily.py`** — complete. `--journals` accepted and forwarded to `run_pipeline.py` if file exists.
 
 - [ ] **8. `build_digest_pdf.py`** — two fixes + source badge
@@ -81,8 +75,6 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
   - Add source badge (small pill, same row as score badge) for papers with `source` field
 
 - [ ] **9. `requirements.txt`** — done. `environment.yml` does not exist; no action needed.
-
-- [ ] **10. User profiles** — add `"field": "cond-mat"` to each existing `taste_profile.json`
 
 - [x] **11. End-to-end test + deploy** — deployed 2026-03-27. See `docs/journal_triage_tuning.md`.
   pip installed on server: `beautifulsoup4`, `lxml`, `matplotlib`. First live run tonight.
