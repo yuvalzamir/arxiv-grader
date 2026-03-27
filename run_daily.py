@@ -276,12 +276,14 @@ def main():
     # ------------------------------------------------------------------
     # Step 4: Run grading pipeline (triage → scoring)
     # ------------------------------------------------------------------
+    archive_path = user_dir / "archive.json"
     grade_cmd = [
         sys.executable, "run_pipeline.py",
         "--papers",   str(papers_path),
         "--profile",  str(profile),
         "--filtered", str(filtered_path),
         "--scored",   str(scored_path),
+        "--archive",  str(archive_path),
     ]
     if args.journals and Path(args.journals).exists():
         grade_cmd += ["--journals", args.journals]

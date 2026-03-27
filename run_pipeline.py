@@ -15,6 +15,7 @@ import argparse
 import json
 import logging
 import os
+import random
 import re
 import sys
 import time
@@ -28,7 +29,8 @@ load_dotenv()
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 TRIAGE_MODEL  = "claude-haiku-4-5-20251001"
 SCORING_MODEL = "claude-sonnet-4-6"
-LIKED_PAPERS_WINDOW = 5   # how many recent liked papers to show the scoring agent
+LIKED_MAX         = 5   # max liked papers shown to scoring agent
+LIKED_SAMPLE_SIZE = 10  # how many archive entries to randomly sample from
 MAX_TRIAGE_PASS         = 15  # hard cap on arXiv papers forwarded to scoring
 MAX_TRIAGE_PASS_JOURNAL = 15  # hard cap on journal papers forwarded to scoring
 
@@ -132,15 +134,35 @@ def build_triage_message(papers: list[dict], profile: dict) -> str:
     )
 
 
-def build_scoring_message(filtered_papers: list[dict], profile: dict) -> str:
+def _sample_liked_papers(archive: list[dict], seed_papers: list[dict]) -> list[dict]:
+    """
+    Build the liked-papers list for the scoring prompt:
+    1. Randomly sample LIKED_SAMPLE_SIZE entries from the archive.
+    2. Keep those rated 'excellent', up to LIKED_MAX.
+    3. Pad with seed_papers from the profile if still under LIKED_MAX.
+    4. Return however many we have (may be fewer than LIKED_MAX).
+    """
+    sample = random.sample(archive, min(LIKED_SAMPLE_SIZE, len(archive))) if archive else []
+    excellent = [e for e in sample if e.get("rating", "").lower() == "excellent"][:LIKED_MAX]
+
+    if len(excellent) >= LIKED_MAX:
+        return excellent
+
+    seen_ids = {e.get("arxiv_id") for e in excellent}
+    padding = [p for p in seed_papers if p.get("arxiv_id") not in seen_ids]
+    return excellent + padding[:LIKED_MAX - len(excellent)]
+
+
+def build_scoring_message(filtered_papers: list[dict], profile: dict, archive: list[dict] | None = None) -> str:
     categories = profile.get("field", "not specified")
     evolved = profile.get("evolved_interests", "").strip() or "(not yet populated)"
 
-    # Last N liked papers (most recent signal).
-    recent_liked = profile.get("liked_papers", [])[-LIKED_PAPERS_WINDOW:]
+    # Liked papers: sample from archive (excellent-rated), pad with seed papers.
+    seed_papers = profile.get("liked_papers", [])
+    liked = _sample_liked_papers(archive or [], seed_papers)
     liked_str = "\n".join(
         f"  - [{p.get('arxiv_id') or 'journal'}] {p['title']} — {p.get('why_relevant', '')}"
-        for p in recent_liked
+        for p in liked
     ) or "  (none)"
 
     header = (
@@ -152,7 +174,7 @@ def build_scoring_message(filtered_papers: list[dict], profile: dict) -> str:
         f"Research areas (grade 1 = most relevant, grade 7 = fading):\n{_areas_str(profile.get('research_areas', []))}\n\n"
         f"Followed authors (rank 1 = highest priority):\n{_authors_str(profile.get('authors', []))}\n\n"
         f"Recent trajectory (evolved interests):\n{evolved}\n\n"
-        f"Recently liked papers (most recent {LIKED_PAPERS_WINDOW}):\n{liked_str}"
+        f"Recently liked papers (up to {LIKED_MAX}, sampled from ratings):\n{liked_str}"
     )
 
     paper_blocks = "\n\n".join(
@@ -359,7 +381,7 @@ def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str) 
     and tags merged in, sorted by score descending.
     """
     client = Anthropic()
-    user_message = build_scoring_message(filtered_papers, profile)
+    user_message = build_scoring_message(filtered_papers, profile, archive)
 
     log.info("Scoring %d papers (model: %s)...", len(filtered_papers), SCORING_MODEL)
 
@@ -418,6 +440,10 @@ def main():
         "--journals", default=None,
         help="Optional path to filtered journal papers JSON to merge before triage.",
     )
+    parser.add_argument(
+        "--archive", default=None,
+        help="Optional path to archive.json for sampling excellent-rated papers.",
+    )
     args = parser.parse_args()
 
     # Check API key before doing anything.
@@ -432,6 +458,7 @@ def main():
     # Load inputs.
     papers  = load_json(args.papers)
     profile = load_json(args.profile)
+    archive = load_json(args.archive) if args.archive and Path(args.archive).exists() else []
     log.info("Loaded %d arXiv papers from %s", len(papers), args.papers)
 
     if args.journals:
