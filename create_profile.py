@@ -171,6 +171,7 @@ def setup_credentials(env_path: Path | None = None) -> None:
                     break
         else:
             print("OK.")
+            os.environ["ANTHROPIC_API_KEY"] = key
 
     # ---- Recipient email --------------------------------------------------
     if not env.get("EMAIL_TO", "").strip():
