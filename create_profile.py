@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-create_profile.py — One-time user onboarding for the arXiv grader.
+create_profile.py — One-time user onboarding for Incoming Science.
 
 Interviews the user across four areas, reads recent papers from an Excel
-file of arXiv links, then runs an agentic Claude call (with web-fetch tools
-and extended thinking) to build a ranked taste profile.
+file of arXiv or journal links, then calls Claude to build a ranked taste
+profile. The daily digest includes both arXiv preprints and published journal
+articles (Nature, Science, PRL, PRB, PRX, and more).
 
 Usage:
     python create_profile.py                    # writes to ./taste_profile.json
@@ -124,7 +125,7 @@ def setup_credentials(env_path: Path | None = None) -> None:
 
     print()
     print("=" * 58)
-    print("  arXiv Grader — Initial Setup")
+    print("  Incoming Science — Initial Setup")
     print("=" * 58)
 
     # ---- Anthropic API key ------------------------------------------------
@@ -323,17 +324,17 @@ def collect_inputs() -> dict:
     """Run the four-part interview and return raw user inputs."""
     print()
     print("=" * 58)
-    print("  arXiv Grader — Profile Setup")
+    print("  Incoming Science — Profile Setup")
     print("=" * 58)
 
-    # --- Part 1: arXiv categories ---
+    # --- Part 1: Research field ---
     print()
-    print("Part 1 of 4 — arXiv categories")
-    print("Which arXiv listing pages are you interested in?")
-    print("Enter one or more categories, comma-separated.")
-    print("Examples: cond-mat  |  cond-mat.str-el  |  quant-ph  |  cs.AI")
-    raw_cats = input("  > ").strip()
-    categories = [c.strip() for c in raw_cats.split(",") if c.strip()]
+    print("Part 1 of 4 — Research field")
+    print("What field are you in?")
+    print("Examples: condensed matter  |  astrophysics  |  quantum physics  |  AI")
+    print("(We'll map this to the right arXiv category and journal feeds.)")
+    field = input("  > ").strip()
+    categories = [field]
 
     # --- Part 2: Free-text research interests ---
     print()
@@ -354,7 +355,8 @@ def collect_inputs() -> dict:
     print()
     print("Part 4 of 4 — Recently read papers (Excel file)")
     print("Provide the path to an Excel file with one paper link per row.")
-    print("Accepted formats: arXiv URLs, arXiv IDs, DOI links, or any journal page URL.")
+    print("Accepted: arXiv URLs/IDs, DOI links, or any journal page URL")
+    print("(Nature, Science, PRL, PRB, PRX, etc. are all fine).")
     print("Press Enter to skip if you have no file.")
     excel_path = input("  > ").strip()
 
@@ -377,6 +379,7 @@ def collect_inputs() -> dict:
                 print(f"  Found {len(paper_links)} paper(s): {', '.join(parts)}.")
 
     return {
+        "field": field,
         "categories": categories,
         "interests_text": interests_text,
         "researchers": researchers,
@@ -553,7 +556,7 @@ def build_user_message(inputs: dict, papers: list[dict]) -> str:
     papers_str = "\n\n---\n\n".join(paper_blocks) if paper_blocks else "none provided"
 
     return (
-        f"arXiv categories of interest: {categories_str}\n\n"
+        f"Field of interest: {categories_str}\n\n"
         f"Free-text description of research interests:\n{inputs['interests_text']}\n\n"
         f"Researchers explicitly followed by user:\n{researchers_str}\n\n"
         f"Author frequency in provided papers (pre-counted by Python):\n{author_freq_str}\n\n"
@@ -634,7 +637,7 @@ def assemble_profile(rankings: dict, inputs: dict, papers: list[dict]) -> dict:
         })
 
     return {
-        "arxiv_categories": inputs["categories"],
+        "field": inputs["field"],
         "interests_description": inputs["interests_text"],
         "keywords": rankings.get("keywords", []),
         "research_areas": rankings.get("research_areas", []),
@@ -655,7 +658,7 @@ def display_profile(profile: dict, categories: list[str]) -> None:
     print("  YOUR PROFILE DRAFT")
     print("=" * 58)
 
-    print(f"\narXiv categories: {', '.join(categories) if categories else '(none)'}")
+    print(f"\nField: {', '.join(categories) if categories else '(none)'}")
 
     print("\nKeywords (grade 1 = most relevant, 5 = tentative):")
     for kw in sorted(profile["keywords"], key=lambda x: x["grade"]):
@@ -790,7 +793,7 @@ def edit_rankings(profile: dict) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="One-time onboarding: create your arXiv grader taste profile."
+        description="One-time onboarding: create your Incoming Science taste profile."
     )
     parser.add_argument(
         "--user-dir", default=None,

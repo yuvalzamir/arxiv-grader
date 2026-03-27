@@ -1,5 +1,26 @@
 # TODO
 
+## Triage tuning — DONE ✓
+
+Created `prompts/triage_journals.txt` with abstract content signal (grade 1–5).
+Caps: arXiv 20→15, journals 10→15. See `docs/journal_triage_tuning.md` for full log.
+
+---
+
+## `fetch_journals.py` — open issues
+
+- [x] **4. Nature main wasteful scraping** — fixed: `d41586` DOI prefix filter in `NatureScraper.editorial_filter` drops news/views before page fetch. Saves ~45 unnecessary HTTP requests per run.
+- [x] **5. Science RSS summary quality** — switched to eTOC feed (full last issue, 42 papers). Abstracts fetched via Semantic Scholar API (free, plain text). 20/42 papers get full abstracts; 22 editorial/opinion pieces fall back to short RSS summaries and are handled by triage.
+- [x] **8. PRB publication lag** — not a lag; PRB simply didn't publish on March 25. Zero-paper days are normal and expected.
+- [ ] **8b. Science date handling** — eTOC feed gives the full last issue; all 42 entries share the issue date (e.g. March 19). Date filter will return 0 on non-issue days. Need to decide: skip date filter for Science, or always include the most recent issue regardless of date.
+- [x] **8b. Science date handling** — eTOC feed gives the full last issue; all entries share the issue date. Watermark handles this correctly — Science papers are picked up once per week when the new issue appears.
+- [x] **8 (watermark)** — replaced fixed `--date` logic with per-journal watermark (`journal_watermarks.json`, keyed by RSS URL). Watermark advances to `min(max_entry_date, yesterday)` to prevent today's papers from being skipped tomorrow. `--since` flag overrides for manual re-runs without updating watermarks.
+- [x] **1/6. Duplicate papers across feeds** — deduplication by `arxiv_id` added to `main()` in `fetch_journals.py` after all journals scraped.
+- [x] **2. `import re` inside `_split_author_string()`** — already at module level in the rewrite.
+- [x] **7. `requirements.txt`** — added `beautifulsoup4`, `lxml` (feedparser and requests were already present).
+
+---
+
 ## Completed ✓
 
 - [x] `fetch_papers.py` — arXiv RSS fetch and parse
@@ -31,6 +52,49 @@
 - [x] Batch API — triage and scoring now use Anthropic Message Batches API (50% cost reduction); `_submit_and_poll()` helper in `run_pipeline.py`
 - [x] Parallel user runs — `run_all_users.py` uses `ThreadPoolExecutor`; all users' pipelines run concurrently
 - [x] `build_digest_pdf.py` — fixed `SyntaxWarning` on invalid escape sequence in docstring (raw string)
+
+---
+
+## Journal sources expansion (`journal_grader` branch)
+
+Design documents: `docs/journal_sources_design.md` (architecture) and `docs/journal_implementation_plan.md` (step-by-step).
+
+- [x] **1. `fields.json`** — complete. 10 journals (NanoLett deferred), section feeds for PRL, physical-sciences RSS for NatComms, eTOC feed for Science.
+
+- [x] **2. `fetch_journals.py`** — complete. Publisher scraper classes (`scrapers/`), per-journal watermark, deduplication, Semantic Scholar for Science abstracts, 1.5s delay.
+
+- [x] **3. `run_all_users.py`** — complete. Field discovery, single shared `fetch_journals.py` subprocess, `filter_for_field()` pure Python, per-user `--journals` arg, `--no-journals` flag.
+
+- [x] **4. `run_pipeline.py`** — complete. `--journals` arg merges journal papers before triage (arXiv first). Separate triage batches with independent caps: arXiv 15, journals 15. `source` field added to `_paper_block()`.
+
+- [ ] **5. `prompts/triage.txt`** — add SOURCE FIELD section
+  - See exact text in `docs/journal_sources_design.md`
+
+- [ ] **6. `prompts/scoring.txt`** — add SOURCE FIELD section + "top venue" tag
+  - See exact text in `docs/journal_sources_design.md`
+
+- [x] **7. `run_daily.py`** — complete. `--journals` accepted and forwarded to `run_pipeline.py` if file exists.
+
+- [ ] **8. `build_digest_pdf.py`** — two fixes + source badge
+  - Replace `arxiv_url()` with `paper_url()`: DOIs (`10.*`) → `https://doi.org/{doi}`, else arXiv URL
+  - URL-encode `paper_id` in `rate_url()` using `urllib.parse.quote(paper_id, safe="")`
+  - Add source badge (small pill, same row as score badge) for papers with `source` field
+
+- [ ] **9. `requirements.txt`** — done. `environment.yml` does not exist; no action needed.
+
+- [ ] **10. User profiles** — add `"field": "cond-mat"` to each existing `taste_profile.json`
+
+- [x] **11. End-to-end test + deploy** — deployed 2026-03-27. See `docs/journal_triage_tuning.md`.
+  pip installed on server: `beautifulsoup4`, `lxml`, `matplotlib`. First live run tonight.
+
+---
+
+## Pending
+
+- [ ] **Shared data folder cleanup** — delete `data/YYYY-MM-DD/` daily after the run.
+  The shared journal scrape folder (`BASE_DIR/data/`) accumulates one folder per day.
+  Simplest fix: delete the folder at the end of `run_all_users.py` (after all users done),
+  or add a `--keep-days` style cleanup similar to the per-user data folders.
 
 ---
 
