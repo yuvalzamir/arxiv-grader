@@ -93,8 +93,8 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 
 - [ ] **Shared data folder cleanup** — delete `data/YYYY-MM-DD/` daily after the run.
   The shared journal scrape folder (`BASE_DIR/data/`) accumulates one folder per day.
-  Simplest fix: delete the folder at the end of `run_all_users.py` (after all users done),
-  or add a `--keep-days` style cleanup similar to the per-user data folders.
+- [ ] **Journal triage tuning** — monitor first live run (2026-03-28 morning). Target 5–10 journals/day.
+- [ ] **APS scraping** — switched to Semantic Scholar API first; monitor for coverage gaps.
 
 ---
 
@@ -103,9 +103,6 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 - [ ] **April 1st** — Check monthly profile refiner ran successfully:
   ```bash
   cat /var/log/arxiv-grader/refiner.log
-  ```
-  And verify `taste_profile.json` was updated:
-  ```bash
   cat /opt/arxiv-grader/users/yuval/taste_profile.json
   ```
 
@@ -113,6 +110,8 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 
 ## Known rough edges (monitor, no action needed now)
 
-- On Tuesdays, arXiv feed has 120–165 papers due to weekend accumulation — triage already handles this well (ranked cap of 20 keeps scoring cost bounded)
-- Scoring agent `max_tokens=8192` — sufficient for up to ~80 filtered papers; hard cap of 20 makes this a non-issue in practice
+- Cron changed to Mon–Fri 05:30 UTC (was Tue–Sat) — Friday arXiv data now delivered Monday
+- APS 403 errors on direct scrape from Hetzner IP — mitigated by Semantic Scholar primary
+- On Mondays, arXiv feed has 120–165 papers due to weekend accumulation — triage cap of 15 handles this
+- Scoring agent `max_tokens=8192` — sufficient for up to ~30 filtered papers (cap 15+15)
 - Cron UTC offset: `TZ=Europe/Madrid` set in crontab — handles summer/winter time automatically
