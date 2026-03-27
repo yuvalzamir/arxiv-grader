@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-server.py — Rating server for the arXiv digest.
+server.py — Rating server for the scientific literature digest.
 
 Handles GET /rate?paper_id=...&rating=...&date=YYYY-MM-DD
 Enriches the rating with paper metadata and appends it to data/DATE/ratings.json.
@@ -312,7 +312,7 @@ def index():
 <body>
   <div class="card">
     <img src="/logo.png" alt="Incoming Science logo" class="logo">
-    <p class="tagline">Your daily arXiv digest, personalised by AI.</p>
+    <p class="tagline">Your daily scientific literature digest, personalised by AI.</p>
 
     <hr class="divider">
 
