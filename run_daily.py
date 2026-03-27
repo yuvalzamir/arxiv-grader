@@ -195,6 +195,10 @@ def main():
         "--journals", default=None,
         help="Path to filtered journal papers JSON to merge with arXiv papers.",
     )
+    parser.add_argument(
+        "--no-batch", action="store_true",
+        help="Use synchronous API instead of Batch API (faster, no queue, 2x cost).",
+    )
     args = parser.parse_args()
 
     user_dir = Path(args.user_dir)
@@ -287,6 +291,8 @@ def main():
     ]
     if args.journals and Path(args.journals).exists():
         grade_cmd += ["--journals", args.journals]
+    if args.no_batch:
+        grade_cmd.append("--no-batch")
     run(grade_cmd, step="grade")
 
     # ------------------------------------------------------------------
