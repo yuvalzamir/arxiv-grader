@@ -95,6 +95,7 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 - [x] **`create_profile.py` — empty archive on onboarding** — creates `archive.json = []` alongside `taste_profile.json` on first save, so new users don't hit NameError on first run.
 - [x] **`run_pipeline.py` — debug prompt files** — triage and scoring prompts (system + user) are written to `triage_arxiv_input.txt`, `triage_journals_input.txt`, `scoring_input.txt` in the data folder on every run.
 - [x] **`run_pipeline.py` — `--no-batch` flag** — `_call_direct()` added; pass `--no-batch` to bypass Batch API queue and use synchronous messages API (2x cost, instant response). Threaded through `run_daily.py` and `run_all_users.py`.
+- [x] **Batch API auto-fallback + alert email** — `BatchTimeoutError` raised after 1-hour timeout. Both triage and scoring catch it, retry with `_call_direct()`, and write `batch_fallback.json` to the data folder. `run_all_users.py` scans for these files after all users complete and sends an alert email to `yuval.zamir@icfo.eu` with per-user/per-stage report.
 
 ---
 
