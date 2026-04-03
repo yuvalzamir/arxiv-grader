@@ -120,6 +120,16 @@ pip install -r requirements.txt
   - 2nd of month 06:30 UTC → monthly refiner
 - **Logs**: `/var/log/arxiv-grader/daily.log`, `/var/log/arxiv-grader/refiner.log`
 
+## Deploying to the Server
+
+The server does **not** pull from git. Files must be copied manually via SCP:
+
+```bash
+scp <file1> <file2> root@116.203.255.222:/opt/arxiv-grader/
+```
+
+**Never SSH into the server or run the pipeline autonomously** — always provide commands for the user to run themselves.
+
 ## Known Constraints
 
 - APS abstracts are truncated (RSS fallback only) — Hetzner IP is blocked by Cloudflare on APS full-text pages
