@@ -69,10 +69,8 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 
 - [x] **7. `run_daily.py`** — complete. `--journals` accepted and forwarded to `run_pipeline.py` if file exists.
 
-- [ ] **8. `build_digest_pdf.py`** — two fixes + source badge
-  - Replace `arxiv_url()` with `paper_url()`: DOIs (`10.*`) → `https://doi.org/{doi}`, else arXiv URL
-  - URL-encode `paper_id` in `rate_url()` using `urllib.parse.quote(paper_id, safe="")`
-  - Add source badge (small pill, same row as score badge) for papers with `source` field
+- [x] **8. `build_digest_pdf.py`** — `paper_url()` implemented (DOI → doi.org, full URL passthrough, else arXiv); `rate_url()` URL-encodes paper_id. Source badge deferred.
+  - [ ] Add source badge (small pill, same row as score badge) for papers with `source` field
 
 - [ ] **9. `requirements.txt`** — done. `environment.yml` does not exist; no action needed.
 
@@ -113,6 +111,10 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 ---
 
 ## Upcoming
+
+- [x] **PDF journal links fix** — `paper_url()` in `build_digest_pdf.py` now passes through full `http(s)://` URLs directly. Root cause: `fetch_journals.py` sets `arxiv_id = doi if doi else url` (line 157), so when no DOI is extracted the field holds the raw article URL; the old `paper_url()` wrapped it in `https://arxiv.org/abs/`.
+
+- [ ] **Triage: switch from Batch API to cached API** — Replace Batch API for the triage step with prompt caching (synchronous). Cache structure: system prompt + the two paper lists (arXiv and journals) as the cached prefix; each user's taste profile as the non-cached suffix. This amortizes the large paper-list tokens across all users in a single run, reducing triage cost further while eliminating the 1-hour batch wait for that stage.
 
 - [ ] **April 2nd** — Check monthly profile refiner ran successfully (runs 2nd of month 06:30 UTC):
   ```bash
