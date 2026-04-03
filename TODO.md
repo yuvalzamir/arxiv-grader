@@ -105,8 +105,10 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 ## Pending
 
 - [x] **Shared data folder cleanup** — `run_daily.py` has `cleanup_old_folders()` (default: keep 14 days). Confirmed working. Note: this cleans per-user `users/<name>/data/` folders; the shared `data/` folder (journal scrape) is cleaned by `run_all_users.py` after each run.
-- [ ] **Journal triage tuning** — monitor first live run (2026-03-28 morning). Target 5–10 journals/day.
+- [x] **Journal triage tuning** — monitoring confirmed current tuning is working well. No action needed.
+- [x] **April 2nd refiner check** — confirmed refiner ran (2026-04-02). Revealed need for refiner v2 (see below).
 - [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token).
+- [ ] **Security audit** — check what sensitive information is exposed on the server and in git history. Review: `.env` files, API keys, email credentials, any secrets accidentally committed. Check `git log` and server file permissions.
 
 ---
 
@@ -116,13 +118,10 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 - [ ] **Triage: switch from Batch API to cached API** — Replace Batch API for the triage step with prompt caching (synchronous). Cache structure: system prompt + the two paper lists (arXiv and journals) as the cached prefix; each user's taste profile as the non-cached suffix. This amortizes the large paper-list tokens across all users in a single run, reducing triage cost further while eliminating the 1-hour batch wait for that stage.
 
-- [ ] **Refiner: structured outputs** — Replace `parse_json_response()` with Anthropic Structured Outputs (`output_config.format` + `json_schema`). The Batch API supports structured outputs natively (50% discount still applies). Benefits: guaranteed valid JSON, schema enforced at inference time, no regex fallback needed. Note: `claude-sonnet-4-6` does not support assistant prefill (breaking change in 4.6) — structured outputs is the correct replacement for forcing JSON.
-
-- [ ] **April 2nd** — Check monthly profile refiner ran successfully (runs 2nd of month 06:30 UTC):
-  ```bash
-  cat /var/log/arxiv-grader/refiner.log
-  cat /opt/arxiv-grader/users/yuval/taste_profile.json
-  ```
+- [ ] **Refiner v2** — Full overhaul of `run_profile_refiner.py`. Design document: `docs/refiner_v2_design.md`. Three changes:
+  1. Structured outputs (replace `parse_json_response()`, schemas in `schemas/`)
+  2. Area management as a separate Haiku call — keyword-driven, decoupled from paper ratings; bidirectional grade recommendations; new area suggestions (min 3 unmatched keywords); static `area_keyword_map` stored in `taste_profile.json`
+  3. Remove area grade changes from the main refiner (Sonnet) entirely — areas exclusively managed by the Haiku step
 
 ---
 
