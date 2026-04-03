@@ -82,8 +82,7 @@ def _call_direct(client: Anthropic, model: str, max_tokens: int,
         max_tokens=max_tokens,
         system=system,
         messages=[
-            {"role": "user",      "content": user_message},
-            {"role": "assistant", "content": "{"},
+            {"role": "user", "content": user_message},
         ],
     )
     log.info(
@@ -544,7 +543,7 @@ def main():
         label="refiner",
     )
 
-    raw = "{" + response.content[0].text.strip()
+    raw = response.content[0].text.strip()
     changes = parse_json_response(raw)
 
     # ---------------------------------------------------------------------------
