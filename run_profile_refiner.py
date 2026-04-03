@@ -86,7 +86,10 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
                 "model": model,
                 "max_tokens": max_tokens,
                 "system": system,
-                "messages": [{"role": "user", "content": user_message}],
+                "messages": [
+                    {"role": "user",      "content": user_message},
+                    {"role": "assistant", "content": "{"},
+                ],
             },
         }]
     )
@@ -565,7 +568,7 @@ def main():
         label="refiner",
     )
 
-    raw = response.content[0].text.strip()
+    raw = "{" + response.content[0].text.strip()
     changes = parse_json_response(raw)
 
     # ---------------------------------------------------------------------------
