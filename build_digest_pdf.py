@@ -74,7 +74,9 @@ def score_color(score: int):
 
 
 def paper_url(paper_id: str) -> str:
-    """Return a link URL: doi.org for DOIs (10.*), arxiv.org otherwise."""
+    """Return a link URL: pass through full URLs, doi.org for DOIs (10.*), arxiv.org otherwise."""
+    if paper_id.startswith("http://") or paper_id.startswith("https://"):
+        return paper_id
     if paper_id.startswith("10."):
         return f"https://doi.org/{paper_id}"
     base = paper_id.split("v")[0]
