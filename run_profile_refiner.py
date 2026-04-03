@@ -23,7 +23,6 @@ import json
 import logging
 import os
 import sys
-import time
 from collections import Counter
 from datetime import date, timedelta
 from pathlib import Path
@@ -38,8 +37,6 @@ ARCHIVE_PATH   = Path(__file__).parent / "archive.json"
 PROFILE_PATH   = Path(__file__).parent / "taste_profile.json"
 REFINER_MODEL       = "claude-sonnet-4-6"
 WINDOW_DAYS         = 30
-BATCH_POLL_INTERVAL = 15    # seconds between batch status checks
-BATCH_TIMEOUT       = 3600  # give up after 1 hour
 
 logging.basicConfig(
     level=logging.INFO,
@@ -76,54 +73,29 @@ def load_prompt(name: str) -> str:
 # Batch API helper
 # ---------------------------------------------------------------------------
 
-def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: int,
-                     system: str, user_message: str, label: str):
-    """Submit a single-request batch, poll until complete, return the Message object."""
-    batch = client.messages.batches.create(
-        requests=[{
-            "custom_id": custom_id,
-            "params": {
-                "model": model,
-                "max_tokens": max_tokens,
-                "system": system,
-                "messages": [
-                    {"role": "user",      "content": user_message},
-                    {"role": "assistant", "content": "{"},
-                ],
-            },
-        }]
+def _call_direct(client: Anthropic, model: str, max_tokens: int,
+                 system: str, user_message: str, label: str):
+    """Call the Messages API directly (synchronous). Returns the Message object."""
+    log.info("%s: sending request...", label)
+    msg = client.messages.create(
+        model=model,
+        max_tokens=max_tokens,
+        system=system,
+        messages=[
+            {"role": "user",      "content": user_message},
+            {"role": "assistant", "content": "{"},
+        ],
     )
-    log.info("%s: batch submitted (id: %s). Polling every %ds...", label, batch.id, BATCH_POLL_INTERVAL)
-
-    deadline = time.time() + BATCH_TIMEOUT
-    while True:
-        batch = client.messages.batches.retrieve(batch.id)
-        if batch.processing_status == "ended":
-            break
-        if time.time() > deadline:
-            log.error("%s: batch timed out after %d seconds.", label, BATCH_TIMEOUT)
-            sys.exit(1)
-        time.sleep(BATCH_POLL_INTERVAL)
-
-    for result in client.messages.batches.results(batch.id):
-        if result.result.type == "succeeded":
-            msg = result.result.message
-            log.info(
-                "%s done. (input: %d tokens, output: %d tokens)",
-                label, msg.usage.input_tokens, msg.usage.output_tokens,
-            )
-            if msg.usage.output_tokens >= max_tokens * 0.9:
-                log.warning(
-                    "%s: output tokens (%d) close to max_tokens (%d) — response may be truncated.",
-                    label, msg.usage.output_tokens, max_tokens,
-                )
-            return msg
-        else:
-            log.error("%s: batch request failed with type '%s'.", label, result.result.type)
-            sys.exit(1)
-
-    log.error("%s: no results returned by batch.", label)
-    sys.exit(1)
+    log.info(
+        "%s done. (input: %d tokens, output: %d tokens)",
+        label, msg.usage.input_tokens, msg.usage.output_tokens,
+    )
+    if msg.usage.output_tokens >= max_tokens * 0.9:
+        log.warning(
+            "%s: output tokens (%d) close to max_tokens (%d) — response may be truncated.",
+            label, msg.usage.output_tokens, max_tokens,
+        )
+    return msg
 
 
 # ---------------------------------------------------------------------------
@@ -563,9 +535,8 @@ def main():
     user_message = build_refiner_message(profile, recent)
 
     client = Anthropic()
-    response = _submit_and_poll(
+    response = _call_direct(
         client,
-        custom_id="profile-refiner",
         model=REFINER_MODEL,
         max_tokens=4096,
         system=system_prompt,
