@@ -112,6 +112,11 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
                 "%s done. (input: %d tokens, output: %d tokens)",
                 label, msg.usage.input_tokens, msg.usage.output_tokens,
             )
+            if msg.usage.output_tokens >= max_tokens * 0.9:
+                log.warning(
+                    "%s: output tokens (%d) close to max_tokens (%d) — response may be truncated.",
+                    label, msg.usage.output_tokens, max_tokens,
+                )
             return msg
         else:
             log.error("%s: batch request failed with type '%s'.", label, result.result.type)
@@ -562,7 +567,7 @@ def main():
         client,
         custom_id="profile-refiner",
         model=REFINER_MODEL,
-        max_tokens=2048,
+        max_tokens=4096,
         system=system_prompt,
         user_message=user_message,
         label="refiner",
