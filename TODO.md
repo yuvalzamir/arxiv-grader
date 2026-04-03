@@ -116,6 +116,8 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 - [ ] **Triage: switch from Batch API to cached API** — Replace Batch API for the triage step with prompt caching (synchronous). Cache structure: system prompt + the two paper lists (arXiv and journals) as the cached prefix; each user's taste profile as the non-cached suffix. This amortizes the large paper-list tokens across all users in a single run, reducing triage cost further while eliminating the 1-hour batch wait for that stage.
 
+- [ ] **Refiner: structured outputs** — Replace `parse_json_response()` with Anthropic Structured Outputs (`output_config.format` + `json_schema`). The Batch API supports structured outputs natively (50% discount still applies). Benefits: guaranteed valid JSON, schema enforced at inference time, no regex fallback needed. Note: `claude-sonnet-4-6` does not support assistant prefill (breaking change in 4.6) — structured outputs is the correct replacement for forcing JSON.
+
 - [ ] **April 2nd** — Check monthly profile refiner ran successfully (runs 2nd of month 06:30 UTC):
   ```bash
   cat /var/log/arxiv-grader/refiner.log
