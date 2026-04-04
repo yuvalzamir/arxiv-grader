@@ -269,6 +269,8 @@ def main():
     parser.add_argument("--skip-dedup",   action="store_true", help="Skip deduplication step.")
     parser.add_argument("--skip-archive", action="store_true", help="Skip archive step.")
     parser.add_argument("--no-journals",  action="store_true", help="Skip journal scraping.")
+    parser.add_argument("--no-fetch",     action="store_true", help="Skip arXiv fetch — expect {field}_arxiv_papers.json to already exist in shared data dir (useful for weekend testing).")
+    parser.add_argument("--triage-only",  action="store_true", help="Stop after centralized triage — skip scoring, PDF, and email (useful for testing triage/caching).")
     parser.add_argument("--no-batch",     action="store_true", help="Use synchronous API for scoring instead of Batch API.")
     # Refiner flags (passed through to run_profile_refiner.py)
     parser.add_argument("--dry-run", action="store_true", help="(refine only) Don't write profile.")
@@ -318,11 +320,19 @@ def main():
         for field in active_fields:
             field_users = [u for u in users if user_fields[u.name] == field]
 
-            arxiv_path = run_arxiv_fetch(field, fields_data.get(field, {}), date_str, shared_data_dir)
-            if arxiv_path is None:
-                log.warning("Field '%s': arXiv fetch failed — skipping %d user(s).", field, len(field_users))
-                triage_failed.update(u.name for u in field_users)
-                continue
+            if args.no_fetch:
+                arxiv_path = shared_data_dir / f"{field}_arxiv_papers.json"
+                if not arxiv_path.exists():
+                    log.error("--no-fetch set but %s not found — skipping field '%s'.", arxiv_path, field)
+                    triage_failed.update(u.name for u in field_users)
+                    continue
+                log.info("Field '%s': --no-fetch — using existing %s.", field, arxiv_path)
+            else:
+                arxiv_path = run_arxiv_fetch(field, fields_data.get(field, {}), date_str, shared_data_dir)
+                if arxiv_path is None:
+                    log.warning("Field '%s': arXiv fetch failed — skipping %d user(s).", field, len(field_users))
+                    triage_failed.update(u.name for u in field_users)
+                    continue
 
             arxiv_papers = json.loads(arxiv_path.read_text())
             if not arxiv_papers:
@@ -350,6 +360,13 @@ def main():
             for user_name, ok in triage_results.items():
                 if not ok:
                     triage_failed.add(user_name)
+
+    # --- Triage-only mode: stop here, skip scoring/PDF/email ---
+    if args.triage_only:
+        log.info("--triage-only: stopping after triage. filtered_papers.json written per user.")
+        for name, failed in [(u.name, u.name in triage_failed) for u in users]:
+            log.info("  %-20s  %s", name, "FAILED" if failed else "OK")
+        return
 
     # --- Build per-user args and run ---
     if args.refine:
