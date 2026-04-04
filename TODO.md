@@ -126,6 +126,19 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ---
 
+## Documentation audit
+
+- [ ] **Review README coverage** — check what features are currently underdocumented or missing:
+  - `--no-batch` flag and scoring fallback behaviour (batch timeout → direct API → alert email)
+  - Journal watermark mechanics (`journal_watermarks.json`, `--since` override flag)
+  - Batch fallback alert email (what triggers it, what it says, who receives it)
+  - `fields.json` schema and how to add a new field
+  - How to add a new user (full flow from onboarding form to cron)
+  - Refiner v2 (once implemented)
+  - Debug prompt files written to data folders (`triage_arxiv_input.txt` etc.)
+
+---
+
 ## Known rough edges (monitor, no action needed now)
 
 - Cron changed to Mon–Fri 05:30 UTC (was Tue–Sat) — Friday arXiv data now delivered Monday

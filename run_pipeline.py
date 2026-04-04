@@ -116,27 +116,27 @@ def _paper_block(i: int, paper: dict, include_triage: bool = False) -> str:
     return "\n".join(lines)
 
 
-def build_triage_message(papers: list[dict], profile: dict) -> str:
+def build_triage_papers_block(papers: list[dict]) -> str:
+    """Cacheable prefix: the paper list (identical for all users in a field)."""
+    paper_blocks = "\n\n".join(_paper_block(i + 1, p) for i, p in enumerate(papers))
+    return (
+        f"PAPERS TO TRIAGE ({len(papers)} total)\n"
+        f"{'=' * 30}\n\n"
+        f"{paper_blocks}"
+    )
+
+
+def build_triage_profile_block(profile: dict) -> str:
+    """Non-cached suffix: the user's taste profile (varies per user)."""
     subcategories = profile.get("arxiv_subcategories", [])
     categories = ", ".join(subcategories) if subcategories else profile.get("field", "not specified")
-
-    header = (
+    return (
         f"TASTE PROFILE\n"
         f"=============\n"
         f"Monitored categories: {categories}\n\n"
         f"Keywords (grade 1 = most relevant, grade 7 = fading):\n{_keywords_str(profile.get('keywords', []))}\n\n"
         f"Research areas (grade 1 = most relevant, grade 7 = fading):\n{_areas_str(profile.get('research_areas', []))}\n\n"
         f"Followed authors (rank 1 = highest priority):\n{_authors_str(profile.get('authors', []))}"
-    )
-
-    paper_blocks = "\n\n".join(_paper_block(i + 1, p) for i, p in enumerate(papers))
-
-    return (
-        f"{header}\n\n"
-        f"---\n\n"
-        f"PAPERS TO TRIAGE ({len(papers)} total)\n"
-        f"{'=' * 30}\n\n"
-        f"{paper_blocks}"
     )
 
 
@@ -245,7 +245,7 @@ def _record_fallback(debug_dir: Path, stage: str, no_batch_succeeded: bool) -> N
 
 def _call_direct(client: Anthropic, model: str, max_tokens: int,
                  system: str, user_message: str, label: str):
-    """Call the messages API directly (synchronous, no batch queue)."""
+    """Call the messages API directly (synchronous, no batch queue). Used for scoring fallback."""
     log.info("%s: calling API directly (no-batch mode)...", label)
     msg = client.messages.create(
         model=model,
@@ -255,6 +255,48 @@ def _call_direct(client: Anthropic, model: str, max_tokens: int,
     )
     log.info("%s done. (input: %d tokens, output: %d tokens)",
              label, msg.usage.input_tokens, msg.usage.output_tokens)
+    return msg
+
+
+def _call_cached(client: Anthropic, model: str, max_tokens: int,
+                 system: str, papers_block: str, profile_block: str, label: str):
+    """Call the messages API with prompt caching (synchronous).
+
+    The system prompt and papers block are marked for caching — they are identical
+    for all users in the same field, so the first call warms the cache and subsequent
+    users pay only the cache-read rate (~10% of normal input cost).
+    The profile block is the non-cached per-user suffix.
+    """
+    log.info("%s: calling cached API...", label)
+    msg = client.messages.create(
+        model=model,
+        max_tokens=max_tokens,
+        system=[{
+            "type": "text",
+            "text": system,
+            "cache_control": {"type": "ephemeral"},
+        }],
+        messages=[{
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": papers_block,
+                    "cache_control": {"type": "ephemeral"},
+                },
+                {
+                    "type": "text",
+                    "text": profile_block,
+                },
+            ],
+        }],
+    )
+    cache_read    = getattr(msg.usage, "cache_read_input_tokens",    0) or 0
+    cache_created = getattr(msg.usage, "cache_creation_input_tokens", 0) or 0
+    log.info(
+        "%s done. (input: %d tokens, output: %d tokens, cache_read: %d, cache_created: %d)",
+        label, msg.usage.input_tokens, msg.usage.output_tokens, cache_read, cache_created,
+    )
     return msg
 
 
@@ -315,48 +357,32 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
 
 def _run_single_triage(
     papers: list[dict], profile: dict, system_prompt: str, label: str,
-    debug_dir: Path | None = None, use_batch: bool = True,
+    debug_dir: Path | None = None, api_key: str | None = None,
 ) -> list[tuple[dict, str]]:
     """
-    Run one triage batch for a list of papers.
+    Run triage for one paper list using the cached API (synchronous).
     Returns a list of (paper, triage_label) pairs in ranked order (best first),
     including all labels (high, medium, low).
+
+    api_key: if provided, used directly (centralized field key); otherwise reads from env.
     """
-    client = Anthropic()
-    user_message = build_triage_message(papers, profile)
+    client = Anthropic(api_key=api_key) if api_key else Anthropic()
+    papers_block  = build_triage_papers_block(papers)
+    profile_block = build_triage_profile_block(profile)
 
     if debug_dir:
         slug = label.lower().replace("-", "_")
         debug_path = debug_dir / f"{slug}_input.txt"
         debug_path.write_text(
-            f"=== SYSTEM ===\n{system_prompt}\n\n=== USER ===\n{user_message}",
+            f"=== SYSTEM (cached) ===\n{system_prompt}\n\n"
+            f"=== USER BLOCK 1: PAPERS (cached) ===\n{papers_block}\n\n"
+            f"=== USER BLOCK 2: PROFILE ===\n{profile_block}",
             encoding="utf-8",
         )
         log.info("%s: prompt saved to %s", label, debug_path)
 
     log.info("%s: running on %d papers (model: %s)...", label, len(papers), TRIAGE_MODEL)
-    no_batch_succeeded = None
-    try:
-        if use_batch:
-            response = _submit_and_poll(
-                client, label.lower().replace("-", "_"), TRIAGE_MODEL, 4096,
-                system_prompt, user_message, label,
-            )
-        else:
-            response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
-    except BatchTimeoutError:
-        log.warning("%s: batch timed out — retrying with direct API...", label)
-        try:
-            response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
-            no_batch_succeeded = True
-        except Exception as e:
-            no_batch_succeeded = False
-            if debug_dir:
-                _record_fallback(debug_dir, label, no_batch_succeeded)
-            log.error("%s: direct API also failed: %s", label, e)
-            sys.exit(1)
-    if no_batch_succeeded is not None and debug_dir:
-        _record_fallback(debug_dir, label, no_batch_succeeded)
+    response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
 
     ranked: list[tuple[dict, str]] = []
     seen: set[int] = set()
@@ -386,7 +412,7 @@ def _run_single_triage(
 def run_triage(
     papers: list[dict], profile: dict,
     system_prompt: str, journal_system_prompt: str,
-    debug_dir: Path | None = None, use_batch: bool = True,
+    debug_dir: Path | None = None, api_key: str | None = None,
 ) -> list[dict]:
     """
     Run triage in two separate batches (arXiv and journals) to avoid
@@ -401,11 +427,11 @@ def run_triage(
 
     if arxiv_papers:
         arxiv_ranked = _run_single_triage(
-            arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, use_batch
+            arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key
         )
     if journal_papers:
         journal_ranked = _run_single_triage(
-            journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, use_batch
+            journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key
         )
 
     # Apply caps independently for each source type.
@@ -539,18 +565,13 @@ def main():
     )
     parser.add_argument(
         "--no-batch", action="store_true",
-        help="Use synchronous API instead of Batch API (faster, no queue, 2x cost).",
+        help="Use synchronous API for scoring instead of Batch API (faster, no queue, 2x cost).",
+    )
+    parser.add_argument(
+        "--skip-triage", action="store_true",
+        help="Skip triage stage — assume --filtered file already exists (written by centralized triage).",
     )
     args = parser.parse_args()
-
-    # Check API key before doing anything.
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        log.error(
-            "ANTHROPIC_API_KEY is not set.\n"
-            "  Create a .env file in this directory with:\n"
-            "      ANTHROPIC_API_KEY=sk-ant-..."
-        )
-        sys.exit(1)
 
     # Load inputs.
     papers  = load_json(args.papers)
@@ -574,18 +595,28 @@ def main():
 
     # --- Stage 1: triage ---
     debug_dir = Path(args.filtered).parent
-    use_batch = not args.no_batch
-    filtered = run_triage(papers, profile, triage_prompt, triage_journal_prompt, debug_dir, use_batch)
-
-    with open(args.filtered, "w", encoding="utf-8") as f:
-        json.dump(filtered, f, indent=2, ensure_ascii=False)
-    log.info("Wrote %d filtered papers to %s", len(filtered), args.filtered)
+    if args.skip_triage:
+        filtered = load_json(args.filtered)
+        log.info("Triage skipped — loaded %d pre-filtered papers from %s", len(filtered), args.filtered)
+    else:
+        filtered = run_triage(papers, profile, triage_prompt, triage_journal_prompt, debug_dir)
+        with open(args.filtered, "w", encoding="utf-8") as f:
+            json.dump(filtered, f, indent=2, ensure_ascii=False)
+        log.info("Wrote %d filtered papers to %s", len(filtered), args.filtered)
 
     if not filtered:
         log.warning("No papers passed triage. Nothing to score.")
         sys.exit(0)
 
     # --- Stage 2: scoring ---
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        log.error(
+            "ANTHROPIC_API_KEY is not set.\n"
+            "  Create a .env file in this directory with:\n"
+            "      ANTHROPIC_API_KEY=sk-ant-..."
+        )
+        sys.exit(1)
+    use_batch = not args.no_batch
     scored = run_scoring(filtered, profile, scoring_prompt, archive, debug_dir, use_batch)
 
     with open(args.scored, "w", encoding="utf-8") as f:

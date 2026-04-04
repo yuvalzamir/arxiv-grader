@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
-run_daily.py — Daily orchestrator for the arXiv cond-mat grader.
+run_daily.py — Per-user daily orchestrator (scoring, PDF, email).
+
+Paper fetching and triage are handled upstream by run_all_users.py.
+This script receives pre-fetched papers and pre-written filtered_papers.json
+and handles the per-user steps: dedup, archive, scoring, PDF, email, cleanup.
 
 Steps (in order):
   1. Deduplicate yesterday's ratings
   2. Archive yesterday's ratings to archive.json
-  3. Create today's data folder
-  4. Fetch today's arXiv papers
-  5. Run grading pipeline (triage → scoring)
-  6. Build PDF digest
-  7. Send PDF by email
-  8. Cleanup data folders older than --keep-days days
+  3. Run scoring pipeline (triage already done; --skip-triage passed automatically)
+  4. Build PDF digest
+  5. Send PDF by email
+  6. Cleanup data folders older than --keep-days days
 
 Requires in .env (or environment):
-  ANTHROPIC_API_KEY   — Anthropic API key (used by run_pipeline.py)
+  ANTHROPIC_API_KEY   — Anthropic API key (used by run_pipeline.py for scoring)
   EMAIL_FROM          — sender address
   EMAIL_TO            — recipient address (your phone/email)
   EMAIL_SMTP_HOST     — SMTP server host (e.g. smtp.gmail.com)
@@ -21,12 +23,6 @@ Requires in .env (or environment):
   EMAIL_SMTP_USER     — SMTP login username
   EMAIL_SMTP_PASSWORD — SMTP login password / app password
   RATING_BASE_URL     — base URL of the /rate endpoint (e.g. http://redpitaya.local:5000)
-
-Usage:
-    python run_daily.py
-    python run_daily.py --no-email          # skip email (for testing)
-    python run_daily.py --date 2026-03-19   # override today's date
-    python run_daily.py --keep-days 7       # keep only 7 days of data folders
 """
 
 import argparse
@@ -192,12 +188,12 @@ def main():
         help="Skip archiving yesterday's ratings.",
     )
     parser.add_argument(
-        "--journals", default=None,
-        help="Path to filtered journal papers JSON to merge with arXiv papers.",
+        "--papers", required=True,
+        help="Path to today's merged papers JSON (arXiv + journals, written by run_all_users.py).",
     )
     parser.add_argument(
         "--no-batch", action="store_true",
-        help="Use synchronous API instead of Batch API (faster, no queue, 2x cost).",
+        help="Use synchronous API for scoring instead of Batch API (faster, no queue, 2x cost).",
     )
     args = parser.parse_args()
 
@@ -213,25 +209,13 @@ def main():
     data_dir  = user_dir / "data"
     profile   = user_dir / "taste_profile.json"
 
-    # Derive arXiv fetch category from fields.json using the profile's field.
-    try:
-        _profile_data = json.loads(profile.read_text(encoding="utf-8"))
-        _field = _profile_data.get("field", "cond-mat")
-        _fields_data = json.loads((BASE_DIR / "fields.json").read_text(encoding="utf-8"))
-        if _field in _fields_data:
-            arxiv_category = _fields_data[_field]["arxiv_category"]
-        else:
-            arxiv_category = _field  # field name is the category (e.g. "quant-ph")
-    except (FileNotFoundError, json.JSONDecodeError):
-        arxiv_category = "cond-mat"
-
     today_str     = args.date or date.today().isoformat()
     yesterday_str = (datetime.strptime(today_str, "%Y-%m-%d").date() - timedelta(days=1)).isoformat()
 
     today_dir = data_dir / today_str
     today_dir.mkdir(parents=True, exist_ok=True)
 
-    papers_path   = today_dir / "today_papers.json"
+    papers_path   = Path(args.papers)
     filtered_path = today_dir / "filtered_papers.json"
     scored_path   = today_dir / "scored_papers.json"
     pdf_path      = today_dir / "digest.pdf"
@@ -263,40 +247,24 @@ def main():
         log.info("[archive] Skipped.")
 
     # ------------------------------------------------------------------
-    # Step 3: Fetch today's papers
-    # ------------------------------------------------------------------
-    run(
-        [sys.executable, "fetch_papers.py", "-o", str(papers_path), "--category", arxiv_category],
-        step="fetch",
-    )
-
-    # ------------------------------------------------------------------
-    # Early exit: no papers today (holiday / arXiv off-day)
-    # ------------------------------------------------------------------
-    if not json.loads(papers_path.read_text(encoding="utf-8")):
-        log.info("No papers in feed today (holiday or arXiv off-day). Skipping.")
-        sys.exit(0)
-
-    # ------------------------------------------------------------------
-    # Step 4: Run grading pipeline (triage → scoring)
+    # Step 3: Run scoring pipeline (triage already done by run_all_users.py)
     # ------------------------------------------------------------------
     archive_path = user_dir / "archive.json"
     grade_cmd = [
         sys.executable, "run_pipeline.py",
-        "--papers",   str(papers_path),
-        "--profile",  str(profile),
-        "--filtered", str(filtered_path),
-        "--scored",   str(scored_path),
-        "--archive",  str(archive_path),
+        "--papers",      str(papers_path),
+        "--profile",     str(profile),
+        "--filtered",    str(filtered_path),
+        "--scored",      str(scored_path),
+        "--archive",     str(archive_path),
+        "--skip-triage",
     ]
-    if args.journals and Path(args.journals).exists():
-        grade_cmd += ["--journals", args.journals]
     if args.no_batch:
         grade_cmd.append("--no-batch")
     run(grade_cmd, step="grade")
 
     # ------------------------------------------------------------------
-    # Step 5: Build PDF digest
+    # Step 4: Build PDF digest
     # ------------------------------------------------------------------
     rating_base_url = os.environ.get("RATING_BASE_URL", "").strip()
     pdf_cmd = [
@@ -308,9 +276,6 @@ def main():
     ]
     if rating_base_url:
         pdf_cmd += ["--base-url", rating_base_url]
-    if args.journals and Path(args.journals).exists():
-        pdf_cmd += ["--journals", args.journals]
-
     run(pdf_cmd, step="pdf")
 
     if not pdf_path.exists():

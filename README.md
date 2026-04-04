@@ -8,8 +8,8 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 
 ## How it works
 
-1. **Fetch** — pulls the arXiv RSS feed for your categories each morning
-2. **Triage** — Claude Haiku filters ~80 papers down to the ~20 most likely to be relevant
+1. **Fetch** — pulls the arXiv RSS feed and scrapes 11 top journals each morning
+2. **Triage** — Claude Haiku filters ~80–120 papers down to the ~30 most likely to be relevant (15 arXiv + 15 journal cap)
 3. **Score** — Claude Sonnet scores each surviving paper 1–10 with a one-line justification
 4. **Deliver** — a ranked PDF digest is emailed to you as an attachment
 5. **Rate** — tap Excellent / Good / Irrelevant buttons in the PDF; ratings are recorded
@@ -19,14 +19,17 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 
 ## Architecture
 
-### 1. Data ingestion — `fetch_papers.py`
+### 1. Data ingestion — `fetch_papers.py` + `fetch_journals.py`
 
-Pulls the arXiv RSS feed, filters to new submissions only (no cross-listings, no replacements), and writes `today_papers.json`.
+**arXiv (`fetch_papers.py`):** Pulls the arXiv RSS feed, filters to new submissions only (no cross-listings, no replacements). Supports `--category` for field filtering (e.g. `cond-mat`). If the feed is empty (holiday or off-day), the pipeline exits cleanly. Fetched once per field, shared across all users in that field.
+
+**Journals (`fetch_journals.py`):** Scrapes 11 top physics journals via RSS/eTOC feeds. Publisher-specific scraper classes live under `scrapers/` (APS, Nature, Science). Field configuration — which journals to monitor and tag filters for multi-discipline journals — is defined in `fields.json`. A per-journal watermark (`journal_watermarks.json`) prevents re-fetching papers already seen. Fetched once per run, filtered per field, shared across all users.
+
+**Journals covered (cond-mat field):** PRL (two section feeds), PRB, PRX, PRXQuantum, Nature, Nature Physics, Nature Materials, Nature Nanotechnology, Nature Communications, Science.
 
 **Output schema per paper:**
-- arXiv ID, title, abstract, authors, subcategories
-
-**Filters:** Only `announce_type == "new"` papers are kept. Supports `--category` for subcategory filtering (e.g. `cond-mat.str-el`). If the feed is empty (arXiv holiday or off-day), the pipeline exits cleanly with no API calls.
+- arXiv ID (or DOI for journal papers), title, abstract, authors, subcategories
+- Journal papers additionally carry: `source` (journal name), `doi`, `url`
 
 ---
 
@@ -77,25 +80,38 @@ A one-time interactive onboarding script that creates `taste_profile.json`. The 
 
 ### 3. Grading pipeline — `run_pipeline.py`
 
-Two sequential Claude API calls using the Anthropic Message Batches API (50% cost discount, async processing).
+Two sequential Claude API calls per user.
 
-#### Stage 1: Triage (Claude Haiku)
+#### Stage 1: Triage (Claude Haiku) — cached API
 
-- **Input:** All daily papers + lean profile (keywords, areas, authors — no liked papers, no narrative)
-- **Task:** Rank all papers best-first and classify each as high / medium / low
+Triage runs **centrally per field** in `run_all_users.py` before the per-user scoring phase. All users in a field are triaged sequentially to maximise prompt cache hits.
+
+**Prompt caching structure:** The paper list and system prompt are identical for all users in a field and are marked `cache_control: ephemeral`. The user's taste profile is appended as the non-cached suffix. The first user in a field warms the cache; subsequent users pay ~10% of normal input token cost for the papers block.
+
+**Two independent calls per user** (to avoid cross-pool calibration and use field-specific prompts):
+- **arXiv triage** (`prompts/triage.txt`) — all arXiv papers for the field
+- **Journal triage** (`prompts/triage_journals.txt`) — all journal papers for the field
+
+Each call has its own pair of cache entries (system prompt + papers block), both live simultaneously.
+
+- **Input per call:** Papers list (cached) + lean profile — keywords, areas, authors only (no liked papers, no narrative)
+- **Task:** Rank papers best-first and classify each as high / medium / low
 - **Medium threshold:** Requires at least one concrete anchor — a keyword hit, an author match, or subcategory match with clear topic overlap. Pure thematic adjacency without any profile anchor → low.
-- **Output:** Top 20 medium-or-high papers forwarded to scoring (hard cap)
+- **Caps:** Top 15 arXiv + top 15 journal papers forwarded to scoring (independent hard caps)
+- **Results written to:** `users/<name>/data/DATE/filtered_papers.json`
 
-#### Stage 2: Scoring (Claude Sonnet)
+#### Stage 2: Scoring (Claude Sonnet) — Batch API
 
-- **Input:** Triage survivors + full profile (including `evolved_interests` and last 5 liked papers)
+Runs per-user in parallel via `ThreadPoolExecutor`. Uses the Anthropic Message Batches API (50% cost discount, async processing). Falls back to synchronous API after 1-hour timeout, with an alert email sent to the operator.
+
+- **Input:** Triage survivors + full profile (including `evolved_interests` and last 5 liked papers sampled from archive)
 - **Task:** Score each paper 1–10 with a one-line justification and tags
 - **Tags:** `author match`, `core topic`, `adjacent interest`, `new direction`
 - **Output:** `scored_papers.json` — sorted by score descending
 
-**Why two stages:** Triage is cheap pattern matching (Haiku, minimal output). Scoring is nuanced reasoning (Sonnet, full profile). Splitting the two avoids passing the full profile across many small batches and maintains quality on the papers that matter.
+**Why two stages:** Triage is cheap pattern matching (Haiku, minimal output). Scoring is nuanced reasoning (Sonnet, full profile). The split keeps triage cost low and scoring quality high.
 
-**Cost:** ~$0.05/user/day on a typical day (~80 papers fetched, ~20 scored), using the Batch API discount.
+**Cost:** ~$0.05/user/day on a typical day (~80–120 papers total, ~30 scored). Caching reduces triage cost further for fields with multiple users.
 
 ---
 
@@ -116,21 +132,30 @@ Tapping opens the browser briefly, the server records the rating, and returns a 
 
 ---
 
-### 5. Delivery — `run_daily.py`
+### 5. Delivery — `run_daily.py` + `run_all_users.py`
 
-Daily orchestrator for a single user. Runs as a subprocess for each user via `run_all_users.py`.
+`run_all_users.py` is the master orchestrator. It handles all shared, field-level work before dispatching per-user tasks in parallel.
 
-**Steps in order:**
+**Master orchestrator steps (`run_all_users.py`):**
+1. Discover all user directories under `users/`
+2. Scrape journals once (`fetch_journals.py`) → filter per field
+3. Fetch arXiv papers once per field (`fetch_papers.py`)
+4. Merge arXiv + journals per field → `{field}_today_papers.json`
+5. Exit cleanly for any field with no papers today
+6. Run centralized triage per field — all users in a field triaged sequentially (cached API)
+7. Dispatch per-user scoring + PDF + email in parallel (`ThreadPoolExecutor`)
+8. Clean up shared data folder
+9. Send batch fallback alert email if any scoring job timed out
+
+**Per-user steps (`run_daily.py`):**
 1. Deduplicate yesterday's ratings (`deduplicate_ratings.py`)
 2. Archive yesterday's ratings to `archive.json` (`archive.py`)
-3. Fetch today's arXiv papers
-4. Exit cleanly if feed is empty (holiday / off-day)
-5. Run triage → scoring pipeline
-6. Build PDF digest
-7. Email PDF to user
-8. Clean up data folders older than 14 days
+3. Run scoring pipeline (`run_pipeline.py --skip-triage` — triage already done)
+4. Build PDF digest
+5. Email PDF to user
+6. Clean up data folders older than 14 days
 
-**Multi-user:** `run_all_users.py` discovers all valid user directories and runs each user's pipeline concurrently via `ThreadPoolExecutor`. A failure for one user does not affect others.
+A failure for one user does not affect others.
 
 ---
 
@@ -195,18 +220,24 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 
 | File | Purpose |
 |------|---------|
-| `fetch_papers.py` | Daily arXiv RSS fetch and parse |
+| `fetch_papers.py` | Daily arXiv RSS fetch and parse (once per field) |
+| `fetch_journals.py` | Journal scraping — 11 journals via RSS/eTOC (once per run) |
+| `scrapers/aps.py` | APS publisher scraper (PRL, PRB, PRX, PRXQuantum) |
+| `scrapers/nature.py` | Nature publisher scraper (Nature, NatPhys, NatMat, NatNano, NatComms) |
+| `scrapers/science.py` | Science eTOC scraper with Semantic Scholar abstract fetch |
+| `fields.json` | Field definitions — arxiv category, journal list, tag filters |
 | `create_profile.py` | One-time interactive user onboarding |
-| `run_pipeline.py` | Triage (Haiku) + scoring (Sonnet) pipeline |
+| `run_pipeline.py` | Triage (Haiku, cached) + scoring (Sonnet, Batch API) pipeline |
 | `build_digest_pdf.py` | Generates the daily PDF digest |
 | `server.py` | Flask server — landing page, rating endpoint, static assets |
 | `deduplicate_ratings.py` | Keeps the last rating per paper per day |
 | `archive.py` | Appends daily ratings to permanent `archive.json` |
-| `run_daily.py` | Daily orchestrator for one user |
-| `run_all_users.py` | Master orchestrator — runs all users concurrently |
+| `run_daily.py` | Per-user orchestrator — scoring, PDF, email (called by run_all_users.py) |
+| `run_all_users.py` | Master orchestrator — fetch, triage, then parallel per-user scoring |
 | `run_profile_refiner.py` | Monthly taste profile refiner |
 | `prompts/profile_creator.txt` | System prompt for profile creation |
-| `prompts/triage.txt` | System prompt for triage agent |
+| `prompts/triage.txt` | System prompt for arXiv triage agent |
+| `prompts/triage_journals.txt` | System prompt for journal triage agent |
 | `prompts/scoring.txt` | System prompt for scoring agent |
 | `prompts/profile_refiner.txt` | System prompt for monthly refiner |
 | `docs/logo.png` | Incoming Science logo |
@@ -217,10 +248,12 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 
 | Path | Purpose |
 |------|---------|
+| `.env` | Root config — SMTP, rating URL, per-field triage API keys |
+| `journal_watermarks.json` | Per-journal watermark — prevents re-fetching seen papers |
 | `users/<name>/taste_profile.json` | Each user's evolving taste profile |
 | `users/<name>/archive.json` | Each user's permanent rating history |
-| `users/<name>/.env` | `ANTHROPIC_API_KEY` + `EMAIL_TO` per user |
-| `users/<name>/data/YYYY-MM-DD/` | Daily data folder: papers, scores, PDF, ratings |
+| `users/<name>/.env` | `ANTHROPIC_API_KEY` (scoring) + `EMAIL_TO` per user |
+| `users/<name>/data/YYYY-MM-DD/` | Daily data folder: papers, filtered, scores, PDF, ratings |
 
 ---
 
@@ -230,7 +263,7 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 - **HTTPS:** Caddy (auto Let's Encrypt) → Gunicorn → Flask
 - **Scheduling:** Cron — daily pipeline runs shortly after arXiv's nightly release; monthly refiner runs on the 2nd of each month, offset by one hour to avoid a race on `archive.json`
 - **Email:** Shared SMTP account configured in root `.env`. Each user configures only `EMAIL_TO`.
-- **LLM:** Anthropic Claude API — Haiku for triage, Sonnet for scoring and refinement. Each user supplies their own `ANTHROPIC_API_KEY`.
+- **LLM:** Anthropic Claude API — Haiku for triage (cached, one shared API key per field in root `.env`), Sonnet for scoring and refinement (Batch API, per-user `ANTHROPIC_API_KEY` in user `.env`).
 
 ---
 
@@ -253,7 +286,13 @@ EMAIL_SMTP_HOST=smtp.gmail.com
 EMAIL_SMTP_PORT=587
 EMAIL_SMTP_USER=your-sender@gmail.com
 EMAIL_SMTP_PASSWORD=your-app-password
+
+# Per-field Anthropic API keys for centralized triage
+# Key format: ANTHROPIC_API_KEY_<FIELD_UPPERCASE_WITH_UNDERSCORES>
+ANTHROPIC_API_KEY_COND_MAT=sk-ant-...
 ```
+
+One API key per field is required for triage. Add a new key when adding a new field (e.g. `ANTHROPIC_API_KEY_QUANT_PH` for a `quant-ph` field). Per-user `ANTHROPIC_API_KEY` in each user's `.env` is used only for scoring.
 
 ### Add a user
 

@@ -117,6 +117,79 @@ def run_journal_scrape(date_str: str, active_fields: list[str], shared_data_dir:
     return scraped_path
 
 
+def run_arxiv_fetch(field: str, field_config: dict, date_str: str, shared_data_dir: Path) -> Path | None:
+    """
+    Fetch arXiv papers for a field once, shared across all users in that field.
+    Returns path to {field}_arxiv_papers.json on success, None on failure.
+    """
+    arxiv_category = field_config.get("arxiv_category", field)
+    output_path = shared_data_dir / f"{field}_arxiv_papers.json"
+    cmd = [
+        sys.executable, str(BASE_DIR / "fetch_papers.py"),
+        "-o", str(output_path),
+        "-c", arxiv_category,
+    ]
+    log.info("Fetching arXiv papers for field '%s' (category: %s)...", field, arxiv_category)
+    result = subprocess.run(cmd, cwd=str(BASE_DIR))
+    if result.returncode != 0:
+        log.warning("fetch_papers.py failed for field '%s'.", field)
+        return None
+    return output_path
+
+
+def run_centralized_triage(
+    field: str,
+    user_dirs: list[Path],
+    papers: list[dict],
+    date_str: str,
+) -> dict[str, bool]:
+    """
+    Run triage for all users in a field sequentially using the cached API.
+
+    The merged paper list (arXiv + journals) is the cached prefix — identical for
+    all users in the field. Each user's taste profile is the non-cached per-user suffix.
+    Sequential execution ensures the first user warms the cache for subsequent users.
+
+    Returns {user_name: success} dict.
+    """
+    from run_pipeline import run_triage, load_prompt  # noqa: PLC0415
+
+    key_name = f"ANTHROPIC_API_KEY_{field.upper().replace('-', '_')}"
+    api_key = os.environ.get(key_name)
+    if not api_key:
+        log.error("Missing env var %s — cannot run centralized triage for field '%s'.", key_name, field)
+        return {u.name: False for u in user_dirs}
+
+    triage_prompt         = load_prompt("triage.txt")
+    triage_journal_prompt = load_prompt("triage_journals.txt")
+
+    results = {}
+    for user_dir in user_dirs:
+        log.info("--- [%s] Triage ---", user_dir.name)
+        try:
+            profile = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
+            today_dir = user_dir / "data" / date_str
+            today_dir.mkdir(parents=True, exist_ok=True)
+
+            filtered = run_triage(
+                papers, profile,
+                triage_prompt, triage_journal_prompt,
+                debug_dir=today_dir,
+                api_key=api_key,
+            )
+
+            filtered_path = today_dir / "filtered_papers.json"
+            with open(filtered_path, "w", encoding="utf-8") as f:
+                json.dump(filtered, f, indent=2, ensure_ascii=False)
+            log.info("--- [%s] Triage done: %d papers passed ---", user_dir.name, len(filtered))
+            results[user_dir.name] = True
+        except Exception as e:
+            log.error("--- [%s] Triage FAILED: %s ---", user_dir.name, e)
+            results[user_dir.name] = False
+
+    return results
+
+
 def run_for_user(user_dir: Path, script: str, extra_args: list[str]) -> bool:
     """Run a script for one user. Returns True on success, False on failure."""
     cmd = [sys.executable, str(BASE_DIR / script), "--user-dir", str(user_dir)] + extra_args
@@ -196,7 +269,7 @@ def main():
     parser.add_argument("--skip-dedup",   action="store_true", help="Skip deduplication step.")
     parser.add_argument("--skip-archive", action="store_true", help="Skip archive step.")
     parser.add_argument("--no-journals",  action="store_true", help="Skip journal scraping.")
-    parser.add_argument("--no-batch",     action="store_true", help="Use synchronous API instead of Batch API.")
+    parser.add_argument("--no-batch",     action="store_true", help="Use synchronous API for scoring instead of Batch API.")
     # Refiner flags (passed through to run_profile_refiner.py)
     parser.add_argument("--dry-run", action="store_true", help="(refine only) Don't write profile.")
     parser.add_argument("--days",    type=int, default=None, help="(refine only) Days of history to use.")
@@ -209,41 +282,74 @@ def main():
 
     log.info("Found %d user(s): %s", len(users), [u.name for u in users])
 
-    # --- Journal scrape (daily pipeline only) ---
-    # Maps user name → path to their field's filtered journal file (or None).
-    user_journals: dict[str, Path | None] = {u.name: None for u in users}
+    # --- Daily pipeline setup: fetch, triage (skipped for refiner) ---
+    # Maps user name → path to their field's merged papers (arXiv + journals).
+    user_papers: dict[str, Path | None] = {u.name: None for u in users}
+    triage_failed: set[str] = set()
     shared_data_dir: Path | None = None
 
-    if not args.refine and not args.no_journals:
+    if not args.refine:
         date_str = args.date or date.today().isoformat()
         shared_data_dir = BASE_DIR / "data" / date_str
         shared_data_dir.mkdir(parents=True, exist_ok=True)
 
-        user_fields = {u.name: _user_field(u) for u in users}
+        user_fields  = {u.name: _user_field(u) for u in users}
         active_fields = sorted(set(user_fields.values()))
+        fields_data   = json.loads((BASE_DIR / "fields.json").read_text())
         log.info("Active fields: %s", active_fields)
 
-        scraped_path = run_journal_scrape(date_str, active_fields, shared_data_dir)
+        # Journal scraping (optional — skipped with --no-journals).
+        if not args.no_journals:
+            scraped_path = run_journal_scrape(date_str, active_fields, shared_data_dir)
+            if scraped_path:
+                with open(scraped_path) as f:
+                    scraped_papers = json.load(f)
+                for field in active_fields:
+                    if field not in fields_data:
+                        log.warning("Field '%s' not in fields.json — skipping filter.", field)
+                        continue
+                    filtered = filter_for_field(scraped_papers, fields_data[field])
+                    field_path = shared_data_dir / f"{field}_journals.json"
+                    with open(field_path, "w") as f:
+                        json.dump(filtered, f, indent=2)
+                    log.info("Field '%s': %d journal papers after filtering.", field, len(filtered))
 
-        if scraped_path:
-            fields_data = json.loads((BASE_DIR / "fields.json").read_text())
-            with open(scraped_path) as f:
-                scraped_papers = json.load(f)
+        # Per-field: arXiv fetch → merge → centralized triage (field order, sequential within field).
+        for field in active_fields:
+            field_users = [u for u in users if user_fields[u.name] == field]
 
-            for field in active_fields:
-                if field not in fields_data:
-                    log.warning("Field '%s' not in fields.json — skipping filter.", field)
-                    continue
-                filtered = filter_for_field(scraped_papers, fields_data[field])
-                field_path = shared_data_dir / f"{field}_journals.json"
-                with open(field_path, "w") as f:
-                    json.dump(filtered, f, indent=2)
-                log.info("Field %s: %d journal papers after filtering.", field, len(filtered))
+            arxiv_path = run_arxiv_fetch(field, fields_data.get(field, {}), date_str, shared_data_dir)
+            if arxiv_path is None:
+                log.warning("Field '%s': arXiv fetch failed — skipping %d user(s).", field, len(field_users))
+                triage_failed.update(u.name for u in field_users)
+                continue
 
-            for user_name, field in user_fields.items():
-                field_path = shared_data_dir / f"{field}_journals.json"
-                if field_path.exists():
-                    user_journals[user_name] = field_path
+            arxiv_papers = json.loads(arxiv_path.read_text())
+            if not arxiv_papers:
+                log.info("Field '%s': no papers today (holiday/off-day) — skipping.", field)
+                triage_failed.update(u.name for u in field_users)
+                continue
+
+            journal_papers: list[dict] = []
+            journals_path = shared_data_dir / f"{field}_journals.json"
+            if journals_path.exists():
+                journal_papers = json.loads(journals_path.read_text())
+
+            merged_papers = arxiv_papers + journal_papers  # arXiv first
+            merged_path = shared_data_dir / f"{field}_today_papers.json"
+            merged_path.write_text(json.dumps(merged_papers, indent=2, ensure_ascii=False))
+            log.info(
+                "Field '%s': %d arXiv + %d journal = %d total papers.",
+                field, len(arxiv_papers), len(journal_papers), len(merged_papers),
+            )
+
+            for user_dir in field_users:
+                user_papers[user_dir.name] = merged_path
+
+            triage_results = run_centralized_triage(field, field_users, merged_papers, date_str)
+            for user_name, ok in triage_results.items():
+                if not ok:
+                    triage_failed.add(user_name)
 
     # --- Build per-user args and run ---
     if args.refine:
@@ -273,10 +379,14 @@ def main():
     with ThreadPoolExecutor(max_workers=len(users)) as executor:
         futures = {}
         for user_dir in users:
+            if user_dir.name in triage_failed:
+                log.warning("--- [%s] Skipped — triage failed or no papers today ---", user_dir.name)
+                results[user_dir.name] = False
+                continue
             extra_args = list(base_extra_args)
-            journals_path = user_journals.get(user_dir.name)
-            if journals_path:
-                extra_args += ["--journals", str(journals_path)]
+            papers_path = user_papers.get(user_dir.name)
+            if papers_path:
+                extra_args += ["--papers", str(papers_path)]
             futures[executor.submit(run_for_user, user_dir, script, extra_args)] = user_dir.name
 
         for future in as_completed(futures):
