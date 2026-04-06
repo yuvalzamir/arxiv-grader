@@ -844,18 +844,21 @@ def main():
     print("=" * 60)
     print("  Profile refiner — proposed changes")
     print("=" * 60)
+    def _print(s: str = "") -> None:
+        sys.stdout.buffer.write((s + "\n").encode("utf-8", errors="replace"))
+
     if all_log:
         for line in all_log:
-            print(line)
+            _print(line)
     else:
-        print("  No changes recommended.")
-    print()
+        _print("  No changes recommended.")
+    _print()
 
     if new_evolved:
-        print("  New evolved_interests:")
+        _print("  New evolved_interests:")
         for line in new_evolved.split(". "):
-            print(f"    {line.strip()}.")
-        print()
+            _print(f"    {line.strip()}.")
+        _print()
 
     if args.dry_run:
         log.info("Dry run — taste_profile.json NOT updated.")

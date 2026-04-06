@@ -118,10 +118,11 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 - [x] **Triage: switch from Batch API to cached API** — Done in commit `d2026d6`. Field-level cached API, sequential per user to warm cache.
 
-- [ ] **Refiner v2** — Full overhaul of `run_profile_refiner.py`. Design document: `docs/refiner_v2_design.md`. Three changes:
+- [x] **Refiner v2** — Implemented and tested (dry run 2026-04-06). Full overhaul of `run_profile_refiner.py`. Three changes:
   1. Structured outputs (replace `parse_json_response()`, schemas in `schemas/`)
   2. Area management as a separate Haiku call — keyword-driven, decoupled from paper ratings; bidirectional grade recommendations; new area suggestions (min 3 unmatched keywords); static `area_keyword_map` stored in `taste_profile.json`
   3. Remove area grade changes from the main refiner (Sonnet) entirely — areas exclusively managed by the Haiku step
+  - [ ] **Refiner v2 — May check** — Verify refiner v2 runs correctly on real data after May 2nd cron. Check area management recommendations make sense given a full month of ratings.
 
 ---
 
