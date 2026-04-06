@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "properties": {
+    "area_grade_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "area":      {"type": "string"},
+          "direction": {"type": "string", "enum": ["up", "down"]},
+          "reason":    {"type": "string"}
+        },
+        "required": ["area", "direction", "reason"],
+        "additionalProperties": false
+      }
+    },
+    "new_areas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "area":                {"type": "string"},
+          "suggested_grade":     {"type": "integer", "enum": [3, 4, 5]},
+          "supporting_keywords": {"type": "array", "items": {"type": "string"}},
+          "reason":              {"type": "string"}
+        },
+        "required": ["area", "suggested_grade", "supporting_keywords", "reason"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["area_grade_changes", "new_areas"],
+  "additionalProperties": false
+}

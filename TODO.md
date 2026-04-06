@@ -70,9 +70,9 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 - [x] **7. `run_daily.py`** — complete. `--journals` accepted and forwarded to `run_pipeline.py` if file exists.
 
 - [x] **8. `build_digest_pdf.py`** — `paper_url()` implemented (DOI → doi.org, full URL passthrough, else arXiv); `rate_url()` URL-encodes paper_id. Source badge deferred.
-  - [ ] Add source badge (small pill, same row as score badge) for papers with `source` field
+  - [x] Add source badge (small pill, same row as score badge) for papers with `source` field
 
-- [ ] **9. `requirements.txt`** — done. `environment.yml` does not exist; no action needed.
+- [x] **9. `requirements.txt`** — done. `environment.yml` does not exist; no action needed.
 
 - [x] **11. End-to-end test + deploy** — deployed 2026-03-27. See `docs/journal_triage_tuning.md`.
   pip installed on server: `beautifulsoup4`, `lxml`, `matplotlib`. First live run tonight.
@@ -105,8 +105,10 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 ## Pending
 
 - [x] **Shared data folder cleanup** — `run_daily.py` has `cleanup_old_folders()` (default: keep 14 days). Confirmed working. Note: this cleans per-user `users/<name>/data/` folders; the shared `data/` folder (journal scrape) is cleaned by `run_all_users.py` after each run.
-- [ ] **Journal triage tuning** — monitor first live run (2026-03-28 morning). Target 5–10 journals/day.
+- [x] **Journal triage tuning** — monitoring confirmed current tuning is working well. No action needed.
+- [x] **April 2nd refiner check** — confirmed refiner ran (2026-04-02). Revealed need for refiner v2 (see below).
 - [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token).
+- [x] **Security audit** — `porkbun key.txt` found committed in initial commit; keys were already dead and repo is private. Purged from all git history via `git filter-repo`, force-pushed all branches. `.gitignore` updated with `*key*.txt`, `*secret*.txt`, `*token*.txt`, `*credentials*.txt` patterns. Server checked — clean.
 
 ---
 
@@ -114,15 +116,13 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 - [x] **PDF journal links fix** — `paper_url()` in `build_digest_pdf.py` now passes through full `http(s)://` URLs directly. Root cause: `fetch_journals.py` sets `arxiv_id = doi if doi else url` (line 157), so when no DOI is extracted the field holds the raw article URL; the old `paper_url()` wrapped it in `https://arxiv.org/abs/`.
 
-- [ ] **Triage: switch from Batch API to cached API** — Replace Batch API for the triage step with prompt caching (synchronous). Cache structure: system prompt + the two paper lists (arXiv and journals) as the cached prefix; each user's taste profile as the non-cached suffix. This amortizes the large paper-list tokens across all users in a single run, reducing triage cost further while eliminating the 1-hour batch wait for that stage.
+- [x] **Triage: switch from Batch API to cached API** — Done in commit `d2026d6`. Field-level cached API, sequential per user to warm cache.
 
-- [ ] **Refiner: structured outputs** — Replace `parse_json_response()` with Anthropic Structured Outputs (`output_config.format` + `json_schema`). The Batch API supports structured outputs natively (50% discount still applies). Benefits: guaranteed valid JSON, schema enforced at inference time, no regex fallback needed. Note: `claude-sonnet-4-6` does not support assistant prefill (breaking change in 4.6) — structured outputs is the correct replacement for forcing JSON.
-
-- [ ] **April 2nd** — Check monthly profile refiner ran successfully (runs 2nd of month 06:30 UTC):
-  ```bash
-  cat /var/log/arxiv-grader/refiner.log
-  cat /opt/arxiv-grader/users/yuval/taste_profile.json
-  ```
+- [x] **Refiner v2** — Implemented and tested (dry run 2026-04-06). Full overhaul of `run_profile_refiner.py`. Three changes:
+  1. Structured outputs (replace `parse_json_response()`, schemas in `schemas/`)
+  2. Area management as a separate Haiku call — keyword-driven, decoupled from paper ratings; bidirectional grade recommendations; new area suggestions (min 3 unmatched keywords); static `area_keyword_map` stored in `taste_profile.json`
+  3. Remove area grade changes from the main refiner (Sonnet) entirely — areas exclusively managed by the Haiku step
+  - [ ] **Refiner v2 — May check** — Verify refiner v2 runs correctly on real data after May 2nd cron. Check area management recommendations make sense given a full month of ratings.
 
 ---
 
@@ -132,16 +132,9 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ---
 
-## Documentation audit
+## Documentation audit ✓
 
-- [ ] **Review README coverage** — check what features are currently underdocumented or missing:
-  - `--no-batch` flag and scoring fallback behaviour (batch timeout → direct API → alert email)
-  - Journal watermark mechanics (`journal_watermarks.json`, `--since` override flag)
-  - Batch fallback alert email (what triggers it, what it says, who receives it)
-  - `fields.json` schema and how to add a new field
-  - How to add a new user (full flow from onboarding form to cron)
-  - Refiner v2 (once implemented)
-  - Debug prompt files written to data folders (`triage_arxiv_input.txt` etc.)
+- [x] **Review README coverage** — completed 2026-04-06. Added: flags (`--no-fetch`, `--triage-only`, `--no-batch`), batch fallback mechanics, watermark `--since`, holiday ordering, archive sampling, debug prompt files, `fields.json` schema. Created `docs/add_new_field.md`.
 
 ---
 
