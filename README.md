@@ -23,7 +23,9 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 
 **arXiv (`fetch_papers.py`):** Pulls the arXiv RSS feed, filters to new submissions only (no cross-listings, no replacements). Supports `--category` for field filtering (e.g. `cond-mat`). If the feed is empty (holiday or off-day), the pipeline exits cleanly. Fetched once per field, shared across all users in that field.
 
-**Journals (`fetch_journals.py`):** Scrapes 11 top physics journals via RSS/eTOC feeds. Publisher-specific scraper classes live under `scrapers/` (APS, Nature, Science). Field configuration — which journals to monitor and tag filters for multi-discipline journals — is defined in `fields.json`. A per-journal watermark (`journal_watermarks.json`) prevents re-fetching papers already seen. Fetched once per run, filtered per field, shared across all users.
+**Journals (`fetch_journals.py`):** Scrapes 11 top physics journals via RSS/eTOC feeds. Publisher-specific scraper classes live under `scrapers/` (APS, Nature, Science). Field configuration — which journals to monitor and tag filters for multi-discipline journals — is defined in `fields.json`. A per-journal watermark (`journal_watermarks.json`) prevents re-fetching papers already seen. Fetched once per run, filtered per field, shared across all users. Use `--since YYYY-MM-DD` to override the watermark for a manual re-run without advancing it.
+
+**Holiday handling:** arXiv papers are fetched before journals. If all fields return empty arXiv feeds (holiday or off-day), the pipeline exits before the journal scraper runs — watermarks are not advanced and journal papers are preserved for the next day.
 
 **Journals covered (cond-mat field):** PRL (two section feeds), PRB, PRX, PRXQuantum, Nature, Nature Physics, Nature Materials, Nature Nanotechnology, Nature Communications, Science.
 
@@ -102,9 +104,9 @@ Each call has its own pair of cache entries (system prompt + papers block), both
 
 #### Stage 2: Scoring (Claude Sonnet) — Batch API
 
-Runs per-user in parallel via `ThreadPoolExecutor`. Uses the Anthropic Message Batches API (50% cost discount, async processing). Falls back to synchronous API after 1-hour timeout, with an alert email sent to the operator.
+Runs per-user in parallel via `ThreadPoolExecutor`. Uses the Anthropic Message Batches API (50% cost discount, async processing). Falls back to synchronous API after 1-hour timeout — a `batch_fallback.json` flag file is written to the user's data folder, and an alert email is sent to the operator after all users complete. Pass `--no-batch` to skip the Batch API entirely.
 
-- **Input:** Triage survivors + full profile (including `evolved_interests` and last 5 liked papers sampled from archive)
+- **Input:** Triage survivors + full profile (including `evolved_interests` and up to 5 liked papers sampled from `archive.json` — prioritising excellent-rated papers, padded with profile seed papers if needed)
 - **Task:** Score each paper 1–10 with a one-line justification and tags
 - **Tags:** `author match`, `core topic`, `adjacent interest`, `new direction`
 - **Output:** `scored_papers.json` — sorted by score descending
@@ -254,6 +256,9 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 | `users/<name>/archive.json` | Each user's permanent rating history |
 | `users/<name>/.env` | `ANTHROPIC_API_KEY` (scoring) + `EMAIL_TO` per user |
 | `users/<name>/data/YYYY-MM-DD/` | Daily data folder: papers, filtered, scores, PDF, ratings |
+| `users/<name>/data/YYYY-MM-DD/triage_arxiv_input.txt` | Full triage prompt sent to Haiku (arXiv papers) — written every run for debugging |
+| `users/<name>/data/YYYY-MM-DD/triage_journals_input.txt` | Full triage prompt sent to Haiku (journal papers) — written every run for debugging |
+| `users/<name>/data/YYYY-MM-DD/scoring_input.txt` | Full scoring prompt sent to Sonnet — written every run for debugging |
 
 ---
 
@@ -294,6 +299,39 @@ ANTHROPIC_API_KEY_COND_MAT=sk-ant-...
 
 One API key per field is required for triage. Add a new key when adding a new field (e.g. `ANTHROPIC_API_KEY_QUANT_PH` for a `quant-ph` field). Per-user `ANTHROPIC_API_KEY` in each user's `.env` is used only for scoring.
 
+### `fields.json` schema
+
+Each top-level key is a field name (used as the `field` value in `taste_profile.json` and as the API key suffix in root `.env`):
+
+```json
+{
+  "cond-mat": {
+    "arxiv_category": "cond-mat",
+    "description": "Condensed matter physics",
+    "journals": [
+      {
+        "name": "PRB",
+        "url": "http://feeds.aps.org/rss/recent/prb.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": ["condensed-matter physics", "superconducting"]
+      }
+    ]
+  }
+}
+```
+
+- `publisher`: one of `aps`, `nature`, `science` — selects the scraper class
+- `tag_filter`: `null` = field-specific journal, keep all papers; `[...]` = general journal, keep only papers whose subject tags contain at least one match
+- Root `.env` requires `ANTHROPIC_API_KEY_<FIELD_UPPERCASE>` for each field (e.g. `ANTHROPIC_API_KEY_COND_MAT`)
+
+See `docs/add_new_field.md` for a step-by-step guide.
+
 ### Add a user
 
 ```bash
@@ -307,4 +345,9 @@ python run_all_users.py               # all users
 python run_all_users.py --user alice  # single user
 python run_all_users.py --no-email    # skip email (testing)
 python run_all_users.py --refine      # run monthly refiner
+python run_all_users.py --no-batch    # skip Batch API, use synchronous API (2× cost, instant)
+python run_all_users.py --no-fetch    # skip arXiv fetch — reuse existing {field}_arxiv_papers.json
+python run_all_users.py --triage-only # stop after triage, skip scoring/PDF/email (testing)
 ```
+
+`--no-fetch` + `--triage-only` together are useful for weekend testing: place a previously fetched `{field}_arxiv_papers.json` in the shared data dir and verify cache behaviour without running the full pipeline.
