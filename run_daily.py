@@ -89,7 +89,7 @@ def run(cmd: list[str], step: str) -> None:
 # Email delivery
 # ---------------------------------------------------------------------------
 
-def send_email(pdf_path: Path, today_str: str) -> None:
+def send_email(pdf_path: Path, today_str: str, username: str) -> None:
     """Send the PDF digest as an email attachment via SMTP (STARTTLS)."""
     to_addr = [a.strip() for a in os.environ.get("EMAIL_TO", "").split(",") if a.strip()]
     if not to_addr:
@@ -105,6 +105,7 @@ def send_email(pdf_path: Path, today_str: str) -> None:
     subject = f"Incoming Science — {today_str}"
     body = (
         f"Your daily scientific literature digest is attached.\n\n"
+        f"Digest for: {username}\n"
         f"Date: {today_str}\n"
         f"Open the PDF, tap rating buttons on papers that catch your eye.\n"
     )
@@ -119,7 +120,7 @@ def send_email(pdf_path: Path, today_str: str) -> None:
         attachment = MIMEApplication(f.read(), _subtype="pdf")
     attachment.add_header(
         "Content-Disposition", "attachment",
-        filename=f"arxiv_digest_{today_str}.pdf",
+        filename=f"arxiv_digest_{today_str}_{username}.pdf",
     )
     msg.attach(attachment)
 
@@ -288,7 +289,7 @@ def main():
     if args.no_email:
         log.info("[email] Skipped (--no-email).")
     else:
-        send_email(pdf_path, today_str)
+        send_email(pdf_path, today_str, username)
 
     # ------------------------------------------------------------------
     # Step 7: Cleanup old data folders

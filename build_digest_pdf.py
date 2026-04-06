@@ -21,6 +21,7 @@ from urllib.parse import quote
 
 import os
 import matplotlib
+from reportlab.lib.utils import ImageReader
 from pylatexenc.latex2text import LatexNodes2Text
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -32,12 +33,17 @@ from reportlab.lib.colors import HexColor, white
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    HRFlowable, KeepTogether,
+    HRFlowable, KeepTogether, PageBreak,
 )
 
 # ── Rating endpoint — overridden by --base-url and --user CLI flags ──────────
 RATE_BASE_URL = "https://your-server.com/rate"
 RATE_USER     = ""   # set from --user flag; embedded in every rating URL
+
+# ── Logo ──────────────────────────────────────────────────────────────────────
+_LOGO_PATH = Path(__file__).parent / "docs" / "logo_for_pdf_2.png"
+_LOGO_W    = 18 * mm   # display width on page
+_LOGO_H    = 24 * mm   # display height (preserveAspectRatio keeps it correct)
 
 # ── Page geometry ─────────────────────────────────────────────────────────────
 PAGE_W, PAGE_H = A4
@@ -200,7 +206,7 @@ def make_styles() -> dict:
     return {
         "page_title": ParagraphStyle(
             "page_title",
-            fontName="DejaVuSans-Bold", fontSize=22, leading=28,
+            fontName="DejaVuSans-Bold", fontSize=18, leading=24,
             textColor=C["text_dark"], alignment=TA_CENTER,
         ),
         "page_date": ParagraphStyle(
@@ -217,7 +223,6 @@ def make_styles() -> dict:
             "subsection_header",
             fontName="DejaVuSans-Bold", fontSize=11, leading=16,
             textColor=C["text_mid"], spaceBefore=6, spaceAfter=2,
-            keepWithNext=1,
         ),
         "title": ParagraphStyle(
             "title",
@@ -422,6 +427,23 @@ def draw_background(canvas, doc):
     canvas.restoreState()
 
 
+def draw_first_page(canvas, doc):
+    """First page: warm background + logo at top-left."""
+    draw_background(canvas, doc)
+    if _LOGO_PATH.exists():
+        canvas.saveState()
+        canvas.drawImage(
+            str(_LOGO_PATH),
+            MARGIN,
+            PAGE_H - MARGIN - _LOGO_H,
+            width=_LOGO_W,
+            height=_LOGO_H,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+        canvas.restoreState()
+
+
 # ── Main builder ──────────────────────────────────────────────────────────────
 
 def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_path: str | None = None):
@@ -457,31 +479,35 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_pat
 
     story = [
         Spacer(1, 4 * mm),
-        Paragraph("arXiv cond-mat digest", styles["page_title"]),
+        Paragraph("Incoming Science — daily digest", styles["page_title"]),
         Paragraph(date_str, styles["page_date"]),
         Paragraph(
             f"{total_papers} papers today  ·  {total_scored} scored  ·  {total_unscored} unscored",
             styles["page_date"],
         ),
-        HRFlowable(width=COL_W, thickness=1, color=C["divider"], spaceAfter=6),
-        Spacer(1, 4 * mm),
-        Paragraph(f"Top Papers  ({total_scored})", styles["section_header"]),
-        Spacer(1, 3 * mm),
+        KeepTogether([
+            HRFlowable(width=COL_W, thickness=1, color=C["divider"], spaceAfter=6),
+            Spacer(1, 4 * mm),
+            Paragraph(f"Top Papers  ({total_scored})", styles["section_header"]),
+            Spacer(1, 3 * mm),
+        ]),
     ]
 
     # ── Scored: journals first, then arXiv ────────────────────────────────────
     if scored_journals:
-        story += subsection_divider("Journals", len(scored_journals), styles)
-        for paper in scored_journals:
+        first = scored_block(scored_journals[0], d.isoformat(), styles)
+        story.append(KeepTogether(subsection_divider("Journals", len(scored_journals), styles) + [first]))
+        for paper in scored_journals[1:]:
             story.append(scored_block(paper, d.isoformat(), styles))
 
     if scored_arxiv:
-        story += subsection_divider("arXiv", len(scored_arxiv), styles)
-        for paper in scored_arxiv:
+        first = scored_block(scored_arxiv[0], d.isoformat(), styles)
+        story.append(KeepTogether(subsection_divider("arXiv", len(scored_arxiv), styles) + [first]))
+        for paper in scored_arxiv[1:]:
             story.append(scored_block(paper, d.isoformat(), styles))
 
     # ── Section divider ───────────────────────────────────────────────────────
-    story.append(Spacer(1, 6 * mm))
+    story.append(PageBreak())
     div_row = Table(
         [[Paragraph("— Remaining papers —", styles["divider_label"])]],
         colWidths=[COL_W],
@@ -491,7 +517,7 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_pat
         ("TOPPADDING",    (0, 0), (-1, -1), 9),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
     ]))
-    story += [
+    _browse_header = [
         div_row,
         Spacer(1, 4 * mm),
         Paragraph(f"Browse  ({total_unscored} papers)", styles["section_header"]),
@@ -500,17 +526,27 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_pat
 
     # ── Unscored: journals first, then arXiv ──────────────────────────────────
     if unscored_journals:
-        story += subsection_divider("Journals", len(unscored_journals), styles)
-        for paper in unscored_journals:
+        first = unscored_block(unscored_journals[0], d.isoformat(), styles)
+        story.append(KeepTogether(
+            _browse_header
+            + subsection_divider("Journals", len(unscored_journals), styles)
+            + [first]
+        ))
+        for paper in unscored_journals[1:]:
             story.append(unscored_block(paper, d.isoformat(), styles))
 
     if unscored_arxiv:
-        story += subsection_divider("arXiv", len(unscored_arxiv), styles)
-        for paper in unscored_arxiv:
+        first = unscored_block(unscored_arxiv[0], d.isoformat(), styles)
+        header = _browse_header if not unscored_journals else []
+        story.append(KeepTogether(header + subsection_divider("arXiv", len(unscored_arxiv), styles) + [first]))
+        for paper in unscored_arxiv[1:]:
             story.append(unscored_block(paper, d.isoformat(), styles))
 
-    doc.build(story, onFirstPage=draw_background, onLaterPages=draw_background)
-    print(f"Digest → {output_path}  ({total_scored} scored, {total_unscored} unscored)")
+    doc.build(story, onFirstPage=draw_first_page, onLaterPages=draw_background)
+    sys.stdout.buffer.write(
+        f"Digest -> {output_path}  ({total_scored} scored, {total_unscored} unscored)\n"
+        .encode("utf-8", errors="replace")
+    )
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
