@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+@README.md
+@TODO.md
+
 ## Project Overview
 
 **Incoming Science** is a multi-user AI-powered daily arXiv digest system. It fetches papers from arXiv and top physics journals, grades them using a two-stage Claude pipeline (triage → scoring), generates a PDF digest with rating buttons, emails it to users, and uses collected ratings to refine each user's taste profile monthly.

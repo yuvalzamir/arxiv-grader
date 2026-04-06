@@ -300,23 +300,9 @@ def main():
         fields_data   = json.loads((BASE_DIR / "fields.json").read_text())
         log.info("Active fields: %s", active_fields)
 
-        # Journal scraping (optional — skipped with --no-journals).
-        if not args.no_journals:
-            scraped_path = run_journal_scrape(date_str, active_fields, shared_data_dir)
-            if scraped_path:
-                with open(scraped_path) as f:
-                    scraped_papers = json.load(f)
-                for field in active_fields:
-                    if field not in fields_data:
-                        log.warning("Field '%s' not in fields.json — skipping filter.", field)
-                        continue
-                    filtered = filter_for_field(scraped_papers, fields_data[field])
-                    field_path = shared_data_dir / f"{field}_journals.json"
-                    with open(field_path, "w") as f:
-                        json.dump(filtered, f, indent=2)
-                    log.info("Field '%s': %d journal papers after filtering.", field, len(filtered))
-
-        # Per-field: arXiv fetch → merge → centralized triage (field order, sequential within field).
+        # Step 1: Fetch arXiv for all fields first — before journal scrape so that
+        # an empty feed (holiday or niche field) doesn't advance journal watermarks.
+        arxiv_papers_by_field: dict[str, list[dict]] = {}
         for field in active_fields:
             field_users = [u for u in users if user_fields[u.name] == field]
 
@@ -334,11 +320,41 @@ def main():
                     triage_failed.update(u.name for u in field_users)
                     continue
 
-            arxiv_papers = json.loads(arxiv_path.read_text())
-            if not arxiv_papers:
-                log.info("Field '%s': no papers today (holiday/off-day) — skipping.", field)
+            papers = json.loads(arxiv_path.read_text())
+            if not papers:
+                log.info("Field '%s': no arXiv papers today — skipping field.", field)
                 triage_failed.update(u.name for u in field_users)
                 continue
+
+            arxiv_papers_by_field[field] = papers
+
+        # If every field is empty it's a global holiday — exit before journal scrape
+        # so watermarks are not advanced for papers that will never be delivered.
+        fields_with_papers = list(arxiv_papers_by_field)
+        if not fields_with_papers:
+            log.info("No arXiv papers in any field today — holiday or off-day. Skipping pipeline.")
+            sys.exit(0)
+
+        # Step 2: Journal scraping — only for fields that have arXiv papers.
+        if not args.no_journals:
+            scraped_path = run_journal_scrape(date_str, fields_with_papers, shared_data_dir)
+            if scraped_path:
+                with open(scraped_path) as f:
+                    scraped_papers = json.load(f)
+                for field in fields_with_papers:
+                    if field not in fields_data:
+                        log.warning("Field '%s' not in fields.json — skipping filter.", field)
+                        continue
+                    filtered = filter_for_field(scraped_papers, fields_data[field])
+                    field_path = shared_data_dir / f"{field}_journals.json"
+                    with open(field_path, "w") as f:
+                        json.dump(filtered, f, indent=2)
+                    log.info("Field '%s': %d journal papers after filtering.", field, len(filtered))
+
+        # Step 3: Merge arXiv + journals and run centralized triage per field.
+        for field in fields_with_papers:
+            field_users = [u for u in users if user_fields[u.name] == field]
+            arxiv_papers = arxiv_papers_by_field[field]
 
             journal_papers: list[dict] = []
             journals_path = shared_data_dir / f"{field}_journals.json"
