@@ -34,9 +34,11 @@ from dotenv import load_dotenv
 load_dotenv()  # load root .env first; user .env loaded in main() after arg parsing
 
 PROMPTS_DIR    = Path(__file__).parent / "prompts"
+SCHEMAS_DIR    = Path(__file__).parent / "schemas"
 ARCHIVE_PATH   = Path(__file__).parent / "archive.json"
 PROFILE_PATH   = Path(__file__).parent / "taste_profile.json"
 REFINER_MODEL       = "claude-sonnet-4-6"
+AREA_MODEL          = "claude-haiku-4-5-20251001"
 WINDOW_DAYS         = 30
 BATCH_POLL_INTERVAL = 15    # seconds between batch status checks
 BATCH_TIMEOUT       = 3600  # give up after 1 hour
@@ -72,23 +74,35 @@ def load_prompt(name: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def load_schema(name: str) -> dict:
+    path = SCHEMAS_DIR / name
+    if not path.exists():
+        log.error("Schema file not found: %s", path)
+        sys.exit(1)
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 # ---------------------------------------------------------------------------
 # Batch API helper
 # ---------------------------------------------------------------------------
 
 def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: int,
-                     system: str, user_message: str, label: str):
+                     system: str, user_message: str, label: str,
+                     output_schema: dict | None = None):
     """Submit a single-request batch, poll until complete, return the Message object."""
+    params: dict = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "system": system,
+        "messages": [{"role": "user", "content": user_message}],
+    }
+    if output_schema is not None:
+        params["output_config"] = {
+            "format": {"type": "json_schema", "schema": output_schema}
+        }
+
     batch = client.messages.batches.create(
-        requests=[{
-            "custom_id": custom_id,
-            "params": {
-                "model": model,
-                "max_tokens": max_tokens,
-                "system": system,
-                "messages": [{"role": "user", "content": user_message}],
-            },
-        }]
+        requests=[{"custom_id": custom_id, "params": params}]
     )
     log.info("%s: batch submitted (id: %s). Polling every %ds...", label, batch.id, BATCH_POLL_INTERVAL)
 
@@ -136,7 +150,7 @@ def filter_recent(archive: list[dict], days: int) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Message builder
+# Message builder — main refiner
 # ---------------------------------------------------------------------------
 
 def _keywords_str(keywords: list[dict]) -> str:
@@ -334,33 +348,6 @@ def build_refiner_message(profile: dict, recent_ratings: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# JSON parsing — same three-tier fallback as run_pipeline.py
-# ---------------------------------------------------------------------------
-
-import re
-
-def parse_json_response(text: str) -> dict:
-    for candidate in [
-        text,
-        "\n".join(l for l in text.splitlines() if not l.startswith("```")).strip(),
-    ]:
-        try:
-            return json.loads(candidate)
-        except json.JSONDecodeError:
-            pass
-
-    m = re.search(r"(\{[\s\S]*\})", text, re.DOTALL)
-    if m:
-        try:
-            return json.loads(m.group(1))
-        except json.JSONDecodeError:
-            pass
-
-    log.error("Failed to parse Claude JSON response. Raw (first 800 chars):\n%s", text[:800])
-    sys.exit(1)
-
-
-# ---------------------------------------------------------------------------
 # Grade application — Python owns the ±1 rule
 # ---------------------------------------------------------------------------
 
@@ -411,11 +398,6 @@ def add_new_keywords(existing: list[dict], new_items: list[dict]) -> tuple[list[
     return existing, log_lines
 
 
-def add_new_areas(existing: list[dict], new_items: list[dict]) -> tuple[list[dict], list[str]]:
-    """If Claude accidentally suggests new areas via keyword changes, handle gracefully."""
-    return existing, []
-
-
 def add_new_authors(existing: list[dict], new_authors: list[dict]) -> tuple[list[dict], list[str]]:
     existing_names = {a["name"].strip().lower() for a in existing}
     next_rank = max((a["rank"] for a in existing), default=0) + 1
@@ -431,6 +413,27 @@ def add_new_authors(existing: list[dict], new_authors: list[dict]) -> tuple[list
         existing_names.add(name.lower())
         log_lines.append(f"  + NEW author '{name}' (rank {next_rank}) — {item.get('reason', '')}")
         next_rank += 1
+    return existing, log_lines
+
+
+def add_new_areas(existing: list[dict], new_items: list[dict], profile: dict) -> tuple[list[dict], list[str]]:
+    """Add new areas and register them in area_keyword_map."""
+    existing_names = {a["area"].strip().lower() for a in existing}
+    log_lines = []
+    for item in new_items[:1]:  # cap: max 1 new area per run
+        name = item.get("area", "").strip()
+        if not name or name.lower() in existing_names:
+            continue
+        grade = max(3, min(5, item.get("suggested_grade", 4)))
+        existing.append({"area": name, "grade": grade})
+        existing_names.add(name.lower())
+        profile.setdefault("area_keyword_map", []).append({
+            "area": name,
+            "keywords": item.get("supporting_keywords", []),
+        })
+        log_lines.append(f"  + NEW area '{name}' (grade {grade}) — {item.get('reason', '')}")
+    if len(new_items) > 1:
+        log.warning("  Area management returned %d new areas; only the first was applied.", len(new_items))
     return existing, log_lines
 
 
@@ -451,6 +454,179 @@ def remove_pre_existing_grade_7(
         else:
             kept.append(item)
     return kept, log_lines
+
+
+def remove_grade_7_areas(
+    areas: list[dict], pre_run_grade_7: set[str], profile: dict
+) -> tuple[list[dict], list[str]]:
+    """
+    Remove areas that were already at grade 7 before this run, subject to the
+    _safe_to_remove_area keyword-support safety check.
+    """
+    log_lines = []
+    kept = []
+    for area in areas:
+        name = area["area"]
+        if area["grade"] >= 7 and name in pre_run_grade_7:
+            if _safe_to_remove_area(name, profile):
+                log_lines.append(
+                    f"  - REMOVED area '{name}' "
+                    f"(grade 7 before this run, keyword support confirms removal)"
+                )
+                # Clean up area_keyword_map entry.
+                profile["area_keyword_map"] = [
+                    e for e in profile.get("area_keyword_map", [])
+                    if e["area"] != name
+                ]
+            else:
+                kept.append(area)
+                log_lines.append(
+                    f"  ~ KEPT area '{name}' at grade 7 "
+                    f"(removal blocked: active keyword support still present)"
+                )
+        else:
+            kept.append(area)
+    return kept, log_lines
+
+
+# ---------------------------------------------------------------------------
+# Area management helpers
+# ---------------------------------------------------------------------------
+
+def _keyword_weight(grade: int) -> float:
+    return (8 - grade) / 7
+
+
+def _compute_support_ratios(profile: dict) -> list[dict]:
+    """Compute support ratio for each area using the stored area_keyword_map."""
+    keywords = profile.get("keywords", [])
+    areas = profile.get("research_areas", [])
+    area_keyword_map = profile.get("area_keyword_map", [])
+    total_keywords = len(keywords)
+
+    kw_grade = {kw["keyword"].lower(): kw["grade"] for kw in keywords}
+    map_lookup = {e["area"]: e["keywords"] for e in area_keyword_map}
+
+    result = []
+    for area in areas:
+        name = area["area"]
+        grade = area["grade"]
+        associated = map_lookup.get(name, [])
+        effective = sum(_keyword_weight(kw_grade.get(k.lower(), 4)) for k in associated)
+        relative = effective / total_keywords if total_keywords else 0
+        ratio = relative / ((8 - grade) ** 1.5) if grade < 8 else 0
+        result.append({
+            "area": name,
+            "grade": grade,
+            "support_ratio": round(ratio, 5),
+            "keyword_count": len(associated),
+            "excluded_from_gap": grade == 1,
+        })
+    return sorted(result, key=lambda x: x["support_ratio"], reverse=True)
+
+
+def _unmatched_keywords(profile: dict) -> list[dict]:
+    """Return keywords not listed in any area's keyword list."""
+    area_keyword_map = profile.get("area_keyword_map", [])
+    all_mapped = {k.lower() for e in area_keyword_map for k in e["keywords"]}
+    return [kw for kw in profile.get("keywords", [])
+            if kw["keyword"].lower() not in all_mapped]
+
+
+def _safe_to_remove_area(area_name: str, profile: dict) -> bool:
+    """Return True if the area can be safely removed (no active keyword support)."""
+    area_keyword_map = profile.get("area_keyword_map", [])
+    all_keywords = profile.get("keywords", [])
+    entry = next((e for e in area_keyword_map if e["area"] == area_name), None)
+    if entry is None:
+        return True  # not mapped → no active support → safe to remove
+    associated = entry["keywords"]
+    if len(associated) > 2:
+        return False  # too many supporting keywords
+    kw_grades = {kw["keyword"].lower(): kw["grade"] for kw in all_keywords}
+    for kw_name in associated:
+        grade = kw_grades.get(kw_name.lower())
+        if grade is not None and grade <= 3:
+            return False  # active keyword still supports this area
+    return True
+
+
+def _update_area_keyword_map(profile: dict, new_keywords_output: list[dict]) -> list[str]:
+    """Append new keywords to their designated areas in area_keyword_map."""
+    area_map = {e["area"]: e for e in profile.get("area_keyword_map", [])}
+    log_lines = []
+    for item in new_keywords_output:
+        kw_name = item.get("keyword", "").strip()
+        for area_name in item.get("areas", []):
+            if area_name in area_map:
+                if kw_name not in area_map[area_name]["keywords"]:
+                    area_map[area_name]["keywords"].append(kw_name)
+                    log_lines.append(f"  map: '{kw_name}' → '{area_name}'")
+            else:
+                log.warning(
+                    "  new keyword '%s' references unknown area '%s' — skipping map update",
+                    kw_name, area_name,
+                )
+    profile["area_keyword_map"] = list(area_map.values())
+    return log_lines
+
+
+def _cleanup_removed_keywords_from_map(profile: dict, removed_names: set[str]) -> None:
+    """Remove deleted keywords from all area_keyword_map entries."""
+    removed_lower = {n.lower() for n in removed_names}
+    for entry in profile.get("area_keyword_map", []):
+        entry["keywords"] = [
+            k for k in entry["keywords"]
+            if k.lower() not in removed_lower
+        ]
+
+
+def build_area_management_message(
+    profile: dict, support_ratios: list[dict], unmatched: list[dict]
+) -> str:
+    areas_lines = []
+    for r in support_ratios:
+        excl = " [EXCLUDED — grade 1, ignore in gap analysis]" if r["excluded_from_gap"] else ""
+        areas_lines.append(
+            f"  grade {r['grade']}: {r['area']}"
+            f"  (support_ratio={r['support_ratio']:.5f}, keywords={r['keyword_count']}){excl}"
+        )
+
+    unmatched_lines = (
+        "\n".join(f"  grade {kw['grade']}: {kw['keyword']}" for kw in unmatched)
+        or "  (none)"
+    )
+
+    return (
+        f"RESEARCH AREAS (sorted by support ratio, highest first)\n"
+        f"=========================================================\n"
+        f"Total keywords: {len(profile.get('keywords', []))}\n\n"
+        + "\n".join(areas_lines)
+        + f"\n\nUNMATCHED KEYWORDS (not associated with any area)\n"
+        f"==================================================\n"
+        + unmatched_lines
+    )
+
+
+def _call_area_management(client: Anthropic, profile: dict, schema: dict) -> dict:
+    """Synchronous Haiku call for keyword-driven area management."""
+    support_ratios = _compute_support_ratios(profile)
+    unmatched = _unmatched_keywords(profile)
+    system = load_prompt("area_management.txt")
+    user_msg = build_area_management_message(profile, support_ratios, unmatched)
+
+    response = client.messages.create(
+        model=AREA_MODEL,
+        max_tokens=512,
+        system=system,
+        messages=[{"role": "user", "content": user_msg}],
+        output_config={"format": {"type": "json_schema", "schema": schema}},
+    )
+    log.info(
+        "Area management done. (input: %d tokens, output: %d tokens)",
+        response.usage.input_tokens, response.usage.output_tokens,
+    )
+    return json.loads(response.content[0].text)
 
 
 # ---------------------------------------------------------------------------
@@ -508,6 +684,8 @@ def main():
     archive = load_json(archive_path)
     profile = load_json(profile_path)
     system_prompt = load_prompt("profile_refiner.txt")
+    refiner_schema = load_schema("refiner_output_schema.json")
+    area_schema    = load_schema("area_management_schema.json")
 
     recent = filter_recent(archive, args.days)
     log.info(
@@ -550,18 +728,19 @@ def main():
     )
 
     # Snapshot which keywords/areas are already at grade 7 before the refiner runs.
-    # Only these will be eligible for removal — items that reach grade 7 during this
-    # run get at least one more month before they can be removed.
-    pre_run_kw_grade_7  = {kw["keyword"] for kw in profile.get("keywords", [])       if kw["grade"] >= 7}
-    pre_run_area_grade_7 = {a["area"]    for a  in profile.get("research_areas", []) if a["grade"]  >= 7}
+    pre_run_kw_grade_7   = {kw["keyword"] for kw in profile.get("keywords", [])       if kw["grade"] >= 7}
+    pre_run_area_grade_7 = {a["area"]     for a  in profile.get("research_areas", []) if a["grade"]  >= 7}
     if pre_run_kw_grade_7 or pre_run_area_grade_7:
         log.info("Pre-run grade-7 items (eligible for removal): keywords=%s, areas=%s",
                  pre_run_kw_grade_7, pre_run_area_grade_7)
 
-    # Build user message and call Claude.
-    user_message = build_refiner_message(profile, recent)
+    # ---------------------------------------------------------------------------
+    # Step 4 — Main refiner call (Sonnet, Batch API, structured outputs)
+    # ---------------------------------------------------------------------------
 
+    user_message = build_refiner_message(profile, recent)
     client = Anthropic()
+
     response = _submit_and_poll(
         client,
         custom_id="profile-refiner",
@@ -570,13 +749,12 @@ def main():
         system=system_prompt,
         user_message=user_message,
         label="refiner",
+        output_schema=refiner_schema,
     )
-
-    raw = response.content[0].text.strip()
-    changes = parse_json_response(raw)
+    changes = json.loads(response.content[0].text)
 
     # ---------------------------------------------------------------------------
-    # Apply changes — Python owns the rules
+    # Step 5 — Apply main refiner changes
     # ---------------------------------------------------------------------------
 
     all_log: list[str] = []
@@ -589,43 +767,74 @@ def main():
         )
         all_log.extend(kw_log)
 
-    # 2. Area grade changes.
-    area_changes = changes.get("area_grade_changes", [])
-    if area_changes:
-        profile["research_areas"], area_log = apply_keyword_changes(
-            profile.get("research_areas", []), area_changes, label="area"
-        )
-        all_log.extend(area_log)
-
-    # 3. New keywords.
+    # 2. New keywords → also update area_keyword_map.
     new_kws = changes.get("new_keywords", [])
     if new_kws:
         profile["keywords"], nkw_log = add_new_keywords(profile.get("keywords", []), new_kws)
         all_log.extend(nkw_log)
+        map_log = _update_area_keyword_map(profile, new_kws)
+        all_log.extend(map_log)
 
-    # 4. New authors.
+    # 3. New authors.
     new_authors = changes.get("new_authors", [])
     if new_authors:
         profile["authors"], na_log = add_new_authors(profile.get("authors", []), new_authors)
         all_log.extend(na_log)
 
-    # 5. Remove keywords/areas that were already at grade 7 before this run and still are.
+    # 4. Update evolved_interests.
+    old_evolved = profile.get("evolved_interests", "").strip()
+    new_evolved = changes.get("evolved_interests", "").strip()
+    if new_evolved and new_evolved != old_evolved:
+        profile["evolved_interests"] = new_evolved
+        all_log.append("  evolved_interests updated.")
+
+    # ---------------------------------------------------------------------------
+    # Step 6 — Area management call (Haiku, synchronous, structured outputs)
+    # ---------------------------------------------------------------------------
+
+    area_changes_raw = _call_area_management(client, profile, area_schema)
+
+    area_grade_changes = area_changes_raw.get("area_grade_changes", [])
+    if len(area_grade_changes) > 1:
+        log.warning("Area management returned %d grade changes; only the first will be applied.",
+                    len(area_grade_changes))
+        area_grade_changes = area_grade_changes[:1]
+
+    if area_grade_changes:
+        profile["research_areas"], area_log = apply_keyword_changes(
+            profile.get("research_areas", []), area_grade_changes, label="area"
+        )
+        all_log.extend(area_log)
+
+    new_areas = area_changes_raw.get("new_areas", [])
+    if new_areas:
+        profile["research_areas"], na_log = add_new_areas(
+            profile.get("research_areas", []), new_areas, profile
+        )
+        all_log.extend(na_log)
+
+    # ---------------------------------------------------------------------------
+    # Step 7 — Grade-7 pruning
+    # ---------------------------------------------------------------------------
+
+    # Keywords: simple removal (no safety check needed).
     profile["keywords"], rem_kw_log = remove_pre_existing_grade_7(
         profile.get("keywords", []), "keyword", pre_run_kw_grade_7
     )
     all_log.extend(rem_kw_log)
 
-    profile["research_areas"], rem_area_log = remove_pre_existing_grade_7(
-        profile.get("research_areas", []), "area", pre_run_area_grade_7
+    # Clean up removed keywords from area_keyword_map.
+    removed_kw_names = {
+        line.split("'")[1] for line in rem_kw_log if "REMOVED keyword" in line
+    }
+    if removed_kw_names:
+        _cleanup_removed_keywords_from_map(profile, removed_kw_names)
+
+    # Areas: safety check using area_keyword_map.
+    profile["research_areas"], rem_area_log = remove_grade_7_areas(
+        profile.get("research_areas", []), pre_run_area_grade_7, profile
     )
     all_log.extend(rem_area_log)
-
-    # 6. Update evolved_interests.
-    old_evolved = profile.get("evolved_interests", "").strip()
-    new_evolved = changes.get("evolved_interests", "").strip()
-    if new_evolved and new_evolved != old_evolved:
-        profile["evolved_interests"] = new_evolved
-        all_log.append(f"  evolved_interests updated.")
 
     # ---------------------------------------------------------------------------
     # Summary

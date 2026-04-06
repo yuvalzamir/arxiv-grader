@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "keyword_grade_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "keyword":   {"type": "string"},
+          "direction": {"type": "string", "enum": ["up", "down"]},
+          "reason":    {"type": "string"}
+        },
+        "required": ["keyword", "direction", "reason"],
+        "additionalProperties": false
+      }
+    },
+    "new_keywords": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "keyword":         {"type": "string"},
+          "suggested_grade": {"type": "integer", "enum": [3, 4, 5]},
+          "areas":           {"type": "array", "items": {"type": "string"}},
+          "reason":          {"type": "string"}
+        },
+        "required": ["keyword", "suggested_grade", "areas", "reason"],
+        "additionalProperties": false
+      }
+    },
+    "new_authors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name":   {"type": "string"},
+          "reason": {"type": "string"}
+        },
+        "required": ["name", "reason"],
+        "additionalProperties": false
+      }
+    },
+    "evolved_interests": {"type": "string"}
+  },
+  "required": ["keyword_grade_changes", "new_keywords", "new_authors", "evolved_interests"],
+  "additionalProperties": false
+}

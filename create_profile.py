@@ -612,6 +612,51 @@ def call_llm(system_prompt: str, user_message: str) -> dict:
     sys.exit(1)
 
 
+def build_area_keyword_map(keywords: list[dict], areas: list[dict], client: Anthropic) -> list[dict]:
+    """
+    One-time Haiku call to assign each keyword to the areas it belongs to.
+    Returns area_keyword_map: [{area, keywords}, ...] for all areas.
+    """
+    kw_list = "\n".join(f"  - {kw['keyword']}" for kw in keywords) or "  (none)"
+    area_list = "\n".join(f"  - {a['area']}" for a in areas) or "  (none)"
+
+    prompt = (
+        f"You are building a keyword-to-area mapping for a researcher's taste profile.\n\n"
+        f"Research areas:\n{area_list}\n\n"
+        f"Keywords:\n{kw_list}\n\n"
+        f"For each area, list which keywords semantically belong to it. "
+        f"A keyword may belong to multiple areas. Use exact keyword names as given. "
+        f"Return JSON only:\n"
+        f'{{"area_keyword_map": [{{"area": "<area name>", "keywords": ["<keyword>", ...]}}]}}'
+    )
+
+    log.info("Building area_keyword_map with Haiku...")
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=2048,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    text = response.content[0].text.strip()
+
+    # Parse — strip markdown fences if present.
+    for candidate in [text, "\n".join(l for l in text.splitlines() if not l.startswith("```")).strip()]:
+        try:
+            result = json.loads(candidate)
+            area_map = result.get("area_keyword_map", [])
+            # Ensure every area has an entry, even if empty.
+            mapped_areas = {e["area"] for e in area_map}
+            for a in areas:
+                if a["area"] not in mapped_areas:
+                    area_map.append({"area": a["area"], "keywords": []})
+            log.info("area_keyword_map built: %d area entries.", len(area_map))
+            return area_map
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    log.warning("Failed to parse area_keyword_map from Haiku — initialising empty map.")
+    return [{"area": a["area"], "keywords": []} for a in areas]
+
+
 def assemble_profile(rankings: dict, inputs: dict, papers: list[dict]) -> dict:
     """
     Build the full taste_profile.json from:
@@ -841,6 +886,14 @@ def main():
 
     # 4. Python assembles the full profile from rankings + pre-fetched data.
     profile = assemble_profile(rankings, inputs, papers)
+
+    # 5. Build area_keyword_map — one Haiku call assigns each keyword to its areas.
+    client = Anthropic()
+    profile["area_keyword_map"] = build_area_keyword_map(
+        profile.get("keywords", []),
+        profile.get("research_areas", []),
+        client,
+    )
 
     # 4. Review / edit loop.
     while True:

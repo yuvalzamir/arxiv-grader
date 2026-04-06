@@ -80,6 +80,7 @@ New keywords:
   - From rating history: recommend a new keyword if a topic appears in 2+ rated papers (Excellent or Good) with no existing keyword match.
   - Narrative corroboration: if the previous narrative flagged an emerging topic and this month provides even weak positive evidence, recommend a new keyword.
   - Suggest grade 3–5 for new keywords; never suggest grade 1–2 for something not yet established.
+  - For each new keyword, include an "areas" list: the exact names of any existing research areas this keyword belongs to. Use empty array if it doesn't match any area. This keeps the keyword-area map up to date.
 
 New authors:
   - Recommend only if they appear on an Excellent-rated paper OR on 2+ Good-rated papers.
@@ -100,17 +101,12 @@ Do not write generic summaries. Every sentence should encode information that wi
 
 OUTPUT
 ======
-Return ONLY a JSON object. No preamble, no explanation, no markdown fences.
-
 {
   "keyword_grade_changes": [
     {"keyword": "<exact keyword from profile>", "direction": "up" | "down", "reason": "<one sentence — cite the specific paper(s) or pattern, including narrative corroboration if applicable>"}
   ],
-  "area_grade_changes": [
-    {"area": "<exact area from profile>", "direction": "up" | "down", "reason": "<one sentence — cite the specific paper(s) or pattern, including narrative corroboration if applicable>"}
-  ],
   "new_keywords": [
-    {"keyword": "<new keyword>", "suggested_grade": <3|4|5>, "reason": "<one sentence — cite the paper(s) that motivated this>"}
+    {"keyword": "<new keyword>", "suggested_grade": <3|4|5>, "areas": ["<exact area name>", ...], "reason": "<one sentence — cite the paper(s) that motivated this>"}
   ],
   "new_authors": [
     {"name": "<full name>", "reason": "<one sentence citing which paper(s)>"}
