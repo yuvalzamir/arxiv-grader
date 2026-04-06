@@ -126,6 +126,12 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ---
 
+## Security review
+
+- [x] **Audit credentials and sensitive files** — `porkbun key.txt` found committed in initial commit; keys were already dead and repo is private. Purged from all git history via `git filter-repo`, force-pushed all branches. `.gitignore` updated with `*key*.txt`, `*secret*.txt`, `*token*.txt`, `*credentials*.txt` patterns. Server checked — clean (only venv package files matched).
+
+---
+
 ## Documentation audit
 
 - [ ] **Review README coverage** — check what features are currently underdocumented or missing:
