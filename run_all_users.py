@@ -167,6 +167,12 @@ def run_centralized_triage(
     triage_prompt         = load_prompt("triage.txt")
     triage_journal_prompt = load_prompt("triage_journals.txt")
 
+    use_batch = len(user_dirs) < 4
+    log.info(
+        "Field '%s': %d user(s) — triage mode: %s",
+        field, len(user_dirs), "batch API" if use_batch else "cached API",
+    )
+
     results = {}
     for user_dir in user_dirs:
         log.info("--- [%s] Triage ---", user_dir.name)
@@ -180,6 +186,7 @@ def run_centralized_triage(
                 triage_prompt, triage_journal_prompt,
                 debug_dir=today_dir,
                 api_key=api_key,
+                use_batch=use_batch,
             )
 
             filtered_path = today_dir / "filtered_papers.json"

@@ -358,12 +358,15 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
 def _run_single_triage(
     papers: list[dict], profile: dict, system_prompt: str, label: str,
     debug_dir: Path | None = None, api_key: str | None = None,
+    use_batch: bool = False,
 ) -> list[tuple[dict, str]]:
     """
-    Run triage for one paper list using the cached API (synchronous).
+    Run triage for one paper list.
     Returns a list of (paper, triage_label) pairs in ranked order (best first),
     including all labels (high, medium, low).
 
+    use_batch: if True, use the Batch API (50% cost discount, async).
+               if False (default), use the cached synchronous API.
     api_key: if provided, used directly (centralized field key); otherwise reads from env.
     """
     client = Anthropic(api_key=api_key) if api_key else Anthropic()
@@ -373,16 +376,23 @@ def _run_single_triage(
     if debug_dir:
         slug = label.lower().replace("-", "_")
         debug_path = debug_dir / f"{slug}_input.txt"
+        mode = "batch" if use_batch else "cached"
         debug_path.write_text(
-            f"=== SYSTEM (cached) ===\n{system_prompt}\n\n"
-            f"=== USER BLOCK 1: PAPERS (cached) ===\n{papers_block}\n\n"
+            f"=== SYSTEM ({mode}) ===\n{system_prompt}\n\n"
+            f"=== USER BLOCK 1: PAPERS ===\n{papers_block}\n\n"
             f"=== USER BLOCK 2: PROFILE ===\n{profile_block}",
             encoding="utf-8",
         )
         log.info("%s: prompt saved to %s", label, debug_path)
 
-    log.info("%s: running on %d papers (model: %s)...", label, len(papers), TRIAGE_MODEL)
-    response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
+    log.info("%s: running on %d papers (model: %s, mode: %s)...",
+             label, len(papers), TRIAGE_MODEL, "batch" if use_batch else "cached")
+    if use_batch:
+        custom_id = label.lower().replace(" ", "-")
+        user_message = f"{papers_block}\n\n{profile_block}"
+        response = _submit_and_poll(client, custom_id, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
+    else:
+        response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
 
     ranked: list[tuple[dict, str]] = []
     seen: set[int] = set()
@@ -413,11 +423,15 @@ def run_triage(
     papers: list[dict], profile: dict,
     system_prompt: str, journal_system_prompt: str,
     debug_dir: Path | None = None, api_key: str | None = None,
+    use_batch: bool = False,
 ) -> list[dict]:
     """
-    Run triage in two separate batches (arXiv and journals) to avoid
+    Run triage in two separate calls (arXiv and journals) to avoid
     cross-pool calibration effects. Returns only high/medium papers with
     'triage' field added, capped independently per source type.
+
+    use_batch: if True, use the Batch API for both calls (50% cost discount).
+               if False (default), use the cached synchronous API.
     """
     arxiv_papers  = [p for p in papers if not p.get("source")]
     journal_papers = [p for p in papers if p.get("source")]
@@ -427,11 +441,11 @@ def run_triage(
 
     if arxiv_papers:
         arxiv_ranked = _run_single_triage(
-            arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key
+            arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, use_batch
         )
     if journal_papers:
         journal_ranked = _run_single_triage(
-            journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key
+            journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, use_batch
         )
 
     # Apply caps independently for each source type.
