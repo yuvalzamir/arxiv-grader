@@ -449,8 +449,11 @@ def draw_first_page(canvas, doc):
 def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_path: str | None = None):
     register_fonts()
     scored = json.loads(Path(scored_path).read_text(encoding="utf-8"))
-    all_arxiv = json.loads(Path(papers_path).read_text(encoding="utf-8"))
-    all_journals = json.loads(Path(journals_path).read_text(encoding="utf-8")) if journals_path else []
+    all_papers = json.loads(Path(papers_path).read_text(encoding="utf-8"))
+    if journals_path:
+        all_papers += json.loads(Path(journals_path).read_text(encoding="utf-8"))
+    all_journals = [p for p in all_papers if p.get("source")]
+    all_arxiv    = [p for p in all_papers if not p.get("source")]
 
     scored_ids = {p["arxiv_id"] for p in scored}
 
