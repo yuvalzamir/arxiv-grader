@@ -108,6 +108,7 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 - [x] **Journal triage tuning** — monitoring confirmed current tuning is working well. No action needed.
 - [x] **April 2nd refiner check** — confirmed refiner ran (2026-04-02). Revealed need for refiner v2 (see below).
 - [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token).
+  - [ ] **`create_profile.py` APS fetcher** — `fetch_journal_paper()` will also fail on APS URLs (same Cloudflare block). Once an APS access solution is found, update the journal fetcher in `create_profile.py` to handle `link.aps.org` URLs.
 - [x] **Security audit** — `porkbun key.txt` found committed in initial commit; keys were already dead and repo is private. Purged from all git history via `git filter-repo`, force-pushed all branches. `.gitignore` updated with `*key*.txt`, `*secret*.txt`, `*token*.txt`, `*credentials*.txt` patterns. Server checked — clean.
 
 ---
@@ -144,5 +145,30 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 - APS abstracts truncated (RSS fallback) — Hetzner IP blocked by APS Cloudflare protection
 - On Mondays, arXiv feed has 120–165 papers due to weekend accumulation — triage cap of 15 handles this
 - Scoring agent `max_tokens=8192` — sufficient for up to ~30 filtered papers (cap 15+15)
-- Cron UTC offset: `TZ=Europe/Madrid` set in crontab — handles summer/winter time automatically
+- Cron: system timezone set to `America/New_York` (`timedatectl set-timezone`); crontab runs at 00:30 ET daily, 01:30 ET monthly refiner — DST handled automatically
 - Anthropic Batch API (Sonnet) can get stuck during incidents — use `--no-batch` flag as fallback
+
+---
+
+## Backlog
+
+- [ ] **Weekly highlight report** — optional weekly email (e.g. every Friday) containing only papers scored 8 and above from the past week. Opt-in per user via `taste_profile.json` flag. Useful for users who want a curated high-signal summary without reading daily digests.
+  - **Opt-in flag:** add `"weekly_digest": true` to `taste_profile.json`; default false
+  - **Trigger:** new cron entry, e.g. Friday 01:00 ET → `run_all_users.py --weekly`
+  - **Data source:** scan `users/<name>/data/*/scored_papers.json` for the past 7 days; collect all papers with `score >= 8`
+  - **Deduplication:** a paper may appear in multiple daily files if re-fetched; deduplicate by `arxiv_id` / DOI, keeping highest score
+  - **PDF:** reuse `build_digest_pdf.py` with a filter; add a "Weekly Highlights" header and date range
+  - **No triage/scoring needed** — purely a post-processing step over already-scored data
+  - **New file:** `run_weekly_digest.py` — loops users, checks opt-in flag, collects papers, builds PDF, emails it
+  - **Edge cases:** fewer than 7 days of data (new user), no papers scored ≥ 8 that week (skip or send empty notice)
+
+- [ ] **Self-service user onboarding** — allow new users to onboard without owner intervention. Possible scheme: user fills out a web form (hosted on `incomingscience.xyz`), submits it, and `create_profile.py` runs automatically on the server to create their profile and add them to the pipeline. Requires auth/validation to prevent abuse, automated directory creation, and a confirmation email flow.
+  - **Web form (`server.py`):** new route `GET /onboarding/form` serving an HTML form with fields: name, email, arXiv categories, free-text interests, keywords (comma-separated), authors to follow, and optionally a list of representative paper URLs
+  - **Submission endpoint:** `POST /onboarding/submit` — validates input, writes a pending request to `onboarding_queue/<token>.json`, sends a verification email to the user with a confirm link
+  - **Email verification:** `GET /onboarding/confirm?token=<token>` — marks request as confirmed, triggers profile creation
+  - **Profile creation:** confirmed request calls `create_profile.py` non-interactively (all inputs from form JSON, skip interactive review steps); creates `users/<name>/` directory, `.env` (with `EMAIL_TO`), `taste_profile.json`, `archive.json`
+  - **API key handling:** new users need their own `ANTHROPIC_API_KEY`; options: (a) owner-provided shared key per field stored in root `.env`, (b) user supplies key in the form. Decision needed before implementation.
+  - **Confirmation email to user:** sent after profile creation — confirms they're enrolled, explains the schedule, links to landing page
+  - **Alert to owner:** email to operator on each new confirmed signup
+  - **Security:** rate-limit submissions by IP; token expiry (e.g. 24h); sanitize all user inputs used in directory names (alphanumeric + hyphen only for `<name>`); no shell execution of user-supplied strings
+  - **`create_profile.py` changes:** add a `--non-interactive` mode that reads all profile fields from a JSON file instead of prompting; skips the Excel upload and interactive ranking review; calls Claude once to generate initial keyword/area ranking from the free-text inputs

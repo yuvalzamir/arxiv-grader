@@ -189,8 +189,9 @@ def main():
         help="Skip archiving yesterday's ratings.",
     )
     parser.add_argument(
-        "--papers", required=True,
-        help="Path to today's merged papers JSON (arXiv + journals, written by run_all_users.py).",
+        "--papers", default=None,
+        help="Path to today's merged papers JSON (arXiv + journals). "
+             "If omitted, falls back to filtered_papers.json (score-only recovery mode).",
     )
     parser.add_argument(
         "--no-batch", action="store_true",
@@ -216,8 +217,12 @@ def main():
     today_dir = data_dir / today_str
     today_dir.mkdir(parents=True, exist_ok=True)
 
-    papers_path   = Path(args.papers)
     filtered_path = today_dir / "filtered_papers.json"
+    if args.papers:
+        papers_path = Path(args.papers)
+    else:
+        log.info("No --papers provided — using filtered_papers.json as papers source (score-only recovery).")
+        papers_path = filtered_path
     scored_path   = today_dir / "scored_papers.json"
     pdf_path      = today_dir / "digest.pdf"
 

@@ -29,8 +29,12 @@ from datetime import date
 from email.mime.text import MIMEText
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR  = Path(__file__).parent
 USERS_DIR = BASE_DIR / "users"
+
+load_dotenv(BASE_DIR / ".env")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -272,6 +276,7 @@ def main():
     parser.add_argument("--no-fetch",     action="store_true", help="Skip arXiv fetch — expect {field}_arxiv_papers.json to already exist in shared data dir (useful for weekend testing).")
     parser.add_argument("--triage-only",  action="store_true", help="Stop after centralized triage — skip scoring, PDF, and email (useful for testing triage/caching).")
     parser.add_argument("--no-batch",     action="store_true", help="Use synchronous API for scoring instead of Batch API.")
+    parser.add_argument("--score-only",   action="store_true", help="Skip fetch, triage, dedup, and archive — run scoring/PDF/email only. Requires filtered_papers.json to already exist for the user+date.")
     # Refiner flags (passed through to run_profile_refiner.py)
     parser.add_argument("--dry-run", action="store_true", help="(refine only) Don't write profile.")
     parser.add_argument("--days",    type=int, default=None, help="(refine only) Days of history to use.")
@@ -293,6 +298,8 @@ def main():
     if not args.refine:
         date_str = args.date or date.today().isoformat()
         shared_data_dir = BASE_DIR / "data" / date_str
+
+    if not args.refine and not args.score_only:
         shared_data_dir.mkdir(parents=True, exist_ok=True)
 
         user_fields  = {u.name: _user_field(u) for u in users}
@@ -407,6 +414,8 @@ def main():
             base_extra_args.append("--skip-archive")
         if args.no_batch:
             base_extra_args.append("--no-batch")
+        if args.score_only:
+            base_extra_args += ["--skip-dedup", "--skip-archive"]
 
     results: dict[str, bool] = {}
     with ThreadPoolExecutor(max_workers=len(users)) as executor:

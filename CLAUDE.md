@@ -118,9 +118,9 @@ pip install -r requirements.txt
 
 - **VPS**: Hetzner CX23, Ubuntu 24.04, `116.203.255.222`
 - **Web**: Caddy reverse proxy + HTTPS (Let's Encrypt) → Gunicorn (systemd)
-- **Cron (TZ=Europe/Madrid)**:
-  - Mon–Fri 05:30 UTC → daily pipeline
-  - 2nd of month 06:30 UTC → monthly refiner
+- **Cron (system TZ=America/New_York, DST-aware)**:
+  - Mon–Fri 00:30 ET → daily pipeline
+  - 2nd of month 01:30 ET → monthly refiner
 - **Logs**: `/var/log/arxiv-grader/daily.log`, `/var/log/arxiv-grader/refiner.log`
 
 ## Deploying to the Server
