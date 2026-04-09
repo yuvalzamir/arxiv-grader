@@ -33,7 +33,7 @@ class NatureScraper(BaseScraper):
             return False
         return True
 
-    def scrape_article(self, url: str) -> dict | None:
+    def scrape_article(self, url: str, entry=None) -> dict | None:
         response = self.get(url)
         if response is None:
             return {"abstract": "", "subject_tags": []}

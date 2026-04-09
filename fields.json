@@ -1,6 +1,6 @@
 {
   "cond-mat": {
-    "arxiv_categories": ["cond-mat", "physics"],
+    "arxiv_categories": ["cond-mat"],
     "description": "Condensed matter physics",
     "journals": [
       {
@@ -65,6 +65,102 @@
       {
         "name": "NatNano",
         "url": "https://www.nature.com/nnano.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "NanoLett",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "publisher": "acs",
+        "tag_filter": null
+      }
+    ]
+  },
+  "quantum-sensing": {
+    "arxiv_categories": ["cond-mat", "physics.app-ph", "physics.optics", "physics.chem-ph"],
+    "description": "Quantum sensing and related photonics, nanoscience, and materials",
+    "journals": [
+      {
+        "name": "ACSNano",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ACSPhotonics",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=apchd5",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ACSSensors",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ascefj",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "NanoLett",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "AdvMat",
+        "url": "https://advanced.onlinelibrary.wiley.com/feed/15214095/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "AdvFuncMat",
+        "url": "https://advanced.onlinelibrary.wiley.com/feed/16163028/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "Small",
+        "url": "https://onlinelibrary.wiley.com/feed/16136829/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "Nanophotonics",
+        "url": "https://onlinelibrary.wiley.com/feed/21928614/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatPhoton",
+        "url": "https://www.nature.com/nphoton.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatNano",
+        "url": "https://www.nature.com/nnano.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatMat",
+        "url": "https://www.nature.com/nmat.rss",
         "publisher": "nature",
         "tag_filter": null
       },

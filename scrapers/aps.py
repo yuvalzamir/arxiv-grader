@@ -5,19 +5,17 @@ Covers: PRL, PRB, PRX, PRX Quantum, and any future APS journal
 added to fields.json with publisher="aps".
 
 Editorial filter: keep URLs matching the abstract pattern; drop errata and publisher's notes.
-Abstract selector: section.abstract p
+Abstract: APS article pages are Cloudflare-protected (403) from server IPs, and
+Semantic Scholar does not provide APS abstracts (licensing restriction). The RSS
+feed contains a truncated abstract (~3 sentences) which is used via the caller's
+fallback in fetch_journals.py.
 Subject tags: not available → always []
 """
 
 import logging
 import re
 
-import requests
-from bs4 import BeautifulSoup
-
 from .base import BaseScraper
-
-_S2_API = "https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}?fields=abstract"
 
 log = logging.getLogger(__name__)
 
@@ -41,26 +39,8 @@ class APSScraper(BaseScraper):
             return False
         return True
 
-    def scrape_article(self, url: str) -> dict:
-        # Try Semantic Scholar first — reliable, no IP blocking issues.
-        doi_match = re.search(r"10\.\d{4}/\S+", url)
-        if doi_match:
-            try:
-                resp = requests.get(_S2_API.format(doi=doi_match.group()), timeout=10)
-                if resp.status_code == 200:
-                    abstract = resp.json().get("abstract") or ""
-                    if abstract:
-                        return {"abstract": abstract, "subject_tags": []}
-            except Exception:
-                pass
-
-        # Fallback: direct APS page scrape.
-        response = self.get(url)
-        if response is not None:
-            soup = BeautifulSoup(response.text, "lxml")
-            section = soup.find("section", {"id": "abstract-section"})
-            abstract = section.get_text(separator=" ", strip=True).removeprefix("Abstract").strip() if section else ""
-            if abstract:
-                return {"abstract": abstract, "subject_tags": []}
-
+    def scrape_article(self, url: str, entry=None) -> dict:
+        # APS pages are Cloudflare-blocked (403) and Semantic Scholar has no APS
+        # abstracts due to licensing. Returning empty here lets fetch_journals.py
+        # fall back to the truncated abstract in the RSS <description>.
         return {"abstract": "", "subject_tags": []}

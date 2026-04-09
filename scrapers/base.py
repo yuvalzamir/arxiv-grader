@@ -41,10 +41,13 @@ class BaseScraper(ABC):
         """Return True if the RSS entry is a research article worth scraping."""
 
     @abstractmethod
-    def scrape_article(self, url: str) -> dict:
+    def scrape_article(self, url: str, entry=None) -> dict:
         """
         Fetch the article page and return:
             {"abstract": str, "subject_tags": list[str]}
+        The RSS feed entry is passed as `entry` (feedparser dict) when available;
+        scrapers that can extract data from the RSS itself should use it to avoid
+        an extra HTTP request.
         Return None to signal the entry is not a research article and should be skipped.
         On fetch failure, return {"abstract": "", "subject_tags": []}.
         """

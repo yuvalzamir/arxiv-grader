@@ -32,7 +32,7 @@ class ScienceScraper(BaseScraper):
         doi = getattr(entry, "id", "")
         return bool(_DOI_RE.search(link) or _DOI_RE.search(doi))
 
-    def scrape_article(self, url: str) -> dict:
+    def scrape_article(self, url: str, entry=None) -> dict:
         # Extract DOI from URL (strip query params like ?af=R)
         doi = _extract_doi_from_url(url)
         if doi:

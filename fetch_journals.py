@@ -149,7 +149,7 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
             continue
 
         url = getattr(entry, "link", "")
-        result = scraper.scrape_article(url)
+        result = scraper.scrape_article(url, entry=entry)
         if result is None:
             continue
 
@@ -157,7 +157,7 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
         arxiv_id = doi if doi else url
 
         abstract = result["abstract"]
-        if not abstract:
+        if not abstract and not result.get("skip_rss_fallback"):
             rss_summary = getattr(entry, "summary", "")
             if rss_summary:
                 abstract = BeautifulSoup(rss_summary, "lxml").get_text(separator=" ", strip=True)
