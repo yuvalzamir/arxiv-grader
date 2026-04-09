@@ -156,6 +156,13 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ---
 
+## Upcoming
+
+- [ ] **ACS abstract access — awaiting response** — email sent to ACS requesting API or institutional access to paper abstracts. If granted, implement in `scrapers/acs.py` (currently returns empty abstract). Follow up if no response.
+- [ ] **systems-biology field + Yael onboarding** — create `systems-biology` field in `fields.json` with relevant arXiv categories (e.g. `q-bio`) and Cell journals. Add triage API key to server root `.env`. Onboard Yael as the first user in this field.
+  - [ ] **Cell journal scrapers** — investigate RSS feeds for Cell Press journals (Cell, Nature Cell Biology, etc.). Check abstract availability. Add scraper if needed (likely a new publisher class or reuse of existing ones). Candidate journals TBD from Yael's onboarding form.
+- [x] **quantum-sensing field** — deployed and first user onboarded ✓
+
 ## Backlog
 
 - [ ] **Weekly highlight report** — optional weekly email (e.g. every Friday) containing only papers scored 8 and above from the past week. Opt-in per user via `taste_profile.json` flag. Useful for users who want a curated high-signal summary without reading daily digests.
