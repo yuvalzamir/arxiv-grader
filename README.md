@@ -134,7 +134,7 @@ Tapping opens the browser briefly, the server records the rating, and returns a 
 
 ---
 
-### 5. Delivery — `run_daily.py` + `run_all_users.py`
+### 5. Delivery — `run_daily.py` + `run_all_users.py` + `run_weekly_digest.py`
 
 `run_all_users.py` is the master orchestrator. It handles all shared, field-level work before dispatching per-user tasks in parallel.
 
@@ -145,19 +145,38 @@ Tapping opens the browser briefly, the server records the rating, and returns a 
 4. Merge arXiv + journals per field → `{field}_today_papers.json`
 5. Exit cleanly for any field with no papers today
 6. Run centralized triage per field — all users in a field triaged sequentially (cached API)
-7. Dispatch per-user scoring + PDF + email in parallel (`ThreadPoolExecutor`)
+7. Dispatch per-user scoring + PDF + daily email in parallel (`ThreadPoolExecutor`)
 8. Clean up shared data folder
 9. Send batch fallback alert email if any scoring job timed out
+10. Weekly digest phase — for any user with `weekly_digest: true` whose chosen weekday matches today, send their weekly email (runs after all daily work is complete)
 
 **Per-user steps (`run_daily.py`):**
 1. Deduplicate yesterday's ratings (`deduplicate_ratings.py`)
 2. Archive yesterday's ratings to `archive.json` (`archive.py`)
 3. Run scoring pipeline (`run_pipeline.py --skip-triage` — triage already done)
 4. Build PDF digest
-5. Email PDF to user
+5. Email PDF to user (skipped if `daily_digest: false` in profile)
 6. Clean up data folders older than 14 days
 
 A failure for one user does not affect others.
+
+#### Delivery modes
+
+Each user independently controls whether they receive a daily digest, a weekly digest, or both. This is configured in `taste_profile.json`:
+
+```json
+"daily_digest": true,
+"weekly_digest": false,
+"weekly_day": "friday"
+```
+
+Both flags default to their values above if absent — existing users are unaffected. A user can have any combination: daily only, weekly only, or both.
+
+**Weekly digest (`run_weekly_digest.py`):** Collects all papers scored ≥ 8 from the past 7 days, deduplicates by paper ID, and delivers a single PDF titled "weekly digest". Scoring and PDF generation still run every day regardless of delivery mode — the daily PDF accumulates in `data/YYYY-MM-DD/` and is available for the weekly aggregator even when no daily email is sent.
+
+**Mailing lists:** Daily and weekly emails can go to different recipients. Set `EMAIL_TO_DAILY` and `EMAIL_TO_WEEKLY` in the user's `.env`; both fall back to `EMAIL_TO` if not set.
+
+**Refiner behaviour for weekly-only users:** When a user has `daily_digest: false` and `weekly_digest: true`, the monthly refiner automatically adjusts its analysis — it suppresses the "missed" and "underscored" discrepancy buckets (which are structurally impossible when the user only ever sees papers scored ≥ 8) and notes the filtered nature of the data to avoid misinterpreting sparse ratings.
 
 ---
 
@@ -234,8 +253,9 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 | `server.py` | Flask server — landing page, rating endpoint, static assets |
 | `deduplicate_ratings.py` | Keeps the last rating per paper per day |
 | `archive.py` | Appends daily ratings to permanent `archive.json` |
-| `run_daily.py` | Per-user orchestrator — scoring, PDF, email (called by run_all_users.py) |
-| `run_all_users.py` | Master orchestrator — fetch, triage, then parallel per-user scoring |
+| `run_daily.py` | Per-user orchestrator — scoring, PDF, daily email (called by run_all_users.py) |
+| `run_all_users.py` | Master orchestrator — fetch, triage, parallel per-user scoring, weekly dispatch |
+| `run_weekly_digest.py` | Weekly digest — collects scored ≥ 8 papers from past 7 days, builds PDF, emails |
 | `run_profile_refiner.py` | Monthly taste profile refiner |
 | `prompts/profile_creator.txt` | System prompt for profile creation |
 | `prompts/triage.txt` | System prompt for arXiv triage agent |
@@ -254,7 +274,7 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 | `journal_watermarks.json` | Per-journal watermark — prevents re-fetching seen papers |
 | `users/<name>/taste_profile.json` | Each user's evolving taste profile |
 | `users/<name>/archive.json` | Each user's permanent rating history |
-| `users/<name>/.env` | `ANTHROPIC_API_KEY` (scoring) + `EMAIL_TO` per user |
+| `users/<name>/.env` | `ANTHROPIC_API_KEY` (scoring) + `EMAIL_TO` / `EMAIL_TO_DAILY` / `EMAIL_TO_WEEKLY` per user |
 | `users/<name>/data/YYYY-MM-DD/` | Daily data folder: papers, filtered, scores, PDF, ratings |
 | `users/<name>/data/YYYY-MM-DD/triage_arxiv_input.txt` | Full triage prompt sent to Haiku (arXiv papers) — written every run for debugging |
 | `users/<name>/data/YYYY-MM-DD/triage_journals_input.txt` | Full triage prompt sent to Haiku (journal papers) — written every run for debugging |
@@ -267,7 +287,7 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 - **Hosting:** Any Linux VPS
 - **HTTPS:** Caddy (auto Let's Encrypt) → Gunicorn → Flask
 - **Scheduling:** Cron — daily pipeline runs shortly after arXiv's nightly release; monthly refiner runs on the 2nd of each month, offset by one hour to avoid a race on `archive.json`
-- **Email:** Shared SMTP account configured in root `.env`. Each user configures only `EMAIL_TO`.
+- **Email:** Shared SMTP account configured in root `.env`. Each user configures `EMAIL_TO` (default), `EMAIL_TO_DAILY`, and/or `EMAIL_TO_WEEKLY` in their `.env` — daily and weekly emails can go to different recipient lists.
 - **LLM:** Anthropic Claude API — Haiku for triage (cached, one shared API key per field in root `.env`), Sonnet for scoring and refinement (Batch API, per-user `ANTHROPIC_API_KEY` in user `.env`).
 
 ---
