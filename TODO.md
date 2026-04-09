@@ -125,6 +125,12 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
   3. Remove area grade changes from the main refiner (Sonnet) entirely — areas exclusively managed by the Haiku step
   - [ ] **Refiner v2 — May check** — Verify refiner v2 runs correctly on real data after May 2nd cron. Check area management recommendations make sense given a full month of ratings.
 
+- [x] **Multiple arXiv categories per field** — allow a field to span more than one top-level arXiv category (e.g. `cond-mat` + `physics`).
+  - **`fields.json`**: renamed `"arxiv_category"` (string) → `"arxiv_categories"` (list). Old string form still supported as fallback.
+  - **`run_all_users.py` — `run_arxiv_fetch()`**: normalizes to list, fetches each category into a temp file, merges results, deduplicates by `arxiv_id`, writes to `{field}_arxiv_papers.json`.
+  - **`fetch_papers.py`**: no changes needed.
+  - Everything downstream (triage, scoring, PDF) is unchanged.
+
 ---
 
 ## Security review

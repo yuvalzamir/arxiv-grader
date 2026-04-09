@@ -124,20 +124,45 @@ def run_journal_scrape(date_str: str, active_fields: list[str], shared_data_dir:
 def run_arxiv_fetch(field: str, field_config: dict, date_str: str, shared_data_dir: Path) -> Path | None:
     """
     Fetch arXiv papers for a field once, shared across all users in that field.
+    Supports multiple arXiv categories via 'arxiv_categories' (list) in fields.json;
+    falls back to 'arxiv_category' (string) for backward compatibility.
+    Papers from all categories are merged and deduplicated by arxiv_id.
     Returns path to {field}_arxiv_papers.json on success, None on failure.
     """
-    arxiv_category = field_config.get("arxiv_category", field)
+    # Normalize to list — support both old string and new list form.
+    raw = field_config.get("arxiv_categories") or field_config.get("arxiv_category") or field
+    categories = [raw] if isinstance(raw, str) else list(raw)
+
     output_path = shared_data_dir / f"{field}_arxiv_papers.json"
-    cmd = [
-        sys.executable, str(BASE_DIR / "fetch_papers.py"),
-        "-o", str(output_path),
-        "-c", arxiv_category,
-    ]
-    log.info("Fetching arXiv papers for field '%s' (category: %s)...", field, arxiv_category)
-    result = subprocess.run(cmd, cwd=str(BASE_DIR))
-    if result.returncode != 0:
-        log.warning("fetch_papers.py failed for field '%s'.", field)
-        return None
+    all_papers: list[dict] = []
+    seen_ids: set[str] = set()
+
+    for category in categories:
+        tmp_path = shared_data_dir / f"{field}_arxiv_{category.replace('/', '_')}_tmp.json"
+        cmd = [
+            sys.executable, str(BASE_DIR / "fetch_papers.py"),
+            "-o", str(tmp_path),
+            "-c", category,
+        ]
+        log.info("Fetching arXiv papers for field '%s' (category: %s)...", field, category)
+        result = subprocess.run(cmd, cwd=str(BASE_DIR))
+        if result.returncode != 0:
+            log.warning("fetch_papers.py failed for field '%s', category '%s'.", field, category)
+            return None
+        papers = json.loads(tmp_path.read_text())
+        tmp_path.unlink(missing_ok=True)
+        before = len(all_papers)
+        for paper in papers:
+            pid = paper.get("arxiv_id", "")
+            if pid not in seen_ids:
+                seen_ids.add(pid)
+                all_papers.append(paper)
+        log.info(
+            "Category '%s': %d papers fetched, %d new after dedup (total: %d).",
+            category, len(papers), len(all_papers) - before, len(all_papers),
+        )
+
+    output_path.write_text(json.dumps(all_papers, indent=2, ensure_ascii=False))
     return output_path
 
 

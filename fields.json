@@ -1,6 +1,6 @@
 {
   "cond-mat": {
-    "arxiv_category": "cond-mat",
+    "arxiv_categories": ["cond-mat", "physics"],
     "description": "Condensed matter physics",
     "journals": [
       {
