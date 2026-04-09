@@ -479,6 +479,51 @@ def main():
         shutil.rmtree(shared_data_dir)
         log.info("Removed shared data folder: %s", shared_data_dir)
 
+    # --- Weekly digest phase: runs after all daily work is complete ---
+    # Only triggered on non-refine, non-triage-only runs. Each user's weekly_day
+    # is compared against today; on a match the weekly digest is sent.
+    if not args.refine and not args.triage_only:
+        today_weekday = (date.fromisoformat(args.date) if args.date else date.today()).strftime("%A").lower()
+        weekly_users = []
+        for user_dir in users:
+            profile_data = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
+            if not profile_data.get("weekly_digest", False):
+                continue
+            if profile_data.get("weekly_day", "friday") != today_weekday:
+                continue
+            weekly_users.append(user_dir)
+
+        if weekly_users:
+            log.info(
+                "Weekly digest day (%s) — sending weekly emails for %d user(s): %s",
+                today_weekday, len(weekly_users), [u.name for u in weekly_users],
+            )
+            weekly_extra = []
+            if args.no_email:
+                weekly_extra.append("--no-email")
+            if args.date:
+                weekly_extra += ["--date", args.date]
+
+            weekly_results: dict[str, bool] = {}
+            with ThreadPoolExecutor(max_workers=len(weekly_users)) as executor:
+                futures = {
+                    executor.submit(run_for_user, u, "run_weekly_digest.py", weekly_extra): u.name
+                    for u in weekly_users
+                }
+                for future in as_completed(futures):
+                    weekly_results[futures[future]] = future.result()
+
+            print()
+            print("=" * 50)
+            print("  Weekly digest summary")
+            print("=" * 50)
+            for name, ok in weekly_results.items():
+                print(f"  {name:20s}  {'OK' if ok else 'FAILED'}")
+            print()
+
+            if not all(weekly_results.values()):
+                results.update({k: False for k, v in weekly_results.items() if not v})
+
     # Check for batch API fallback reports and send alert if any.
     if not args.refine:
         date_str = args.date or date.today().isoformat()

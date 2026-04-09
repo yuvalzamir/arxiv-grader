@@ -206,10 +206,13 @@ def _get_score(entry: dict) -> int | None:
         return None
 
 
-def build_discrepancy_section(recent_ratings: list[dict]) -> str:
+def build_discrepancy_section(recent_ratings: list[dict], weekly_only_mode: bool = False) -> str:
     """
     Identify papers where the pipeline score and user rating diverged significantly.
     Returns a formatted text section for the refiner message.
+
+    In weekly_only_mode the user only ever sees papers scored >= 8, so the MISSED
+    and UNDERSCORED buckets are structurally impossible and are suppressed.
     """
     overconfident_high: list[dict] = []   # score ≥ 7, rated irrelevant
     overconfident_mild: list[dict] = []   # score ≥ 8, rated good
@@ -246,9 +249,28 @@ def build_discrepancy_section(recent_ratings: list[dict]) -> str:
     parts = [
         f"SCORE-RATING DISCREPANCIES ({total} total)",
         "=" * 42,
-        "Papers where the pipeline's score and the user's rating diverged significantly.",
-        "The justification field shows which keyword/signal drove the pipeline's score.",
-        "",
+    ]
+
+    if weekly_only_mode:
+        parts += [
+            "IMPORTANT — WEEKLY-ONLY DELIVERY MODE",
+            "This user receives only papers scored >= 8 (weekly digest). They never see",
+            "papers triaged out or scored below 8. As a result:",
+            "  - MISSED and UNDERSCORED discrepancies are structurally impossible and are",
+            "    not shown. Do not treat their absence as evidence triage is working well.",
+            "  - Only OVERCONFIDENT discrepancies are meaningful here.",
+            "  - Expect fewer total ratings than a daily user — be conservative with",
+            "    borderline signals.",
+            "",
+        ]
+    else:
+        parts += [
+            "Papers where the pipeline's score and the user's rating diverged significantly.",
+            "The justification field shows which keyword/signal drove the pipeline's score.",
+            "",
+        ]
+
+    parts += [
         disc_section(
             "OVERCONFIDENT — scored ≥7 but user said IRRELEVANT (strongest negative signal)",
             overconfident_high,
@@ -258,28 +280,33 @@ def build_discrepancy_section(recent_ratings: list[dict]) -> str:
             "OVERCONFIDENT — scored ≥8 but user said only GOOD (mild overconfidence)",
             overconfident_mild,
         ),
-        "",
-        disc_section(
-            "MISSED — not triaged or scored ≤3, but user said EXCELLENT (must fix)",
-            missed_excellent,
-            include_abstract=True,
-        ),
-        "",
-        disc_section(
-            "MISSED — not triaged or scored ≤3, but user said GOOD (consider new keyword)",
-            missed_good,
-            include_abstract=True,
-        ),
-        "",
-        disc_section(
-            "UNDERSCORED — scored 4–6 but user said EXCELLENT (signal present but underweighted)",
-            underscored,
-        ),
     ]
+
+    if not weekly_only_mode:
+        parts += [
+            "",
+            disc_section(
+                "MISSED — not triaged or scored ≤3, but user said EXCELLENT (must fix)",
+                missed_excellent,
+                include_abstract=True,
+            ),
+            "",
+            disc_section(
+                "MISSED — not triaged or scored ≤3, but user said GOOD (consider new keyword)",
+                missed_good,
+                include_abstract=True,
+            ),
+            "",
+            disc_section(
+                "UNDERSCORED — scored 4–6 but user said EXCELLENT (signal present but underweighted)",
+                underscored,
+            ),
+        ]
+
     return "\n".join(parts)
 
 
-def build_refiner_message(profile: dict, recent_ratings: list[dict]) -> str:
+def build_refiner_message(profile: dict, recent_ratings: list[dict], weekly_only_mode: bool = False) -> str:
     # Group by rating.
     by_rating: dict[str, list[dict]] = {"excellent": [], "good": [], "irrelevant": []}
     for entry in recent_ratings:
@@ -342,7 +369,7 @@ def build_refiner_message(profile: dict, recent_ratings: list[dict]) -> str:
         f"{section('IRRELEVANT', by_rating['irrelevant'])}"
     )
 
-    discrepancy_block = build_discrepancy_section(recent_ratings)
+    discrepancy_block = build_discrepancy_section(recent_ratings, weekly_only_mode=weekly_only_mode)
 
     return f"{profile_block}\n\n---\n\n{ratings_block}\n\n---\n\n{discrepancy_block}"
 
@@ -738,7 +765,13 @@ def main():
     # Step 4 — Main refiner call (Sonnet, Batch API, structured outputs)
     # ---------------------------------------------------------------------------
 
-    user_message = build_refiner_message(profile, recent)
+    weekly_only_mode = (
+        not profile.get("daily_digest", True)
+        and profile.get("weekly_digest", False)
+    )
+    if weekly_only_mode:
+        log.info("Weekly-only delivery mode detected — suppressing MISSED/UNDERSCORED buckets.")
+    user_message = build_refiner_message(profile, recent, weekly_only_mode=weekly_only_mode)
     client = Anthropic()
 
     response = _submit_and_poll(

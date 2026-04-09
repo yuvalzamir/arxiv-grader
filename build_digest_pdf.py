@@ -446,7 +446,7 @@ def draw_first_page(canvas, doc):
 
 # ── Main builder ──────────────────────────────────────────────────────────────
 
-def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_path: str | None = None):
+def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_path: str | None = None, weekly: bool = False):
     register_fonts()
     scored = json.loads(Path(scored_path).read_text(encoding="utf-8"))
     all_papers = json.loads(Path(papers_path).read_text(encoding="utf-8"))
@@ -482,31 +482,27 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_pat
 
     story = [
         Spacer(1, 4 * mm),
-        Paragraph("Incoming Science — daily digest", styles["page_title"]),
+        Paragraph("Incoming Science — weekly digest" if weekly else "Incoming Science — daily digest", styles["page_title"]),
         Paragraph(date_str, styles["page_date"]),
         Paragraph(
-            f"{total_papers} papers today  ·  {total_scored} scored  ·  {total_unscored} unscored",
+            f"{total_scored} papers this week" if weekly else f"{total_papers} papers today  ·  {total_scored} scored  ·  {total_unscored} unscored",
             styles["page_date"],
         ),
         KeepTogether([
             HRFlowable(width=COL_W, thickness=1, color=C["divider"], spaceAfter=6),
             Spacer(1, 4 * mm),
-            Paragraph(f"Top Papers  ({total_scored})", styles["section_header"]),
-            Spacer(1, 3 * mm),
-        ]),
+        ] + ([] if weekly else [Paragraph(f"Top Papers  ({total_scored})", styles["section_header"]), Spacer(1, 3 * mm)])),
     ]
 
     # ── Scored: journals first, then arXiv ────────────────────────────────────
     if scored_journals:
-        first = scored_block(scored_journals[0], d.isoformat(), styles)
-        story.append(KeepTogether(subsection_divider("Journals", len(scored_journals), styles) + [first]))
-        for paper in scored_journals[1:]:
+        story.append(KeepTogether(subsection_divider("Journals", len(scored_journals), styles)))
+        for paper in scored_journals:
             story.append(scored_block(paper, d.isoformat(), styles))
 
     if scored_arxiv:
-        first = scored_block(scored_arxiv[0], d.isoformat(), styles)
-        story.append(KeepTogether(subsection_divider("arXiv", len(scored_arxiv), styles) + [first]))
-        for paper in scored_arxiv[1:]:
+        story.append(KeepTogether(subsection_divider("arXiv", len(scored_arxiv), styles)))
+        for paper in scored_arxiv:
             story.append(scored_block(paper, d.isoformat(), styles))
 
     # ── Section divider ───────────────────────────────────────────────────────
@@ -562,6 +558,7 @@ def main():
     p.add_argument("--output",    default=None,                          help="Output PDF path")
     p.add_argument("--base-url",  default=None,                          help="Override rating base URL (e.g. http://localhost:5000/rate)")
     p.add_argument("--user",      default=None,                          help="Username embedded in rating URLs (e.g. alice)")
+    p.add_argument("--weekly",    action="store_true",                   help="Use 'weekly digest' title instead of 'daily digest'.")
     args = p.parse_args()
 
     if args.base_url:
@@ -581,7 +578,7 @@ def main():
             print(f"Error: {f} not found", file=sys.stderr)
         sys.exit(1)
 
-    build_pdf(args.scored, args.papers, args.output, journals_path=args.journals)
+    build_pdf(args.scored, args.papers, args.output, journals_path=args.journals, weekly=args.weekly)
 
 
 if __name__ == "__main__":

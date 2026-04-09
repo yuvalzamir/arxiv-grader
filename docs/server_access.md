@@ -153,7 +153,48 @@ Check that `users/<name>/data/YYYY-MM-DD/digest.pdf` was created, then send with
 python run_all_users.py --user <name> --skip-dedup --skip-archive
 ```
 
-### Step 5 — Done
+### Step 5 — Configure delivery preferences
+
+Edit the user's `taste_profile.json` to set their delivery mode. The defaults (if fields are absent) are `daily_digest: true` and `weekly_digest: false`, so a standard daily user needs no changes.
+
+**Daily only (default):** no changes needed — the profile created by `create_profile.py` works as-is.
+
+**Weekly only** (gets one email per week with papers scored ≥ 8, no daily emails):
+```bash
+# Add to taste_profile.json:
+"daily_digest": false,
+"weekly_digest": true,
+"weekly_day": "friday"   # lowercase weekday name, defaults to friday
+```
+And add to their `.env`:
+```bash
+cat >> /opt/arxiv-grader/users/<name>/.env << 'EOF'
+EMAIL_TO_WEEKLY=<their email>
+EOF
+```
+
+**Both daily and weekly** (daily email every day + weekly highlights email on their chosen day):
+```bash
+# Add to taste_profile.json:
+"daily_digest": true,
+"weekly_digest": true,
+"weekly_day": "friday"
+```
+And add both lists to their `.env`:
+```bash
+cat >> /opt/arxiv-grader/users/<name>/.env << 'EOF'
+EMAIL_TO_DAILY=<daily recipients, comma-separated>
+EMAIL_TO_WEEKLY=<weekly recipients, comma-separated>
+EOF
+```
+
+**Notes:**
+- `EMAIL_TO_DAILY` falls back to `EMAIL_TO` if not set — existing users with only `EMAIL_TO` are unaffected.
+- `EMAIL_TO_WEEKLY` falls back to `EMAIL_TO` if not set.
+- The weekly email is sent at the end of the normal daily cron run on the chosen weekday — no separate cron entry needed.
+- The weekly PDF contains only papers scored 8 or above from the past 7 days, with the title "weekly digest".
+
+### Step 6 — Done
 The new user is picked up automatically by the daily cron — no restart or config change needed.
 
 ---
