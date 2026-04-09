@@ -171,6 +171,7 @@ def run_centralized_triage(
     user_dirs: list[Path],
     papers: list[dict],
     date_str: str,
+    no_batch: bool = False,
 ) -> dict[str, bool]:
     """
     Run triage for all users in a field sequentially using the cached API.
@@ -192,7 +193,7 @@ def run_centralized_triage(
     triage_prompt         = load_prompt("triage.txt")
     triage_journal_prompt = load_prompt("triage_journals.txt")
 
-    use_batch = len(user_dirs) < 4
+    use_batch = len(user_dirs) < 4 and not no_batch
     log.info(
         "Field '%s': %d user(s) — triage mode: %s",
         field, len(user_dirs), "batch API" if use_batch else "cached API",
@@ -411,7 +412,7 @@ def main():
             for user_dir in field_users:
                 user_papers[user_dir.name] = merged_path
 
-            triage_results = run_centralized_triage(field, field_users, merged_papers, date_str)
+            triage_results = run_centralized_triage(field, field_users, merged_papers, date_str, no_batch=args.no_batch)
             for user_name, ok in triage_results.items():
                 if not ok:
                     triage_failed.add(user_name)

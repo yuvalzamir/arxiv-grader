@@ -23,11 +23,13 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 
 **arXiv (`fetch_papers.py`):** Pulls the arXiv RSS feed, filters to new submissions only (no cross-listings, no replacements). Supports `--category` for field filtering (e.g. `cond-mat`). If the feed is empty (holiday or off-day), the pipeline exits cleanly. Fetched once per field, shared across all users in that field.
 
-**Journals (`fetch_journals.py`):** Scrapes 11 top physics journals via RSS/eTOC feeds. Publisher-specific scraper classes live under `scrapers/` (APS, Nature, Science). Field configuration — which journals to monitor and tag filters for multi-discipline journals — is defined in `fields.json`. A per-journal watermark (`journal_watermarks.json`) prevents re-fetching papers already seen. Fetched once per run, filtered per field, shared across all users. Use `--since YYYY-MM-DD` to override the watermark for a manual re-run without advancing it.
+**Journals (`fetch_journals.py`):** Scrapes journals via RSS/eTOC feeds. Publisher-specific scraper classes live under `scrapers/` (APS, Nature, Science, ACS, Wiley). Field configuration — which journals to monitor and tag filters for multi-discipline journals — is defined in `fields.json`. A per-journal watermark (`journal_watermarks.json`) prevents re-fetching papers already seen. Fetched once per run, filtered per field, shared across all users. Use `--since YYYY-MM-DD` to override the watermark for a manual re-run without advancing it.
+
+**Abstract availability by publisher:** Nature scrapes article pages for full abstracts + subject tags. Science uses Semantic Scholar (~50% hit rate). APS uses the truncated RSS abstract (article pages Cloudflare-blocked, no API source). ACS has no abstract from any source (Cloudflare-blocked, no API) — triage uses title + authors only. Wiley extracts full abstracts directly from the RSS feed, no page fetches needed.
 
 **Holiday handling:** arXiv papers are fetched before journals. If all fields return empty arXiv feeds (holiday or off-day), the pipeline exits before the journal scraper runs — watermarks are not advanced and journal papers are preserved for the next day.
 
-**Journals covered (cond-mat field):** PRL (two section feeds), PRB, PRX, PRXQuantum, Nature, Nature Physics, Nature Materials, Nature Nanotechnology, Nature Communications, Science.
+**Journals covered:** Configured per field in `fields.json`. cond-mat: PRL (two section feeds), PRB, PRX, PRXQuantum, Nature, Nature Physics, Nature Materials, Nature Nanotechnology, Nature Communications, Science, Nano Letters. quantum-sensing: ACS Nano, ACS Photonics, ACS Sensors, Nano Letters, Advanced Materials, Advanced Functional Materials, Small, Nanophotonics, Nature, Nature Photonics, Nature Nanotechnology, Nature Materials, Nature Communications, Science.
 
 **Output schema per paper:**
 - arXiv ID (or DOI for journal papers), title, abstract, authors, subcategories
@@ -243,9 +245,11 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 |------|---------|
 | `fetch_papers.py` | Daily arXiv RSS fetch and parse (once per field) |
 | `fetch_journals.py` | Journal scraping — 11 journals via RSS/eTOC (once per run) |
-| `scrapers/aps.py` | APS publisher scraper (PRL, PRB, PRX, PRXQuantum) |
-| `scrapers/nature.py` | Nature publisher scraper (Nature, NatPhys, NatMat, NatNano, NatComms) |
-| `scrapers/science.py` | Science eTOC scraper with Semantic Scholar abstract fetch |
+| `scrapers/aps.py` | APS publisher scraper (PRL, PRB, PRX, PRXQuantum) — truncated RSS abstract |
+| `scrapers/nature.py` | Nature publisher scraper — full abstract + subject tags from article page |
+| `scrapers/science.py` | Science eTOC scraper — full abstract via Semantic Scholar API |
+| `scrapers/acs.py` | ACS publisher scraper — no abstract available; title + authors only |
+| `scrapers/wiley.py` | Wiley publisher scraper — full abstract from RSS feed, no page fetches |
 | `fields.json` | Field definitions — arxiv category, journal list, tag filters |
 | `create_profile.py` | One-time interactive user onboarding |
 | `run_pipeline.py` | Triage (Haiku, cached) + scoring (Sonnet, Batch API) pipeline |
