@@ -39,7 +39,13 @@ class PlosScraper(BaseScraper):
         if entry is not None:
             summary = getattr(entry, "summary", "")
             if summary:
-                abstract = BeautifulSoup(summary, "lxml").get_text(separator=" ", strip=True)
+                soup = BeautifulSoup(summary, "lxml")
+                # PLOS RSS summaries begin with a <p>by Author1, Author2...</p>
+                # followed by the abstract as plain text. Strip that author paragraph.
+                first_p = soup.find("p")
+                if first_p and first_p.get_text(strip=True).lower().startswith("by "):
+                    first_p.decompose()
+                abstract = soup.get_text(separator=" ", strip=True)
                 if abstract:
                     # Signal the caller not to re-apply the RSS fallback, since
                     # we already extracted the abstract from the same summary field.
