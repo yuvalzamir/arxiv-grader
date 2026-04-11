@@ -8,14 +8,20 @@ To add a new publisher family:
 
 from .acs import ACSScraper
 from .aps import APSScraper
+from .cell import CellScraper
 from .nature import NatureScraper
+from .plos import PlosScraper
+from .pnas import PnasScraper
 from .science import ScienceScraper
 from .wiley import WileyScraper
 
 SCRAPERS: dict = {
     "acs":     ACSScraper,
     "aps":     APSScraper,
+    "cell":    CellScraper,
     "nature":  NatureScraper,
+    "plos":    PlosScraper,
+    "pnas":    PnasScraper,
     "science": ScienceScraper,
     "wiley":   WileyScraper,
 }

@@ -159,8 +159,8 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 ## Upcoming
 
 - [ ] **ACS abstract access — awaiting response** — email sent to ACS requesting API or institutional access to paper abstracts. If granted, implement in `scrapers/acs.py` (currently returns empty abstract). Follow up if no response.
-- [ ] **systems-biology field + Yael onboarding** — create `systems-biology` field in `fields.json` with relevant arXiv categories (e.g. `q-bio`) and Cell journals. Add triage API key to server root `.env`. Onboard Yael as the first user in this field.
-  - [ ] **Cell journal scrapers** — investigate RSS feeds for Cell Press journals (Cell, Nature Cell Biology, etc.). Check abstract availability. Add scraper if needed (likely a new publisher class or reuse of existing ones). Candidate journals TBD from Yael's onboarding form.
+- [x] **systems-biology field + Yael onboarding** — scrapers and fields.json complete, deployed to server 2026-04-11. `ANTHROPIC_API_KEY_SYSTEMS_BIOLOGY` added to server root `.env`. Yael onboarded via `create_profile.py`. New scrapers: `cell.py`, `plos.py`, `pnas.py`. Extended `science.py` (Science Immunology + Science Advances). 18 journals. arXiv: `q-bio` + `physics.bio-ph`.
+  - [x] **tag_filter tuning** — PNAS uses 4 topic-specific RSS feeds (biophys/immun/cell-bio/microbio); Science Advances uses its dedicated eTOC feed. Both are pre-filtered at the RSS level; `tag_filter: null` is correct.
 - [x] **quantum-sensing field** — deployed and first user onboarded ✓
 
 ## Backlog
@@ -174,6 +174,8 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
   - **No triage/scoring needed** — purely a post-processing step over already-scored data
   - **New file:** `run_weekly_digest.py` — loops users, checks opt-in flag, collects papers, builds PDF, emails it
   - **Edge cases:** fewer than 7 days of data (new user), no papers scored ≥ 8 that week (skip or send empty notice)
+
+- [ ] **`create_profile.py` — ask digest frequency during onboarding** — add interactive questions for `daily_digest` (yes/no), `weekly_digest` (yes/no), and `weekly_day` (if weekly enabled). Write these fields into `taste_profile.json` at creation time so they never need to be added manually (manual edits caused JSON corruption in April 2026).
 
 - [ ] **Self-service user onboarding** — allow new users to onboard without owner intervention. Possible scheme: user fills out a web form (hosted on `incomingscience.xyz`), submits it, and `create_profile.py` runs automatically on the server to create their profile and add them to the pipeline. Requires auth/validation to prevent abuse, automated directory creation, and a confirmation email flow.
   - **Web form (`server.py`):** new route `GET /onboarding/form` serving an HTML form with fields: name, email, arXiv categories, free-text interests, keywords (comma-separated), authors to follow, and optionally a list of representative paper URLs

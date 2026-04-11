@@ -2,13 +2,19 @@
 scrapers/nature.py — Scraper for Nature Portfolio journals (nature.com).
 
 Covers: Nature, Nature Physics, Nature Materials, Nature Nanotechnology,
-Nature Communications, and any future Nature journal added to fields.json
-with publisher="nature".
+Nature Communications, Nature Computational Science, and any future Nature
+journal added to fields.json with publisher="nature".
 
-Editorial filter: keep URLs containing /articles/; this excludes /news/,
-/comment/, /correspondence/, /perspective/, etc.
-Abstract selector: div#Abs1-content p
-Subject tags: meta[name="dc.subject"] — confirmed present on nature.com article pages.
+Abstract coverage: FULL — scraped from article pages.
+  - Article pages: accessible (no Cloudflare block from server IPs).
+  - Selector: div#Abs1-content p — confirmed on all Nature Portfolio journals.
+  - Returns None (skip entry) when no abstract section is found, which
+    signals News, Views, and other non-research content.
+  - ~45 HTTP requests saved per run by pre-filtering d41586 DOI prefix
+    (Nature main news/views) in editorial_filter before any page fetch.
+
+Subject tags: meta[name="dc.subject"] — full subject taxonomy from article pages.
+Authors: meta[name="citation_author"] — complete author list from article pages.
 """
 
 import logging

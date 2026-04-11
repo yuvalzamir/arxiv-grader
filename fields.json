@@ -1,7 +1,96 @@
 {
   "cond-mat": {
-    "arxiv_categories": ["cond-mat"],
+    "arxiv_categories": ["cond-mat", "quant-ph"],
     "description": "Condensed matter physics",
+    "journals": [
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-CondensedMatterStructureetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRB",
+        "url": "http://feeds.aps.org/rss/recent/prb.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRX",
+        "url": "http://feeds.aps.org/rss/recent/prx.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRXQuantum",
+        "url": "http://feeds.aps.org/rss/recent/prxquantum.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "condensed-matter physics",
+          "electronic properties",
+          "magnetic properties",
+          "superconducting",
+          "topological matter",
+          "spintronics",
+          "two-dimensional materials",
+          "quantum hall",
+          "nanoscale materials",
+          "nanoscience and technology"
+        ]
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatMat",
+        "url": "https://www.nature.com/nmat.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatNano",
+        "url": "https://www.nature.com/nnano.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "NanoLett",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "publisher": "acs",
+        "tag_filter": null
+      }
+    ]
+  },
+  "cond-mat-optics": {
+    "arxiv_categories": ["cond-mat", "physics.optics", "quant-ph"],
+    "description": "Condensed matter physics and optics",
     "journals": [
       {
         "name": "PRL",
@@ -169,6 +258,132 @@
         "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",
         "publisher": "nature",
         "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      }
+    ]
+  },
+  "systems-biology": {
+    "arxiv_categories": ["q-bio", "physics.bio-ph"],
+    "description": "Systems biology, computational biology, immunology, and cell biology",
+    "journals": [
+      {
+        "name": "Cell",
+        "url": "https://www.cell.com/cell/inpress.rss",
+        "publisher": "cell",
+        "tag_filter": null
+      },
+      {
+        "name": "CellSystems",
+        "url": "https://www.cell.com/cell-systems/inpress.rss",
+        "publisher": "cell",
+        "tag_filter": null
+      },
+      {
+        "name": "iScience",
+        "url": "https://www.cell.com/iscience/inpress.rss",
+        "publisher": "cell",
+        "tag_filter": null
+      },
+      {
+        "name": "Immunity",
+        "url": "https://www.cell.com/immunity/inpress.rss",
+        "publisher": "cell",
+        "tag_filter": null
+      },
+      {
+        "name": "ScienceImmunology",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciimmunol",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "ScienceAdvances",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCodeOr=biophys-bio&tagCodeOr=biophys-phys",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=immun",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=cell-bio",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=microbio",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
+        "name": "PLOSCompBio",
+        "url": "http://feeds.plos.org/ploscompbiol/NewArticles",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "NatCompSci",
+        "url": "https://www.nature.com/natcomputsci.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/computational-biology-and-bioinformatics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/immunology/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/cell-biology/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/systems-biology/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "cell biology",
+          "systems biology",
+          "computational biology",
+          "immunology",
+          "genomics",
+          "proteomics",
+          "molecular biology",
+          "genetics",
+          "biochemistry",
+          "cancer",
+          "microbiology"
+        ]
       },
       {
         "name": "Science",
