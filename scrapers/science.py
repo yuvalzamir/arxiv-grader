@@ -1,5 +1,5 @@
 """
-scrapers/science.py — Scraper for Science (science.org).
+scrapers/science.py — Scraper for Science (science.org) / AAAS journals.
 
 Covers: Science, Science Immunology, Science Advances, and any future
 AAAS journal added to fields.json with publisher="science".
@@ -7,9 +7,15 @@ AAAS journal added to fields.json with publisher="science".
 RSS: eTOC feed — gives the complete last issue (all article types).
 tag_filter can be used to filter multi-discipline journals like Science Advances.
 
-Editorial filter: requires a valid 10.1126/ DOI (accepts all AAAS journals).
-Abstract: Science.org is Cloudflare-protected (403). Uses Semantic Scholar
-API (api.semanticscholar.org) for full abstracts. Falls back to RSS summary.
+Abstract coverage: PARTIAL — Semantic Scholar (~50% hit rate).
+  - Article pages: Cloudflare-protected (403) from server IPs.
+  - Semantic Scholar: free API, no key required. Returns full abstract when
+    indexed. Hit rate ~50% — editorials, perspectives, and very recent papers
+    often not indexed. Measured on Science flagship eTOC (2026-03 sample).
+  - RSS fallback: short summary (~1-3 sentences) used when Semantic Scholar
+    returns nothing.
+
+Subject tags: not available → always []
 """
 
 import logging

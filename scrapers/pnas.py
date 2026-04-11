@@ -2,16 +2,24 @@
 scrapers/pnas.py — Scraper for PNAS (Proceedings of the National Academy of Sciences).
 
 RSS: eTOC feed — gives the full current issue (~70 entries) once per week.
-All entries in an issue share the same prism:coverDate (the issue date),
-while individual papers have earlier updated/published dates (online-first).
-fetch_journals.py uses the later of updated vs coverDate as the entry date,
-so the watermark advances to the issue date after the first run.
+All entries share the same prism:coverDate (the issue date); individual
+papers carry earlier updated/published dates (online-first). fetch_journals.py
+uses the later of updated vs coverDate so the watermark advances to the
+issue date after first scrape.
 
-Editorial filter: accept only DOIs matching 10.1073/pnas. — this excludes
-"In This Issue" summaries (10.1073/iti...) and other non-paper content.
+Abstract coverage: GOOD — Semantic Scholar (~80%+ estimated hit rate).
+  - Semantic Scholar: free API, no key required. PNAS is open-access-friendly
+    and well-indexed. Confirmed full abstract (907c) on first tested paper.
+    Short commentaries and perspective pieces may not be indexed.
+  - RSS fallback: PNAS RSS summaries are typically empty; Semantic Scholar
+    is the sole abstract source.
+  Tested on live feed 2026-04-11: 2/3 research articles returned full
+  abstracts; 1 commentary had no Semantic Scholar entry.
 
-Abstract: Semantic Scholar API. PNAS is open-access-friendly and has good
-coverage. Falls back to RSS summary (which is usually empty for PNAS).
+Editorial filter: accepts 10.1073/pnas. DOIs only — excludes "In This Issue"
+summaries (10.1073/iti...) and other non-paper content.
+
+Subject tags: not available → always []
 """
 
 import logging

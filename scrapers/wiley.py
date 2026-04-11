@@ -4,14 +4,14 @@ scrapers/wiley.py — Scraper for Wiley / Wiley-VCH journals.
 Covers: Advanced Materials, Advanced Functional Materials, Small, Nanophotonics,
 and any other Wiley journal added to fields.json with publisher="wiley".
 
-Wiley RSS feeds (onlinelibrary.wiley.com/feed/<issn>/most-recent) include full
-abstracts in the dc:description element, which feedparser exposes as entry.content
-(type="text/plain"). No HTTP requests to article pages are needed.
+Abstract coverage: FULL — extracted directly from RSS feed.
+  - Wiley RSS feeds include full abstracts in the dc:description element,
+    exposed by feedparser as entry.content (type="text/plain").
+  - No HTTP requests to article pages are needed.
+  - Content format: "Short graphical abstract...\n\n\nABSTRACT\nFull text..."
+    The scraper splits on "ABSTRACT" and takes the trailing portion.
 
-Content format:
-    "Short graphical abstract summary...\n\n\nABSTRACT\nFull abstract text..."
-
-Editorial filter: accept RESEARCH ARTICLE, REVIEW, COMMUNICATION, FULL PAPER.
+Subject tags: not available → always []
 """
 
 import logging

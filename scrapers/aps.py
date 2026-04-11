@@ -4,11 +4,14 @@ scrapers/aps.py — Scraper for APS journals (journals.aps.org).
 Covers: PRL, PRB, PRX, PRX Quantum, and any future APS journal
 added to fields.json with publisher="aps".
 
-Editorial filter: keep URLs matching the abstract pattern; drop errata and publisher's notes.
-Abstract: APS article pages are Cloudflare-protected (403) from server IPs, and
-Semantic Scholar does not provide APS abstracts (licensing restriction). The RSS
-feed contains a truncated abstract (~3 sentences) which is used via the caller's
-fallback in fetch_journals.py.
+Abstract coverage: PARTIAL — truncated RSS abstract only (~2-3 sentences).
+  - Article pages: Cloudflare-blocked (403) from server IPs.
+  - Semantic Scholar: no APS abstracts (APS licensing restriction).
+  - CrossRef / OpenAlex: no abstracts deposited by APS.
+  - RSS fallback: ~2-3 sentence truncation, sufficient for triage.
+  Possible future improvement: ICFO institutional APS access (IP whitelist
+  or API token) — not yet investigated.
+
 Subject tags: not available → always []
 """
 

@@ -4,11 +4,16 @@ scrapers/acs.py — Scraper for ACS (American Chemical Society) journals.
 Covers: ACS Nano, ACS Photonics, ACS Sensors, and any future ACS journal
 added to fields.json with publisher="acs".
 
-ACS RSS entries include title, DOI link, and authors, but NO abstract text.
-ACS article pages are Cloudflare-protected (403) from server IPs.
-Neither Semantic Scholar nor CrossRef provides ACS abstracts due to licensing.
+Abstract coverage: NONE — triage uses title + authors only.
+  - Article pages: Cloudflare-protected (403) from server IPs.
+  - Semantic Scholar: no ACS abstracts (ACS licensing restriction).
+  - CrossRef: no abstracts deposited by ACS.
+  - RSS feed: description contains only a TOC graphic URL and DOI text —
+    skip_rss_fallback=True prevents fetch_journals.py from using it.
+  Possible future improvement: awaiting response from ACS on API/institutional
+  access to abstracts (email sent 2026-04).
 
-Result: abstract is always empty. Triage relies on title + authors only.
+Subject tags: not available → always []
 """
 
 import logging

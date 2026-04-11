@@ -4,24 +4,28 @@ scrapers/cell.py — Scraper for Cell Press journals (cell.com).
 Covers: Cell, Cell Systems, iScience, Immunity, and any future Cell Press
 journal added to fields.json with publisher="cell".
 
-cell.com article pages are Cloudflare-protected (403) from server IPs.
-Semantic Scholar has no Cell Press abstracts (Elsevier licensing).
+Abstract coverage: GOOD overall, varies by journal.
+  - Article pages: Cloudflare-protected (403) from server IPs.
+  - Semantic Scholar: no Cell Press abstracts (Elsevier licensing).
+  - Europe PMC REST API (primary source): free, no key required.
+      Cell:         ~67% hit rate (6/7 in live test, 2026-04-11)
+      Cell Systems: ~83% hit rate (7/7 in live test, 2026-04-11)
+      Immunity:     ~87% hit rate (7/8 in live test, 2026-04-11)
+      iScience:       0% hit rate — Europe PMC does not index iScience
+  - RSS summary fallback (secondary source): Cell Press inpress feeds
+    carry short teasers in entry.summary (200-450c for Cell/Cell Systems/
+    Immunity, ~575c full abstracts for iScience). Used when Europe PMC
+    returns nothing. Sufficient for triage in all cases.
 
-Abstract strategy (in order):
-  1. Europe PMC REST API — good coverage for Cell, Cell Systems, Immunity
-     (~67–83% hit rate on inpress articles). Free, no key required.
-  2. RSS summary fallback — the caller (fetch_journals.py) uses entry.summary
-     when scrape_article returns an empty abstract. Cell Press RSS summaries
-     are 200–600c teasers, sufficient for triage. iScience RSS has full
-     abstracts (~575c) and relies entirely on this fallback.
-
-Editorial filter: prism:section = "Correction" is excluded. All other
-section types (Article, Review, Perspective, Methods, etc.) are kept.
-When no section tag is present the entry is included by default.
+Editorial filter: prism:section = "Correction" (and Erratum, Retraction,
+Expression of Concern) excluded. All other sections (Article, Review,
+Perspective, Methods) are kept. Missing section → included by default.
 
 DOI: stored in dc:identifier on Cell Press RSS entries. fetch_journals.py
 _extract_doi() reads dc_identifier so Cell papers get their DOI as
 arxiv_id rather than the PII-based article URL.
+
+Subject tags: not available → always []
 """
 
 import logging

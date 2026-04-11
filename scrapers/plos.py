@@ -4,11 +4,15 @@ scrapers/plos.py — Scraper for PLOS (Public Library of Science) journals.
 Covers: PLOS Computational Biology, and any future PLOS journal added to
 fields.json with publisher="plos".
 
-PLOS is fully open access. Full abstracts are included in the RSS
-<description> field as HTML. No HTTP requests to article pages are needed.
+Abstract coverage: FULL — extracted directly from RSS feed.
+  - PLOS is fully open access; full abstracts are in the RSS <description>
+    as HTML. No HTTP requests to article pages are needed.
+  - RSS format: <p>by Author1, Author2...</p> followed by abstract text.
+    The scraper strips the leading author paragraph before extracting text.
+  - Confirmed on 9/9 research articles in a live feed sample (2026-04).
+    1/10 correctly filtered as a Correction.
 
-Editorial filter: skip corrections, retractions, and expressions of concern
-by title. The feed is otherwise research-article-only.
+Subject tags: not available → always []
 """
 
 import logging
