@@ -97,6 +97,11 @@ def _split_author_string(s: str) -> list[str]:
 
 def _extract_doi(entry) -> str:
     """Best-effort DOI extraction from an RSS entry."""
+    # Cell Press (Elsevier) stores a clean DOI in dc:identifier
+    dc_id = getattr(entry, "dc_identifier", "")
+    if dc_id and dc_id.startswith("10."):
+        return dc_id
+
     for attr in ("id", "link"):
         val = getattr(entry, attr, "")
         if val.startswith("10."):
