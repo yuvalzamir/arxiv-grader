@@ -107,16 +107,11 @@ SSH in and create the user directory:
 ```bash
 mkdir -p /opt/arxiv-grader/users/<name>
 ```
-Create their `.env` file (replace the values before running):
+Create their `.env` with just the Anthropic API key (email addresses are collected interactively by the script):
 ```bash
 cat > /opt/arxiv-grader/users/<name>/.env << 'EOF'
 ANTHROPIC_API_KEY=<their key>
-EMAIL_TO=<their email>
 EOF
-```
-Verify it was written correctly:
-```bash
-cat /opt/arxiv-grader/users/<name>/.env
 ```
 They need their own Anthropic API key — create one for them at https://console.anthropic.com/ (all keys bill to your account).
 
@@ -125,11 +120,14 @@ They need their own Anthropic API key — create one for them at https://console
 cd /opt/arxiv-grader && source venv/bin/activate
 python create_profile.py --user-dir users/<name>
 ```
-The script will run a 4-part interview — answer using the filled form:
-1. **arXiv categories** — copy from Part 1 of the form (comma-separated)
-2. **Research interests** — paste the free text from Part 2
-3. **Researchers to follow** — enter names from Part 3 one per line, blank line to finish
-4. **Excel file of papers** — you'll need to convert the URLs from Part 4 of the form into an Excel file first (one URL per row, column A), save it somewhere on the server, and provide the path
+The script runs in this order:
+1. **Delivery preferences** — whether they want the daily digest, the weekly digest, or both; email address(es) for each; day of week for weekly (Monday–Friday only)
+2. **arXiv categories** — copy from Part 1 of the form (comma-separated)
+3. **Research interests** — paste the free text from Part 2
+4. **Researchers to follow** — enter names from Part 3 one per line, blank line to finish
+5. **Excel file of papers** — convert the URLs from Part 4 of the form into an Excel file first (one URL per row, column A), save it somewhere on the server, and provide the path
+
+Delivery preferences are written to the user's `.env` (`EMAIL_TO_DAILY`, `EMAIL_TO_WEEKLY`) and to `taste_profile.json` (`daily_digest`, `weekly_digest`, `weekly_day`) automatically — no manual edits needed afterwards.
 
 ### Step 2b — Prepare the Excel file from the form
 On your local machine, copy the URLs from the Word table into an Excel file (one per row, no header), save it, then upload it to the server:
@@ -153,48 +151,7 @@ Check that `users/<name>/data/YYYY-MM-DD/digest.pdf` was created, then send with
 python run_all_users.py --user <name> --skip-dedup --skip-archive
 ```
 
-### Step 5 — Configure delivery preferences
-
-Edit the user's `taste_profile.json` to set their delivery mode. The defaults (if fields are absent) are `daily_digest: true` and `weekly_digest: false`, so a standard daily user needs no changes.
-
-**Daily only (default):** no changes needed — the profile created by `create_profile.py` works as-is.
-
-**Weekly only** (gets one email per week with papers scored ≥ 8, no daily emails):
-```bash
-# Add to taste_profile.json:
-"daily_digest": false,
-"weekly_digest": true,
-"weekly_day": "friday",   
-```
-And add to their `.env`:
-```bash
-cat >> /opt/arxiv-grader/users/<name>/.env << 'EOF'
-EMAIL_TO_WEEKLY=<their email>
-EOF
-```
-
-**Both daily and weekly** (daily email every day + weekly highlights email on their chosen day):
-```bash
-# Add to taste_profile.json:
-"daily_digest": true,
-"weekly_digest": true,
-"weekly_day": "friday",
-```
-And add both lists to their `.env`:
-```bash
-cat >> /opt/arxiv-grader/users/<name>/.env << 'EOF'
-EMAIL_TO_DAILY=<daily recipients, comma-separated>
-EMAIL_TO_WEEKLY=<weekly recipients, comma-separated>
-EOF
-```
-
-**Notes:**
-- `EMAIL_TO_DAILY` falls back to `EMAIL_TO` if not set — existing users with only `EMAIL_TO` are unaffected.
-- `EMAIL_TO_WEEKLY` falls back to `EMAIL_TO` if not set.
-- The weekly email is sent at the end of the normal daily cron run on the chosen weekday — no separate cron entry needed.
-- The weekly PDF contains only papers scored 8 or above from the past 7 days, with the title "weekly digest".
-
-### Step 6 — Done
+### Step 5 — Done
 The new user is picked up automatically by the daily cron — no restart or config change needed.
 
 ---

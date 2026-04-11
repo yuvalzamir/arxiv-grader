@@ -173,19 +173,6 @@ def setup_credentials(env_path: Path | None = None) -> None:
             print("OK.")
             os.environ["ANTHROPIC_API_KEY"] = key
 
-    # ---- Recipient email --------------------------------------------------
-    if not env.get("EMAIL_TO", "").strip():
-        print()
-        print("Your email address (where the daily digest will be sent):")
-        while True:
-            val = input("  Email address: ").strip()
-            if not val or "@" not in val:
-                print("  Please enter a valid email address.")
-                continue
-            env["EMAIL_TO"] = val
-            changed = True
-            break
-
     # ---- Write shared SMTP settings silently (same for all users) ---------
     smtp_fields = {
         "EMAIL_FROM":          _EMAIL_FROM,
@@ -266,6 +253,101 @@ def read_excel_papers(path: str) -> list[str]:
     wb.close()
     log.info("Read %d paper links from %s", len(links), path)
     return links
+
+
+# ---------------------------------------------------------------------------
+# Delivery preferences
+# ---------------------------------------------------------------------------
+
+_VALID_DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"]
+
+
+def _parse_emails(raw: str) -> list[str]:
+    """Split comma-separated email string, strip whitespace, validate basic format."""
+    return [e.strip() for e in raw.split(",") if e.strip() and "@" in e.strip()]
+
+
+def collect_delivery_preferences(env_path: Path) -> dict:
+    """
+    Ask the user about daily/weekly digest preferences.
+    Writes EMAIL_TO, EMAIL_TO_DAILY, EMAIL_TO_WEEKLY to .env as needed.
+    Returns dict with daily_digest, weekly_digest, weekly_day.
+    """
+    print()
+    print("=" * 58)
+    print("  Delivery preferences")
+    print("=" * 58)
+    print()
+    print("Incoming Science can deliver your digest in two modes:")
+    print("  Daily  — one email every morning with all papers from the last 24 h")
+    print("  Weekly — one email per week with only the top-scoring papers (≥ 8/10)")
+    print("You can opt into either or both.")
+
+    env = _read_env_file(env_path)
+    changed = False
+
+    # ---- Daily digest --------------------------------------------------------
+    print()
+    while True:
+        ans = input("  Receive the daily digest? [y/n]: ").strip().lower()
+        if ans in ("y", "n"):
+            break
+        print("  Please enter y or n.")
+    daily_digest = (ans == "y")
+
+    daily_emails = ""
+    if daily_digest:
+        while True:
+            raw = input("  Email address(es) for the daily digest (comma-separated): ").strip()
+            emails = _parse_emails(raw)
+            if not emails:
+                print("  Please enter one or more valid email addresses.")
+                continue
+            daily_emails = ", ".join(emails)
+            env["EMAIL_TO_DAILY"] = daily_emails
+            changed = True
+            break
+
+    # ---- Weekly digest -------------------------------------------------------
+    print()
+    while True:
+        ans = input("  Receive the weekly digest? [y/n]: ").strip().lower()
+        if ans in ("y", "n"):
+            break
+        print("  Please enter y or n.")
+    weekly_digest = (ans == "y")
+
+    weekly_emails = ""
+    weekly_day = "friday"
+    if weekly_digest:
+        while True:
+            raw = input("  Email address(es) for the weekly digest (comma-separated): ").strip()
+            emails = _parse_emails(raw)
+            if not emails:
+                print("  Please enter one or more valid email addresses.")
+                continue
+            weekly_emails = ", ".join(emails)
+            env["EMAIL_TO_WEEKLY"] = weekly_emails
+            changed = True
+            break
+
+        while True:
+            raw = input("  Which day of the week? (Monday–Friday): ").strip().lower()
+            if raw in _VALID_DAYS:
+                weekly_day = raw
+                break
+            print("  The weekly digest can only be sent on a weekday (Monday–Friday). Please try again.")
+
+    if changed:
+        _write_env_file(env, env_path)
+        print()
+        print("  Delivery preferences saved.")
+
+    return {
+        "daily_digest": daily_digest,
+        "weekly_digest": weekly_digest,
+        "weekly_day": weekly_day,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -873,6 +955,9 @@ def main():
     # 0. Ensure credentials are present and valid; prompt + save if not.
     setup_credentials(env_path)
 
+    # 0b. Collect delivery preferences (daily/weekly, email lists, day of week).
+    delivery = collect_delivery_preferences(env_path)
+
     # 1. Collect user inputs.
     inputs = collect_inputs()
 
@@ -886,6 +971,7 @@ def main():
 
     # 4. Python assembles the full profile from rankings + pre-fetched data.
     profile = assemble_profile(rankings, inputs, papers)
+    profile.update(delivery)
 
     # 5. Build area_keyword_map — one Haiku call assigns each keyword to its areas.
     client = Anthropic()
