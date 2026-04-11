@@ -1,0 +1,329 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Incoming Science | Seeding Your Taste Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#adeeed",
+                        "primary-container": "#1a2b3c",
+                        "on-background": "#1b1c1d",
+                        "surface-dim": "#dbd9db",
+                        "secondary-fixed": "#dde3ed",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#4f6073",
+                        "tertiary": "#001818",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c4c6cd",
+                        "inverse-surface": "#303032",
+                        "on-surface": "#1b1c1d",
+                        "on-secondary-fixed-variant": "#41474f",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#91d2d0",
+                        "secondary-container": "#dde3ed",
+                        "on-primary-fixed": "#0b1d2d",
+                        "secondary": "#595f67",
+                        "on-tertiary-fixed-variant": "#00504f",
+                        "primary-fixed": "#d2e4fb",
+                        "inverse-on-surface": "#f2f0f2",
+                        "on-primary-container": "#8192a7",
+                        "inverse-primary": "#b7c8de",
+                        "outline": "#74777d",
+                        "surface-container-highest": "#e4e2e3",
+                        "surface-container-high": "#e9e7e9",
+                        "on-secondary-container": "#5f656d",
+                        "primary": "#041627",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#00201f",
+                        "on-secondary-fixed": "#161c23",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e4e2e3",
+                        "on-tertiary-container": "#5b9b9a",
+                        "surface": "#fbf9fa",
+                        "primary-fixed-dim": "#b7c8de",
+                        "background": "#fbf9fa",
+                        "on-primary-fixed-variant": "#38485a",
+                        "surface-bright": "#fbf9fa",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#efedef",
+                        "tertiary-container": "#002f2f",
+                        "secondary-fixed-dim": "#c1c7d1",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#44474c",
+                        "surface-container-low": "#f5f3f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .serif-anchor { font-family: 'Newsreader', serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- Sidebar Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col py-8 px-6 bg-slate-100 dark:bg-slate-900 border-none w-64 z-50">
+<a href="../incoming_science_how_it_works_final/code.html" class="mb-12 flex items-center gap-3 hover:opacity-80 transition-opacity">
+<img alt="Incoming Science Logo" class="w-10 h-10 object-contain mix-blend-multiply dark:mix-blend-normal" src="https://lh3.googleusercontent.com/aida/ADBb0ug5P32daj6nHDORJVxolX5xc8Ua0bQqjXdJRwtOWFRrZBNf8oRGOOmq5N9P27pQqHeWWXMOxm4FaGo2WaASbBuj1MQ3p6--ZDzTuyGCtVVBNryfi9pFrFxdaWXxOW0H8V0JeDDkTUcpDHgM755wm279yaB_pCw5Sj7gaYLsvCFTedELxv6GioPzWq7hxpWWkCj7bkPt3ys48vGjjhqoDNOO1-1eEc1cRLHDvZjw8Z6qh-KRxFfbhy0XP5DBKpKQxi6T576rUnKLFm0">
+<span class="text-xl font-serif italic text-slate-900 dark:text-slate-50 block leading-tight">Incoming Science</span>
+</a>
+<nav class="flex-1 mt-2">
+<div class="relative ml-1">
+<div class="absolute left-3 top-[22px] bottom-[22px] w-px bg-slate-200"></div>
+<div class="relative flex items-center gap-3 py-2.5 cursor-default">
+<div class="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center flex-shrink-0 z-10"><span class="font-label text-[9px] font-bold text-white leading-none">1</span></div>
+<span class="font-label text-xs uppercase tracking-widest text-slate-400">Identity</span>
+</div>
+<div class="relative flex items-center gap-3 py-2.5 cursor-default">
+<div class="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center flex-shrink-0 z-10"><span class="font-label text-[9px] font-bold text-white leading-none">2</span></div>
+<span class="font-label text-xs uppercase tracking-widest text-slate-400">Research</span>
+</div>
+<div class="relative flex items-center gap-3 py-2.5 cursor-default">
+<div class="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center flex-shrink-0 z-10"><span class="font-label text-[9px] font-bold text-white leading-none">3</span></div>
+<span class="font-label text-xs uppercase tracking-widest text-slate-400">Signals</span>
+</div>
+<div class="relative flex items-center gap-3 py-2.5 cursor-default">
+<div class="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0 z-10"><span class="font-label text-[9px] font-bold text-white leading-none">4</span></div>
+<span class="font-label text-xs uppercase tracking-widest text-slate-900 font-bold">Papers</span>
+</div>
+</div>
+</nav>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-64 min-h-[1024px] relative flex flex-col">
+<!-- Header -->
+<header class="flex justify-between items-center w-full px-12 py-8 bg-transparent">
+<div class="flex items-center gap-2">
+<span class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">Onboarding</span>
+<div class="w-8 h-[1px] bg-outline-variant opacity-30"></div>
+<span class="font-label text-[10px] uppercase tracking-[0.2em] text-primary">Step 04 / 04</span>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 px-12 pb-24 max-w-5xl">
+<!-- Hero Title -->
+<div class="mb-16">
+<h1 class="text-[3.5rem] leading-[1.1] font-headline text-primary -tracking-[0.02em] mb-4">
+                    Seeding Your <span class="italic">Taste Profile</span>
+</h1>
+<p class="text-lg text-on-surface-variant font-body leading-relaxed max-w-2xl opacity-80">
+                    Provide a list of papers you've recently read or found highly relevant. This primes the AI to understand your scholarly taste from day one.
+                </p>
+</div>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Left Column: XLSX Upload -->
+<div class="col-span-12 lg:col-span-5 space-y-8">
+<section class="bg-surface-container-low p-8 rounded-lg relative overflow-hidden group">
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-fixed text-xl">upload_file</span>
+</div>
+<h3 class="text-xl font-headline text-primary">Structured Import</h3>
+</div>
+<p class="font-body text-sm text-on-surface-variant mb-8 leading-relaxed">
+                                Upload an XLSX file containing paper URLs or DOIs. Each non-empty cell will become one entry in the list.
+                            </p>
+<input id="xlsx-input" type="file" accept=".xlsx" class="hidden" onchange="handleXlsxUpload(this)">
+<button id="upload-btn" onclick="document.getElementById('xlsx-input').click()" class="w-full py-4 border border-outline-variant border-dashed rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-surface-container-highest transition-colors group/btn">
+<span class="material-symbols-outlined text-3xl text-outline-variant group-hover/btn:text-primary">add</span>
+<span class="font-label text-[11px] uppercase tracking-widest font-bold text-on-surface-variant">Upload XLSX</span>
+</button>
+<div id="file-loaded" class="hidden w-full py-3 px-4 border border-tertiary-fixed/60 bg-tertiary-fixed/20 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-3 min-w-0">
+<span class="material-symbols-outlined text-on-tertiary-fixed-variant text-xl flex-shrink-0">description</span>
+<span id="file-name" class="font-label text-xs font-bold text-primary truncate"></span>
+</div>
+<button onclick="clearXlsx()" class="flex-shrink-0 ml-3 text-on-surface-variant hover:text-error transition-colors" title="Remove file">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+<div id="xlsx-error" class="hidden mt-3 text-xs text-error font-label">Please upload a valid .xlsx file.</div>
+</div>
+<!-- Decorative background texture -->
+<div class="absolute -right-4 -bottom-4 w-32 h-32 opacity-[0.03] pointer-events-none">
+<span class="material-symbols-outlined text-[120px]">table_chart</span>
+</div>
+</section>
+</div>
+<!-- Right Column: Bulk URL Input -->
+<div class="col-span-12 lg:col-span-7">
+<section class="bg-surface-container-lowest p-8 rounded-lg shadow-[0_32px_48px_rgba(27,28,29,0.04)] h-full border border-outline-variant/15">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container text-xl">link</span>
+</div>
+<h3 class="text-xl font-headline text-primary">Bulk URL Manifest</h3>
+</div>
+<span class="font-label text-[10px] text-on-surface-variant opacity-60">Paste up to 50 links</span>
+</div>
+<div class="relative">
+<textarea id="urls-textarea" class="w-full h-80 bg-surface-container-low border-none focus:ring-1 focus:ring-primary rounded-lg font-mono text-sm p-6 resize-none placeholder:text-outline-variant/60" placeholder="https://arxiv.org/abs/2301.12345
+https://nature.com/articles/s41586-023...
+https://doi.org/10.1145/3544548..."></textarea>
+<!-- Custom Scroll Indicator -->
+<div class="absolute right-2 top-2 bottom-2 w-1 bg-outline-variant/10 rounded-full">
+<div class="w-full h-1/4 bg-primary/20 rounded-full"></div>
+</div>
+</div>
+<div class="mt-6 flex items-center justify-between">
+<p class="text-xs text-on-surface-variant/70 italic">Ensure one URL per line for accurate parsing.</p>
+<button id="clear-btn" onclick="document.getElementById('urls-textarea').value=''" class="text-tertiary hover:underline font-label text-[11px] uppercase tracking-widest font-bold">Clear List</button>
+</div>
+</section>
+</div>
+</div>
+</div>
+<!-- Footer Actions Fixed -->
+<footer class="fixed bottom-0 left-64 right-0 h-20 px-12 bg-surface/80 backdrop-blur-md flex items-center justify-between z-40 border-t border-outline-variant/10">
+<button onclick="window.location.href='../onboarding_signals_interests_final/code.html'" class="flex items-center gap-2 font-label text-[11px] uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+                Back
+            </button>
+<div class="flex items-center gap-8">
+<div class="flex gap-1">
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="w-3 h-1 rounded-full bg-primary"></div>
+</div>
+<button onclick="saveAndNext()" class="bg-primary text-on-primary px-10 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                    Complete Profile
+                </button>
+</div>
+</footer>
+</main>
+<!-- Overlay Specimen Detail -->
+<div class="fixed top-24 right-[-40px] rotate-90 origin-left pointer-events-none hidden xl:block">
+<span class="font-label text-[10px] uppercase tracking-[0.5em] text-outline-variant/40 select-none">Scholarly Artifact ID: 992-ARC-SCIENCE</span>
+</div>
+<script>
+function setTextareaLocked(locked) {
+    const ta = document.getElementById('urls-textarea');
+    ta.disabled = locked;
+    if (locked) {
+        ta.classList.add('opacity-40', 'cursor-not-allowed');
+        ta.classList.remove('focus:ring-primary');
+    } else {
+        ta.classList.remove('opacity-40', 'cursor-not-allowed');
+        ta.classList.add('focus:ring-primary');
+    }
+    const clearBtn = document.getElementById('clear-btn');
+    if (locked) {
+        clearBtn.classList.add('opacity-30', 'pointer-events-none');
+    } else {
+        clearBtn.classList.remove('opacity-30', 'pointer-events-none');
+    }
+}
+
+function handleXlsxUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const errEl = document.getElementById('xlsx-error');
+    errEl.classList.add('hidden');
+
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+        errEl.classList.remove('hidden');
+        input.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            const entries = [];
+            workbook.SheetNames.forEach(sheetName => {
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                rows.forEach(row => {
+                    row.forEach(cell => {
+                        const val = String(cell).trim();
+                        if (val && val !== 'undefined' && val !== '') entries.push(val);
+                    });
+                });
+            });
+
+            document.getElementById('urls-textarea').value = entries.join('\n');
+            setTextareaLocked(true);
+            document.getElementById('upload-btn').classList.add('hidden');
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-loaded').classList.remove('hidden');
+        } catch (err) {
+            errEl.textContent = 'Could not parse the file. Please check it is a valid .xlsx.';
+            errEl.classList.remove('hidden');
+            input.value = '';
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function clearXlsx() {
+    document.getElementById('xlsx-input').value = '';
+    document.getElementById('file-loaded').classList.add('hidden');
+    document.getElementById('upload-btn').classList.remove('hidden');
+    document.getElementById('xlsx-error').classList.add('hidden');
+    document.getElementById('urls-textarea').value = '';
+    setTextareaLocked(false);
+}
+
+function saveAndNext() {
+    const raw = document.getElementById('urls-textarea').value;
+    const paper_urls = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const state = JSON.parse(localStorage.getItem('is_onboarding') || '{}');
+    state.paper_urls = paper_urls;
+    localStorage.setItem('is_onboarding', JSON.stringify(state));
+
+    const finalJson = {
+        email: state.email || '',
+        daily_digest: state.daily_digest !== false,
+        weekly_digest: state.weekly_digest !== false,
+        weekly_day: state.weekly_day || 'friday',
+        field: state.field || '',
+        interests_description: state.interests_description || '',
+        researchers: state.researchers || [],
+        paper_urls: paper_urls
+    };
+    localStorage.setItem('is_onboarding_final', JSON.stringify(finalJson));
+    window.location.href = '../onboarding_success_final/code.html';
+}
+
+// Restore state on load
+(function() {
+    const state = JSON.parse(localStorage.getItem('is_onboarding') || '{}');
+    if (state.paper_urls && state.paper_urls.length) {
+        document.getElementById('urls-textarea').value = state.paper_urls.join('\n');
+    }
+})();
+</script>
+</body></html>
