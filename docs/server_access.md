@@ -164,7 +164,7 @@ Edit the user's `taste_profile.json` to set their delivery mode. The defaults (i
 # Add to taste_profile.json:
 "daily_digest": false,
 "weekly_digest": true,
-"weekly_day": "friday"   # lowercase weekday name, defaults to friday
+"weekly_day": "friday",   
 ```
 And add to their `.env`:
 ```bash
@@ -178,7 +178,7 @@ EOF
 # Add to taste_profile.json:
 "daily_digest": true,
 "weekly_digest": true,
-"weekly_day": "friday"
+"weekly_day": "friday",
 ```
 And add both lists to their `.env`:
 ```bash

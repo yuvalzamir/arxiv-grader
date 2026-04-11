@@ -159,14 +159,8 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 ## Upcoming
 
 - [ ] **ACS abstract access — awaiting response** — email sent to ACS requesting API or institutional access to paper abstracts. If granted, implement in `scrapers/acs.py` (currently returns empty abstract). Follow up if no response.
-- [ ] **systems-biology field + Yael onboarding** — scrapers and fields.json complete (branch `systems-biology`, deployed to server 2026-04-11). Remaining steps:
-  - [ ] Add `ANTHROPIC_API_KEY_SYSTEMS_BIOLOGY=sk-ant-...` to server root `.env`
-  - [ ] Run `python create_profile.py --user-dir users/Yael` to onboard Yael
-  - New scrapers: `cell.py` (Europe PMC + RSS fallback), `plos.py` (RSS), `pnas.py` (Semantic Scholar)
-  - Extended: `science.py` (now covers Science Immunology + Science Advances)
-  - 18 journals: 4 Cell Press, 4 PNAS topic feeds, 4 NatComms subject feeds, PLOS Comp Bio, NatCompSci, SciImmunol, SciAdvances, Nature, Science
-  - arXiv: `q-bio` + `physics.bio-ph`
-  - [ ] **tag_filter tuning** — Science Advances and PNAS have `tag_filter: null` (scrapers return empty subject_tags). Monitor first runs; triage handles relevance filtering for now.
+- [x] **systems-biology field + Yael onboarding** — scrapers and fields.json complete, deployed to server 2026-04-11. `ANTHROPIC_API_KEY_SYSTEMS_BIOLOGY` added to server root `.env`. Yael onboarded via `create_profile.py`. New scrapers: `cell.py`, `plos.py`, `pnas.py`. Extended `science.py` (Science Immunology + Science Advances). 18 journals. arXiv: `q-bio` + `physics.bio-ph`.
+  - [x] **tag_filter tuning** — PNAS uses 4 topic-specific RSS feeds (biophys/immun/cell-bio/microbio); Science Advances uses its dedicated eTOC feed. Both are pre-filtered at the RSS level; `tag_filter: null` is correct.
 - [x] **quantum-sensing field** — deployed and first user onboarded ✓
 
 ## Backlog

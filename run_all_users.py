@@ -102,7 +102,7 @@ def filter_for_field(scraped_papers: list[dict], field_config: dict) -> list[dic
     return result
 
 
-def run_journal_scrape(date_str: str, active_fields: list[str], shared_data_dir: Path) -> Path | None:
+def run_journal_scrape(date_str: str, active_fields: list[str], shared_data_dir: Path, no_advance_watermark: bool = False) -> Path | None:
     """
     Run fetch_journals.py once for all active fields.
     Returns path to scraped_journals.json on success, None on failure.
@@ -113,6 +113,8 @@ def run_journal_scrape(date_str: str, active_fields: list[str], shared_data_dir:
         "--fields", *active_fields,
         "--output", str(scraped_path),
     ]
+    if no_advance_watermark:
+        cmd.append("--no-advance-watermark")
     log.info("Running journal scrape for fields: %s", active_fields)
     result = subprocess.run(cmd, cwd=str(BASE_DIR))
     if result.returncode != 0:
@@ -306,6 +308,7 @@ def main():
     parser.add_argument("--skip-dedup",   action="store_true", help="Skip deduplication step.")
     parser.add_argument("--skip-archive", action="store_true", help="Skip archive step.")
     parser.add_argument("--no-journals",  action="store_true", help="Skip journal scraping.")
+    parser.add_argument("--no-advance-watermark", action="store_true", help="Scrape journals using existing watermarks but do not save updates (useful for re-runs).")
     parser.add_argument("--no-fetch",     action="store_true", help="Skip arXiv fetch — expect {field}_arxiv_papers.json to already exist in shared data dir (useful for weekend testing).")
     parser.add_argument("--triage-only",  action="store_true", help="Stop after centralized triage — skip scoring, PDF, and email (useful for testing triage/caching).")
     parser.add_argument("--no-batch",     action="store_true", help="Use synchronous API for scoring instead of Batch API.")
@@ -377,7 +380,7 @@ def main():
 
         # Step 2: Journal scraping — only for fields that have arXiv papers.
         if not args.no_journals:
-            scraped_path = run_journal_scrape(date_str, fields_with_papers, shared_data_dir)
+            scraped_path = run_journal_scrape(date_str, fields_with_papers, shared_data_dir, no_advance_watermark=args.no_advance_watermark)
             if scraped_path:
                 with open(scraped_path) as f:
                     scraped_papers = json.load(f)
