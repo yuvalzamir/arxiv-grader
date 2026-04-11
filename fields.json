@@ -79,96 +79,103 @@
         "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
         "publisher": "science",
         "tag_filter": null
-      },
-      {
-        "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
-        "publisher": "acs",
-        "tag_filter": null
       }
     ]
   },
-  "quantum-sensing": {
-    "arxiv_categories": ["cond-mat", "physics.app-ph", "physics.optics", "physics.chem-ph"],
-    "description": "Quantum sensing and related photonics, nanoscience, and materials",
+  "systems-biology": {
+    "arxiv_categories": ["q-bio"],
+    "description": "Systems biology, computational biology, immunology, and cell biology",
     "journals": [
       {
-        "name": "ACSNano",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
-        "publisher": "acs",
+        "name": "Cell",
+        "url": "https://www.cell.com/cell/inpress.rss",
+        "publisher": "cell",
         "tag_filter": null
       },
       {
-        "name": "ACSPhotonics",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=apchd5",
-        "publisher": "acs",
+        "name": "CellSystems",
+        "url": "https://www.cell.com/cell-systems/inpress.rss",
+        "publisher": "cell",
         "tag_filter": null
       },
       {
-        "name": "ACSSensors",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ascefj",
-        "publisher": "acs",
+        "name": "iScience",
+        "url": "https://www.cell.com/iscience/inpress.rss",
+        "publisher": "cell",
         "tag_filter": null
       },
       {
-        "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
-        "publisher": "acs",
+        "name": "Immunity",
+        "url": "https://www.cell.com/immunity/inpress.rss",
+        "publisher": "cell",
         "tag_filter": null
       },
       {
-        "name": "AdvMat",
-        "url": "https://advanced.onlinelibrary.wiley.com/feed/15214095/most-recent",
-        "publisher": "wiley",
+        "name": "ScienceImmunology",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciimmunol",
+        "publisher": "science",
         "tag_filter": null
       },
       {
-        "name": "AdvFuncMat",
-        "url": "https://advanced.onlinelibrary.wiley.com/feed/16163028/most-recent",
-        "publisher": "wiley",
+        "name": "ScienceAdvances",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
+        "publisher": "science",
         "tag_filter": null
       },
       {
-        "name": "Small",
-        "url": "https://onlinelibrary.wiley.com/feed/16136829/most-recent",
-        "publisher": "wiley",
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=etoc&feed=rss&jc=PNAS",
+        "publisher": "pnas",
         "tag_filter": null
       },
       {
-        "name": "Nanophotonics",
-        "url": "https://onlinelibrary.wiley.com/feed/21928614/most-recent",
-        "publisher": "wiley",
+        "name": "PLOSCompBio",
+        "url": "http://feeds.plos.org/ploscompbiol/NewArticles",
+        "publisher": "plos",
         "tag_filter": null
       },
       {
-        "name": "Nature",
-        "url": "https://www.nature.com/nature.rss",
-        "publisher": "nature",
-        "tag_filter": null
-      },
-      {
-        "name": "NatPhoton",
-        "url": "https://www.nature.com/nphoton.rss",
-        "publisher": "nature",
-        "tag_filter": null
-      },
-      {
-        "name": "NatNano",
-        "url": "https://www.nature.com/nnano.rss",
-        "publisher": "nature",
-        "tag_filter": null
-      },
-      {
-        "name": "NatMat",
-        "url": "https://www.nature.com/nmat.rss",
+        "name": "NatCompSci",
+        "url": "https://www.nature.com/natcomputsci.rss",
         "publisher": "nature",
         "tag_filter": null
       },
       {
         "name": "NatComms",
-        "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",
+        "url": "https://www.nature.com/ncomms.rss",
         "publisher": "nature",
-        "tag_filter": null
+        "tag_filter": [
+          "cell biology",
+          "systems biology",
+          "computational biology",
+          "immunology",
+          "genomics",
+          "proteomics",
+          "bioinformatics",
+          "molecular biology",
+          "genetics",
+          "biochemistry",
+          "microbiology",
+          "cancer"
+        ]
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "cell biology",
+          "systems biology",
+          "computational biology",
+          "immunology",
+          "genomics",
+          "proteomics",
+          "molecular biology",
+          "genetics",
+          "biochemistry",
+          "cancer",
+          "microbiology"
+        ]
       },
       {
         "name": "Science",
