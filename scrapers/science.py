@@ -1,13 +1,13 @@
 """
 scrapers/science.py — Scraper for Science (science.org).
 
-Covers: Science, and any future AAAS journal added to fields.json
-with publisher="science".
+Covers: Science, Science Immunology, Science Advances, and any future
+AAAS journal added to fields.json with publisher="science".
 
 RSS: eTOC feed — gives the complete last issue (all article types).
-tag_filter should be null — full issue is passed to triage.
+tag_filter can be used to filter multi-discipline journals like Science Advances.
 
-Editorial filter: requires a valid 10.1126/science. DOI.
+Editorial filter: requires a valid 10.1126/ DOI (accepts all AAAS journals).
 Abstract: Science.org is Cloudflare-protected (403). Uses Semantic Scholar
 API (api.semanticscholar.org) for full abstracts. Falls back to RSS summary.
 """
@@ -21,7 +21,7 @@ from .base import BaseScraper
 
 log = logging.getLogger(__name__)
 
-_DOI_RE = re.compile(r"10\.1126/science\.")
+_DOI_RE = re.compile(r"10\.1126/")
 _SEMANTIC_SCHOLAR_URL = "https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}"
 
 

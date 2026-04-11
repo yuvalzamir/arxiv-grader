@@ -9,6 +9,7 @@ To add a new publisher family:
 from .acs import ACSScraper
 from .aps import APSScraper
 from .nature import NatureScraper
+from .plos import PlosScraper
 from .science import ScienceScraper
 from .wiley import WileyScraper
 
@@ -16,6 +17,7 @@ SCRAPERS: dict = {
     "acs":     ACSScraper,
     "aps":     APSScraper,
     "nature":  NatureScraper,
+    "plos":    PlosScraper,
     "science": ScienceScraper,
     "wiley":   WileyScraper,
 }
