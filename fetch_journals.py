@@ -108,11 +108,27 @@ def _extract_doi(entry) -> str:
 
 
 def _entry_date(entry) -> date | None:
-    """Return the publication date of an RSS entry, or None if unavailable."""
+    """Return the publication date of an RSS entry, or None if unavailable.
+
+    Some publishers (PNAS) carry both an online-first date (updated/published)
+    and a prism:coverDate (official issue date). The cover date is always the
+    later of the two for batch-released journals, so we take the maximum to
+    ensure the watermark advances to the issue date on first scrape.
+    """
     parsed = getattr(entry, "published_parsed", None) or getattr(entry, "updated_parsed", None)
-    if parsed:
-        return date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday)
-    return None
+    pub_date = date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday) if parsed else None
+
+    cover_date = None
+    cover_str = getattr(entry, "prism_coverdate", None)
+    if cover_str:
+        try:
+            # prism:coverDate may be "YYYY-MM-DD" or "YYYY-MM-DDThh:mm:ssZ"
+            cover_date = date.fromisoformat(cover_str[:10])
+        except ValueError:
+            pass
+
+    candidates = [d for d in (pub_date, cover_date) if d is not None]
+    return max(candidates) if candidates else None
 
 
 def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]:
@@ -187,6 +203,7 @@ def main():
     parser.add_argument("--fields", nargs="+", required=True, help="Field names to scrape (e.g. cond-mat)")
     parser.add_argument("--output", required=True, help="Output JSON path")
     parser.add_argument("--since", default=None, help="Override watermark: scrape entries after this date (YYYY-MM-DD)")
+    parser.add_argument("--no-advance-watermark", action="store_true", help="Read watermarks normally but do not save updates (useful for re-runs).")
     parser.add_argument("--fields-file", default="fields.json", help="Path to fields.json")
     args = parser.parse_args()
 
@@ -220,14 +237,14 @@ def main():
                 # Advance watermark to min(max_date, yesterday) — never advance
                 # to today, as papers published after this run would be missed tomorrow.
                 new_watermark = min(max_date, yesterday)
-                if not args.since:  # don't update watermarks on manual overrides
+                if not args.since and not args.no_advance_watermark:
                     watermarks[url_key] = new_watermark.isoformat()
                     log.info("%s: watermark advanced to %s", journal["name"], new_watermark)
 
         except Exception as e:
             log.warning("Unexpected error scraping %s: %s — skipping.", journal["name"], e)
 
-    if not args.since:
+    if not args.since and not args.no_advance_watermark:
         _save_watermarks(watermarks)
 
     # Deduplicate by arxiv_id (DOI or URL) — a paper can appear in multiple
