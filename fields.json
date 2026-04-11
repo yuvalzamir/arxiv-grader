@@ -268,7 +268,7 @@
     ]
   },
   "systems-biology": {
-    "arxiv_categories": ["q-bio"],
+    "arxiv_categories": ["q-bio", "physics.bio-ph"],
     "description": "Systems biology, computational biology, immunology, and cell biology",
     "journals": [
       {
@@ -327,22 +327,27 @@
       },
       {
         "name": "NatComms",
-        "url": "https://www.nature.com/ncomms.rss",
+        "url": "https://www.nature.com/subjects/computational-biology-and-bioinformatics/ncomms.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "cell biology",
-          "systems biology",
-          "computational biology",
-          "immunology",
-          "genomics",
-          "proteomics",
-          "bioinformatics",
-          "molecular biology",
-          "genetics",
-          "biochemistry",
-          "microbiology",
-          "cancer"
-        ]
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/immunology/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/cell-biology/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/systems-biology/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
       },
       {
         "name": "Nature",
