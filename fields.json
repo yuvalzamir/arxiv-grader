@@ -309,7 +309,25 @@
       },
       {
         "name": "PNAS",
-        "url": "https://www.pnas.org/action/showFeed?type=etoc&feed=rss&jc=PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCodeOr=biophys-bio&tagCodeOr=biophys-phys",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=immun",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=cell-bio",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=microbio",
         "publisher": "pnas",
         "tag_filter": null
       },
