@@ -182,21 +182,40 @@ Both flags default to their values above if absent — existing users are unaffe
 
 ---
 
-### 6. Landing page & onboarding — `server.py`
+### 6. Landing page & onboarding — `server.py` + `website/`
 
-Flask app serving both the public landing page and the rating endpoint, running under Gunicorn behind a Caddy reverse proxy.
+Flask app serving the public website and rating endpoint, running under Gunicorn behind a Caddy reverse proxy.
 
 **Routes:**
-- `GET /` — landing page with logo, description, and onboarding instructions
-- `GET /onboarding` — downloads the onboarding form (`docs/incoming_science_onboarding.docx`)
+- `GET /` — landing page (how it works, delivery options, about)
+- `GET /signup` — onboarding step 1: email + delivery preferences
+- `GET /signup/field` — onboarding step 2: research field selection
+- `GET /signup/interests` — onboarding step 3: interests + researchers
+- `GET /signup/papers` — onboarding step 4: seed papers (XLSX or URLs)
+- `GET /signup/done` — success page
+- `POST /onboarding/submit` — receives completed onboarding JSON; saves to `users_pending/<slug>/onboarding.json`
+- `GET /assets/<filename>` — static assets (images, fonts, JS)
 - `GET /rate?paper_id=...&rating=...&date=...&user=...` — records a paper rating
 - `GET /health` — liveness check
 
-**Onboarding flow for new users:**
-1. User visits the landing page and downloads the onboarding form
-2. User fills in research interests, keywords, arXiv categories, and representative papers
-3. User emails the completed form back
-4. Owner runs `create_profile.py --user-dir users/<name>` on the server
+**Website:** Six mobile-responsive static HTML pages under `website/stitch_platform_user_expansion/`, served at clean URLs by Flask. Built with Tailwind CSS. All inter-page navigation uses absolute URLs. Assets served from `website/assets/`.
+
+**Self-service onboarding flow:**
+1. User visits `incomingscience.xyz/signup` and fills in 4 screens (email, field, interests/researchers, seed papers)
+2. On the success screen, the browser POSTs the collected JSON to `POST /onboarding/submit`
+3. Submission is saved to `users_pending/<email-slug>/onboarding.json`
+4. Owner processes it with `process_pending.py` (see below)
+
+**Processing pending signups (`process_pending.py`):**
+```bash
+python process_pending.py --list    # show unprocessed submissions
+python process_pending.py --all     # process all pending
+python process_pending.py <slug>    # process one by email slug
+```
+- Uses `ANTHROPIC_API_KEY_ONBOARDING` from root `.env` to call Claude for profile creation
+- Creates `users/<slug>/taste_profile.json`, `archive.json`, and `.env` with `EMAIL_TO_DAILY` / `EMAIL_TO_WEEKLY`
+- After processing, owner must add `ANTHROPIC_API_KEY=sk-ant-...` to `users/<slug>/.env` before the next pipeline run
+- Stamps `processed_at` on the submission JSON to prevent re-processing
 
 ---
 
@@ -252,9 +271,11 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 | `scrapers/wiley.py` | Wiley publisher scraper — full abstract from RSS feed, no page fetches |
 | `fields.json` | Field definitions — arxiv category, journal list, tag filters |
 | `create_profile.py` | One-time interactive user onboarding |
+| `process_pending.py` | Owner tool — processes web signups from `users_pending/` into full user profiles |
 | `run_pipeline.py` | Triage (Haiku, cached) + scoring (Sonnet, Batch API) pipeline |
 | `build_digest_pdf.py` | Generates the daily PDF digest |
-| `server.py` | Flask server — landing page, rating endpoint, static assets |
+| `server.py` | Flask server — website, onboarding submit endpoint, rating endpoint, static assets |
+| `website/` | Mobile-responsive 6-page onboarding website (landing + 4 signup steps + success) |
 | `deduplicate_ratings.py` | Keeps the last rating per paper per day |
 | `archive.py` | Appends daily ratings to permanent `archive.json` |
 | `run_daily.py` | Per-user orchestrator — scoring, PDF, daily email (called by run_all_users.py) |
