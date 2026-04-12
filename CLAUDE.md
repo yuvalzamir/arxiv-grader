@@ -39,6 +39,12 @@ python run_all_users.py --refine --dry-run
 # Onboard a new user (interactive)
 python create_profile.py --user-dir users/<name>
 
+# Process pending web signups (non-interactive)
+python process_pending.py --list          # see what's waiting
+python process_pending.py --all           # process all pending
+python process_pending.py <slug>          # process one by slug
+# After processing: add ANTHROPIC_API_KEY to users/<slug>/.env
+
 # Run Flask rating server locally
 python server.py
 ```

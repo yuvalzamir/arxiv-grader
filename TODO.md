@@ -165,6 +165,8 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ## Backlog
 
+- [ ] **Website mobile responsiveness** — the onboarding flow and landing page look poor on mobile. All pages need a mobile-first layout pass: sidebar navigation, footer action bar, grid layouts, font sizes, and spacing all need adjusting for small screens.
+
 - [ ] **Weekly highlight report** — optional weekly email (e.g. every Friday) containing only papers scored 8 and above from the past week. Opt-in per user via `taste_profile.json` flag. Useful for users who want a curated high-signal summary without reading daily digests.
   - **Opt-in flag:** add `"weekly_digest": true` to `taste_profile.json`; default false
   - **Trigger:** new cron entry, e.g. Friday 01:00 ET → `run_all_users.py --weekly`

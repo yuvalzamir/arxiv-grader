@@ -358,9 +358,18 @@ See `docs/add_new_field.md` for a step-by-step guide.
 
 ### Add a user
 
+**Interactive (owner-assisted):**
 ```bash
 python create_profile.py --user-dir users/<name>
 ```
+
+**Via web signup** (`incomingscience.xyz/signup`): users self-register; submissions land in `users_pending/`. Process them with:
+```bash
+python process_pending.py --list          # see pending signups
+python process_pending.py --all           # process all
+python process_pending.py <slug>          # process one
+```
+After processing, add `ANTHROPIC_API_KEY=sk-ant-...` to `users/<slug>/.env`. Requires `ANTHROPIC_API_KEY_ONBOARDING` in root `.env`.
 
 ### Run manually
 
