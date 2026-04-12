@@ -84,8 +84,15 @@
     </style>
 </head>
 <body class="bg-surface text-on-surface min-h-[1024px] flex antialiased">
+<!-- Mobile-only step indicator -->
+<div class="md:hidden fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-outline-variant/20">
+  <div class="h-[2px] bg-outline-variant/20 w-full">
+    <div class="h-full bg-primary" style="width: 25%"></div>
+  </div>
+  <div class="px-4 py-2 text-xs font-label uppercase tracking-widest text-on-surface-variant">Step 01 of 04</div>
+</div>
 <!-- Sidebar Navigation -->
-<aside class="fixed left-0 top-0 h-full flex flex-col py-8 px-6 bg-slate-100 dark:bg-slate-900 border-none w-64 z-50">
+<aside class="hidden md:flex fixed left-0 top-0 h-full flex-col py-8 px-6 bg-slate-100 dark:bg-slate-900 border-none w-64 z-50">
 <a href="/" class="mb-12 flex items-center gap-3 hover:opacity-80 transition-opacity">
 <img alt="Incoming Science Logo" class="w-10 h-10 object-contain mix-blend-multiply dark:mix-blend-normal" src="/assets/logo.png">
 <span class="text-xl font-serif italic text-slate-900 dark:text-slate-50 block leading-tight">Incoming Science</span>
@@ -113,21 +120,21 @@
 </nav>
 </aside>
 <!-- Main Content Canvas -->
-<main class="ml-64 flex-1 flex flex-col min-h-[1024px] relative overflow-x-hidden">
+<main class="md:ml-64 flex-1 flex flex-col min-h-[1024px] relative overflow-x-hidden pt-10 md:pt-0">
 <!-- Top Navigation -->
-<header class="flex justify-between items-center w-full px-12 py-8 bg-transparent">
+<header class="flex justify-between items-center w-full px-4 md:px-12 py-8 bg-transparent">
 <div class="flex items-center gap-2">
 <span class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">Onboarding</span>
 <div class="w-8 h-[1px] bg-outline-variant opacity-30"></div>
-<span class="font-label text-[10px] uppercase tracking-[0.2em] text-primary">Step 01 of 04</span>
+<span class="hidden md:inline font-label text-[10px] uppercase tracking-[0.2em] text-primary">Step 01 of 04</span>
 </div>
 </header>
 <!-- Onboarding Canvas -->
-<div class="flex-1 max-w-5xl mx-auto w-full px-12 pb-24">
+<div class="flex-1 max-w-5xl mx-auto w-full px-4 md:px-12 pb-24">
 <!-- Hero Narrative Header -->
 <div class="mb-16">
-<h1 class="text-[3.5rem] leading-[1.1] font-headline text-primary -tracking-[0.02em] mb-6">
-                Register &amp; <span class="italic">frequency</span>
+<h1 class="text-3xl md:text-[3.5rem] leading-[1.1] font-headline text-primary -tracking-[0.02em] mb-6">
+                Register <span class="italic"></span>
 </h1>
 <p class="text-lg text-on-surface-variant font-body leading-relaxed max-w-2xl opacity-80">
                 Add your email and choose delivery frequency.
@@ -196,7 +203,7 @@
 </div>
 </div>
 <!-- Footer Actions -->
-<footer class="fixed bottom-0 left-64 right-0 h-20 px-12 bg-surface/80 backdrop-blur-md flex items-center justify-between z-40 border-t border-outline-variant/10">
+<footer class="fixed bottom-0 left-0 md:left-64 right-0 h-20 px-4 md:px-12 bg-surface/80 backdrop-blur-md flex items-center justify-between z-40 border-t border-outline-variant/10">
 <button onclick="window.location.href='/'" class="flex items-center gap-2 font-label text-[11px] uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
 <span class="material-symbols-outlined text-sm">arrow_back</span>
             Back
@@ -209,7 +216,7 @@
 <div class="w-1 h-1 rounded-full bg-outline-variant"></div>
 <div class="w-1 h-1 rounded-full bg-outline-variant"></div>
 </div>
-<span class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">Step 01 of 04</span>
+<span class="hidden md:inline font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">Step 01 of 04</span>
 </div>
 <button id="next-btn" onclick="saveAndNext()" class="bg-outline-variant text-on-surface-variant px-10 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold transition-all flex items-center gap-2 opacity-40 cursor-not-allowed pointer-events-none">
 <span>Next: Research</span>
