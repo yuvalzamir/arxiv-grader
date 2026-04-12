@@ -3,7 +3,7 @@
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Incoming Science | Defining Your Scholarly Signals</title>
+<title>Incoming Science | Defining Your Iterest</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;display=swap" rel="stylesheet"/>
@@ -91,8 +91,8 @@
 <body class="bg-surface text-on-surface antialiased min-h-[1024px] flex flex-col" data-mode="connect" data-stitch-vh="min-h-[1024px]===min-h-screen">
 <!-- Sidebar Navigation -->
 <aside class="fixed left-0 top-0 h-full flex flex-col py-8 px-6 bg-slate-100 dark:bg-slate-900 border-none w-64 z-50">
-<a href="../incoming_science_how_it_works_final/code.html" class="mb-12 flex items-center gap-3 hover:opacity-80 transition-opacity">
-<img alt="Incoming Science Logo" class="w-10 h-10 object-contain mix-blend-multiply dark:mix-blend-normal" src="../assets/logo.png"/>
+<a href="/" class="mb-12 flex items-center gap-3 hover:opacity-80 transition-opacity">
+<img alt="Incoming Science Logo" class="w-10 h-10 object-contain mix-blend-multiply dark:mix-blend-normal" src="/assets/logo.png"/>
 <span class="text-xl font-serif italic text-slate-900 dark:text-slate-50 block leading-tight">Incoming Science</span>
 </a>
 <nav class="flex-1 mt-2">
@@ -130,7 +130,7 @@
 <div class="flex items-center gap-2">
 <span class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">Onboarding</span>
 <div class="w-8 h-[1px] bg-outline-variant opacity-30"></div>
-<span class="font-label text-[10px] uppercase tracking-[0.2em] text-primary">Step 03 / 04</span>
+<span class="font-label text-[10px] uppercase tracking-[0.2em] text-primary">Step 03 of 04</span>
 </div>
 <div class="flex items-center gap-6">
 <span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors"><br/></span>
@@ -161,11 +161,11 @@
                         Research Interest &amp; Academic Thesis
                     </label>
 <div class="relative bg-surface-container-low p-1 rounded-lg border border-outline-variant/15">
-<textarea id="interests-textarea" oninput="updateNextButton()" class="w-full h-48 bg-surface-container-lowest border-none focus:ring-0 text-body p-8 font-light italic leading-relaxed text-on-surface rounded-md" placeholder="Describe the core signals you are tracking. What are the emerging patterns in your field?"></textarea>
+<textarea id="interests-textarea" oninput="updateNextButton()" class="w-full h-48 bg-surface-container-lowest border-none focus:ring-0 text-body p-8 font-light italic leading-relaxed text-on-surface rounded-md" placeholder="Describe your research and interests in free text (1-3 paragraphs)"></textarea>
 
 </div>
 <p class="mt-4 text-sm text-on-surface-variant/70 italic max-w-lg leading-relaxed">
-                        This input helps our algorithmic curator weigh signal strength across various academic repositories.
+                        This field is the most critical one. Be sure to include everything of interest, and define it importance to you (e.g. core, relevant, want to learn more, new to the field)
                     </p>
 </div>
 <!-- Researchers to Follow -->
@@ -191,7 +191,7 @@
                         </p>
 </div>
 <div class="flex-1 w-full h-40">
-<img alt="Data Visualization" class="w-full h-full object-cover grayscale brightness-75 rounded-lg" src="../assets/signals_photo.jpg"/>
+<img alt="Data Visualization" class="w-full h-full object-cover grayscale brightness-75 rounded-lg" src="/assets/signals_photo.jpg"/>
 </div>
 </div>
 </aside>
@@ -199,7 +199,7 @@
 </div>
 <!-- Sticky Footer -->
 <footer class="fixed bottom-0 left-64 right-0 h-20 px-12 bg-surface/80 backdrop-blur-md flex items-center justify-between z-40 border-t border-outline-variant/10">
-<button onclick="window.location.href='../onboarding_research_field_final/code.html'" class="flex items-center gap-2 font-label text-[11px] uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
+<button onclick="window.location.href='/signup/field'" class="flex items-center gap-2 font-label text-[11px] uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
 <span class="material-symbols-outlined text-sm">arrow_back</span>
             Back
         </button>
@@ -272,7 +272,7 @@ function saveAndNext() {
     state.interests_description = interests;
     state.researchers = researchers;
     localStorage.setItem('is_onboarding', JSON.stringify(state));
-    window.location.href = '../onboarding_seed_papers_final/code.html';
+    window.location.href = '/signup/papers';
 }
 
 // Restore state on load

@@ -177,13 +177,9 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 - [ ] **`create_profile.py` — ask digest frequency during onboarding** — add interactive questions for `daily_digest` (yes/no), `weekly_digest` (yes/no), and `weekly_day` (if weekly enabled). Write these fields into `taste_profile.json` at creation time so they never need to be added manually (manual edits caused JSON corruption in April 2026).
 
-- [ ] **Self-service user onboarding** — allow new users to onboard without owner intervention. Possible scheme: user fills out a web form (hosted on `incomingscience.xyz`), submits it, and `create_profile.py` runs automatically on the server to create their profile and add them to the pipeline. Requires auth/validation to prevent abuse, automated directory creation, and a confirmation email flow.
-  - **Web form (`server.py`):** new route `GET /onboarding/form` serving an HTML form with fields: name, email, arXiv categories, free-text interests, keywords (comma-separated), authors to follow, and optionally a list of representative paper URLs
-  - **Submission endpoint:** `POST /onboarding/submit` — validates input, writes a pending request to `onboarding_queue/<token>.json`, sends a verification email to the user with a confirm link
-  - **Email verification:** `GET /onboarding/confirm?token=<token>` — marks request as confirmed, triggers profile creation
-  - **Profile creation:** confirmed request calls `create_profile.py` non-interactively (all inputs from form JSON, skip interactive review steps); creates `users/<name>/` directory, `.env` (with `EMAIL_TO`), `taste_profile.json`, `archive.json`
-  - **API key handling:** new users need their own `ANTHROPIC_API_KEY`; options: (a) owner-provided shared key per field stored in root `.env`, (b) user supplies key in the form. Decision needed before implementation.
-  - **Confirmation email to user:** sent after profile creation — confirms they're enrolled, explains the schedule, links to landing page
-  - **Alert to owner:** email to operator on each new confirmed signup
-  - **Security:** rate-limit submissions by IP; token expiry (e.g. 24h); sanitize all user inputs used in directory names (alphanumeric + hyphen only for `<name>`); no shell execution of user-supplied strings
-  - **`create_profile.py` changes:** add a `--non-interactive` mode that reads all profile fields from a JSON file instead of prompting; skips the Excel upload and interactive ranking review; calls Claude once to generate initial keyword/area ranking from the free-text inputs
+- [x] **Self-service user onboarding** — web onboarding flow live at `incomingscience.xyz`. 5-screen static HTML flow (landing, identity/delivery, research field, interests/researchers, seed papers, success). Owner activates accounts manually via `process_pending.py`.
+  - [x] **Web form** — 5-screen static HTML flow served at clean URLs: `/` (landing), `/signup` (step 1), `/signup/field`, `/signup/interests`, `/signup/papers`, `/signup/done`
+  - [x] **`POST /onboarding/submit`** in `server.py` — receives final JSON, saves to `users_pending/<email-slug>/onboarding.json`
+  - [x] **Success page** — POSTs JSON to `/onboarding/submit` before clearing localStorage
+  - [x] **`process_pending.py`** — owner tool: `--list` shows pending submissions, `--all` or by slug processes them; uses `ANTHROPIC_API_KEY_ONBOARDING` from root `.env`; imports reusable functions from `create_profile.py`
+  - [x] **Flask static serving** — website pages served at clean URLs via `server.py`; assets at `/assets/<filename>`; navigation links use absolute URLs

@@ -93,9 +93,10 @@ All four onboarding pages share the same step-progress sidebar:
 
 Step 2 embeds a snapshot of `fields.json` as a JS constant in the page script. When adding a new field to `fields.json`, update the `fieldData` constant in `onboarding_research_field_final/code.html` to match.
 
-## Pending backend work
+## Completed backend work
 
-1. **`POST /onboarding/submit`** in `server.py` — receives the final JSON, saves to `users_pending/<email_slug>/onboarding.json`.
-2. **Success page** — add `fetch()` POST to the above endpoint before clearing localStorage.
-3. **`process_pending.py`** — owner tool: reads pending JSON, calls Claude to generate `taste_profile.json`, creates user directory, writes `.env` (without API key).
-4. **Flask static serving** — serve the website files so the flow is accessible at `incomingscience.xyz/onboarding`.
+1. **`POST /onboarding/submit`** in `server.py` — receives the final JSON from the success page, saves to `users_pending/<email-slug>/onboarding.json`.
+2. **Success page** — POSTs the compiled JSON to `/onboarding/submit` before clearing localStorage.
+3. **`process_pending.py`** — owner tool for processing pending submissions. Supports `--list` (show pending), `--all` (process all), or by slug. Uses `ANTHROPIC_API_KEY_ONBOARDING` from root `.env`. Imports reusable keyword/area generation functions from `create_profile.py` to build `taste_profile.json` without interactive prompts.
+4. **Flask static serving** — `server.py` serves the website pages at clean URLs: `/` (landing), `/signup` (step 1 — identity/delivery), `/signup/field` (step 2), `/signup/interests` (step 3), `/signup/papers` (step 4), `/signup/done` (step 5 — success); static assets served at `/assets/<filename>`.
+5. **Navigation links** — all HTML pages use absolute URLs (`/signup`, `/signup/field`, etc.) instead of relative paths, so they work correctly when served from Flask routes.

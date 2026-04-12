@@ -13,6 +13,7 @@ Production (on Red Pitaya):
 """
 
 import json
+import re
 import threading
 from datetime import date, datetime
 from pathlib import Path
@@ -21,9 +22,12 @@ from flask import Flask, request, send_from_directory
 
 app = Flask(__name__)
 
-BASE_DIR      = Path(__file__).parent
-USERS_DIR     = BASE_DIR / "users"
-VALID_RATINGS = {"excellent", "good", "irrelevant"}
+BASE_DIR          = Path(__file__).parent
+USERS_DIR         = BASE_DIR / "users"
+USERS_PENDING_DIR = BASE_DIR / "users_pending"
+VALID_RATINGS     = {"excellent", "good", "irrelevant"}
+
+REQUIRED_ONBOARDING_FIELDS = {"email", "field", "interests_description", "researchers"}
 
 _write_lock = threading.Lock()   # guard concurrent writes to ratings.json
 
@@ -198,152 +202,61 @@ def rate():
 
 @app.route("/")
 def index():
-    html = """<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Incoming Science</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #F7F4EF;
-      color: #2C2826;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px;
-    }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 48px 40px;
-      max-width: 580px;
-      width: 100%;
-      box-shadow: 0 2px 12px rgba(44,40,38,0.10);
-      text-align: center;
-    }
-    .logo {
-      width: 180px;
-      height: auto;
-      margin-bottom: 8px;
-      border: 2px solid #DDD5C8;
-      border-radius: 12px;
-      padding: 12px;
-      background: #FAFCF6;
-    }
-    h1 {
-      font-size: 1.7em;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      color: #2C2826;
-      margin-bottom: 6px;
-    }
-    .tagline {
-      font-size: 0.9em;
-      color: #9C9288;
-      margin-bottom: 28px;
-    }
-    .divider {
-      border: none;
-      border-top: 2px solid #EAE4DB;
-      margin: 28px 0;
-    }
-    p {
-      color: #5C5550;
-      font-size: 0.95em;
-      line-height: 1.75;
-      margin-bottom: 16px;
-      text-align: left;
-    }
-    .steps {
-      background: #F7F4EF;
-      border: 2px solid #DDD5C8;
-      border-radius: 8px;
-      padding: 20px 24px;
-      text-align: left;
-      margin: 24px 0;
-    }
-    .steps ol {
-      padding-left: 20px;
-      color: #5C5550;
-      font-size: 0.95em;
-      line-height: 2;
-    }
-    .steps ol li strong {
-      color: #2C2826;
-    }
-    .btn {
-      display: inline-block;
-      background: #DDD5C8;
-      color: #2C2826;
-      font-family: inherit;
-      font-size: 0.95em;
-      font-weight: 700;
-      padding: 12px 28px;
-      border-radius: 8px;
-      text-decoration: none;
-      margin-top: 8px;
-      transition: background 0.15s;
-    }
-    .btn:hover { background: #CEC5B6; }
-    .contact {
-      margin-top: 24px;
-      font-size: 0.88em;
-      color: #9C9288;
-    }
-    .contact a {
-      color: #6A8FAF;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .contact a:hover { text-decoration: underline; }
-    .footer {
-      margin-top: 32px;
-      font-size: 0.78em;
-      color: #B8B0A8;
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <img src="/logo.png" alt="Incoming Science logo" class="logo">
-    <p class="tagline">Your daily scientific literature digest, personalised by AI.</p>
+    return send_from_directory(
+        BASE_DIR / "website" / "stitch_platform_user_expansion" / "incoming_science_how_it_works_final",
+        "code.html",
+    )
 
-    <hr class="divider">
 
-    <p>Incoming Science fetches the latest papers in your field every morning, ranks them
-    by relevance to your research interests, and delivers a scored PDF to your inbox &mdash;
-    ready to read on your phone.</p>
-    <p>Rate papers with one tap. Ratings feed back into an evolving taste profile that
-    sharpens recommendations over time.</p>
+@app.route("/signup")
+def signup_step1():
+    return send_from_directory(
+        BASE_DIR / "website" / "stitch_platform_user_expansion" / "onboarding_identity_delivery_final",
+        "code.html",
+    )
 
-    <hr class="divider">
 
-    <div class="steps">
-      <ol>
-        <li><strong>Download</strong> the onboarding form below.</li>
-        <li><strong>Fill it in</strong> &mdash; your research interests, keywords, and a few representative papers.</li>
-        <li><strong>Email it back</strong> to get set up.</li>
-      </ol>
-    </div>
+@app.route("/signup/field")
+def signup_step2():
+    return send_from_directory(
+        BASE_DIR / "website" / "stitch_platform_user_expansion" / "onboarding_research_field_final",
+        "code.html",
+    )
 
-    <a href="/onboarding" class="btn">&#8659;&nbsp; Download onboarding form</a>
 
-    <div class="contact">
-      Send the completed form to
-      <a href="mailto:yuval.zamir@icfo.eu">yuval.zamir@icfo.eu</a>
-    </div>
+@app.route("/signup/interests")
+def signup_step3():
+    return send_from_directory(
+        BASE_DIR / "website" / "stitch_platform_user_expansion" / "onboarding_signals_interests_final",
+        "code.html",
+    )
 
-    <p class="footer">Built for researchers, by a researcher.</p>
-  </div>
-</body>
-</html>"""
-    return html, 200, {"Content-Type": "text/html; charset=utf-8"}
+
+@app.route("/signup/papers")
+def signup_step4():
+    return send_from_directory(
+        BASE_DIR / "website" / "stitch_platform_user_expansion" / "onboarding_seed_papers_final",
+        "code.html",
+    )
+
+
+@app.route("/signup/done")
+def signup_done():
+    return send_from_directory(
+        BASE_DIR / "website" / "stitch_platform_user_expansion" / "onboarding_success_final",
+        "code.html",
+    )
+
+
+@app.route("/assets/<path:filename>")
+def assets(filename):
+    return send_from_directory(BASE_DIR / "website" / "assets", filename)
+
+
+@app.route("/web/<path:filename>")
+def website(filename):
+    """Serve the static onboarding website from website/."""
+    return send_from_directory(BASE_DIR / "website", filename)
 
 
 @app.route("/logo.png")
@@ -358,6 +271,42 @@ def onboarding():
         as_attachment=True,
         download_name="incoming_science_onboarding.docx",
     )
+
+
+@app.route("/onboarding/submit", methods=["POST"])
+def onboarding_submit():
+    """
+    Receive the completed onboarding JSON from the web flow and save it
+    to users_pending/<email_slug>/onboarding.json for manual processing.
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return {"status": "error", "message": "Invalid JSON body."}, 400
+
+    missing = REQUIRED_ONBOARDING_FIELDS - data.keys()
+    if missing:
+        return {"status": "error", "message": f"Missing fields: {', '.join(sorted(missing))}"}, 400
+
+    email = str(data.get("email", "")).strip().lower()
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return {"status": "error", "message": "Invalid email address."}, 400
+
+    # Sanitise email → directory slug (alphanumeric + hyphens only)
+    slug = re.sub(r"[^a-z0-9]+", "-", email).strip("-")
+    if not slug:
+        return {"status": "error", "message": "Could not derive a valid slug from email."}, 400
+
+    USERS_PENDING_DIR.mkdir(exist_ok=True)
+    pending_dir = USERS_PENDING_DIR / slug
+    pending_dir.mkdir(exist_ok=True)
+
+    payload = dict(data)
+    payload["submitted_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+
+    out_path = pending_dir / "onboarding.json"
+    out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return {"status": "ok"}, 200
 
 
 @app.route("/health")
