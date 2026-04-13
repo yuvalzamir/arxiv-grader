@@ -88,9 +88,9 @@ Two sequential Claude API calls per user.
 
 #### Stage 1: Triage (Claude Haiku) — cached API
 
-Triage runs **centrally per field** in `run_all_users.py` before the per-user scoring phase. All users in a field are triaged sequentially to maximise prompt cache hits.
+Triage runs **centrally per field** in `run_all_users.py` before the per-user scoring phase. Users in a field are triaged in parallel with staggered launches to maximise prompt cache hits while respecting rate limits.
 
-**Prompt caching structure:** The paper list and system prompt are identical for all users in a field and are marked `cache_control: ephemeral`. The user's taste profile is appended as the non-cached suffix. The first user in a field warms the cache; subsequent users pay ~10% of normal input token cost for the papers block.
+**Prompt caching structure:** The paper list and system prompt are identical for all users in a field and are marked `cache_control: ephemeral`. The user's taste profile is appended as the non-cached suffix. The first user warms the cache; subsequent users pay ~10% of normal input token cost for the papers block.
 
 **Two independent calls per user** (to avoid cross-pool calibration and use field-specific prompts):
 - **arXiv triage** (`prompts/triage.txt`) — all arXiv papers for the field
@@ -103,6 +103,8 @@ Each call has its own pair of cache entries (system prompt + papers block), both
 - **Medium threshold:** Requires at least one concrete anchor — a keyword hit, an author match, or subcategory match with clear topic overlap. Pure thematic adjacency without any profile anchor → low.
 - **Caps:** Top 15 arXiv + top 15 journal papers forwarded to scoring (independent hard caps)
 - **Results written to:** `users/<name>/data/DATE/filtered_papers.json`
+
+**Rate limit and parallelism:** The cached API has a 50k input-token/minute limit shared across all calls. Each user's triage thread launches `i × 61s` apart so no two cached calls overlap within the same 60-second window. Batch calls run concurrently in the background (no rate limit applies). Within each thread, the cached call always fires before the Batch call to hit the cache while it is still warm. Token counts are estimated per call (chars/4) against a 40k safety threshold; if arXiv or journals individually exceeds 40k, or both combined exceed 40k, the larger pool is automatically routed to Batch.
 
 #### Stage 2: Scoring (Claude Sonnet) — Batch API
 
@@ -146,9 +148,10 @@ Tapping opens the browser briefly, the server records the rating, and returns a 
 3. Fetch arXiv papers once per field (`fetch_papers.py`)
 4. Merge arXiv + journals per field → `{field}_today_papers.json`
 5. Exit cleanly for any field with no papers today
-6. Run centralized triage per field — all users in a field triaged sequentially (cached API)
-7. Dispatch per-user scoring + PDF + daily email in parallel (`ThreadPoolExecutor`)
-8. Clean up shared data folder
+6. Snapshot `journal_watermarks.json` → `data/DATE/journal_watermarks_snapshot.json` (recovery aid)
+7. Run centralized triage per field — users triaged in parallel with staggered 61s launches
+8. Dispatch per-user scoring + PDF + daily email in parallel (`ThreadPoolExecutor`)
+9. Clean up shared data folders older than 3 days
 9. Send batch fallback alert email if any scoring job timed out
 10. Weekly digest phase — for any user with `weekly_digest: true` whose chosen weekday matches today, send their weekly email (runs after all daily work is complete)
 

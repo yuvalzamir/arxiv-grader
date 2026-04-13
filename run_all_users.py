@@ -195,11 +195,15 @@ def run_centralized_triage(
     no_batch: bool = False,
 ) -> dict[str, bool]:
     """
-    Run triage for all users in a field sequentially using the cached API.
+    Run triage for all users in a field in parallel with staggered launches.
 
     The merged paper list (arXiv + journals) is the cached prefix — identical for
     all users in the field. Each user's taste profile is the non-cached per-user suffix.
-    Sequential execution ensures the first user warms the cache for subsequent users.
+
+    Users launch in parallel but each thread sleeps i*61s before firing its cached
+    call, ensuring no two cached API calls overlap within the same 60s rate-limit
+    window. Batch calls are not subject to the 50k token/minute limit and run
+    immediately after the cached call within each thread.
 
     Returns {user_name: success} dict.
     """
@@ -214,25 +218,64 @@ def run_centralized_triage(
     triage_prompt         = load_prompt("triage.txt")
     triage_journal_prompt = load_prompt("triage_journals.txt")
 
-    use_batch = len(user_dirs) < 4 and not no_batch
+    # The cached API has a 50k input-token/minute rate limit shared across all
+    # calls in that window. Both triage calls (arXiv + journals) fire within
+    # seconds for the same user, so their token counts must be budgeted together.
+    # Token estimate (chars/4) is intentionally rough, so we use 40k as the
+    # combined safety threshold — a 20% buffer below the 50k hard limit.
+    CACHED_BUDGET = 40_000
+    arxiv_papers   = [p for p in papers if not p.get("source")]
+    journal_papers = [p for p in papers if p.get("source")]
+
+    arxiv_tokens   = len(json.dumps(arxiv_papers))   // 4
+    journal_tokens = len(json.dumps(journal_papers)) // 4
+    combined_tokens = arxiv_tokens + journal_tokens
+
+    base_batch = len(user_dirs) < 4 and not no_batch
+
+    # Individual overflow: a single call exceeds the full budget on its own.
+    arxiv_overflow   = arxiv_tokens   > CACHED_BUDGET
+    journal_overflow = journal_tokens > CACHED_BUDGET
+
+    # Combined overflow: both calls together exceed the shared per-minute budget.
+    # Force the larger pool to Batch so the smaller can stay on the cheaper cached API.
+    combined_overflow = (not arxiv_overflow and not journal_overflow) and (combined_tokens > CACHED_BUDGET)
+    if combined_overflow:
+        if arxiv_tokens >= journal_tokens:
+            arxiv_overflow = True
+        else:
+            journal_overflow = True
+
+    use_batch_arxiv    = base_batch or arxiv_overflow
+    use_batch_journals = base_batch or journal_overflow
+
+    if arxiv_overflow:
+        log.warning("Field '%s': arXiv ~%d tokens — forcing Batch API for arXiv triage.", field, arxiv_tokens)
+    if journal_overflow:
+        log.warning("Field '%s': journals ~%d tokens — forcing Batch API for journal triage.", field, journal_tokens)
+    if combined_overflow:
+        log.warning("Field '%s': combined ~%d tokens exceeds budget — offloaded larger pool to Batch.", field, combined_tokens)
+
+    # Stagger only needed when at least one call is on the cached API.
+    needs_stagger = not use_batch_arxiv or not use_batch_journals
+    CACHED_TRIAGE_DELAY = 61  # seconds between cached call launches
+
     log.info(
-        "Field '%s': %d user(s) — triage mode: %s",
-        field, len(user_dirs), "batch API" if use_batch else "cached API",
+        "Field '%s': %d user(s) — triage mode: arXiv=%s  journals=%s  stagger=%s",
+        field, len(user_dirs),
+        "batch" if use_batch_arxiv else "cached",
+        "batch" if use_batch_journals else "cached",
+        f"{CACHED_TRIAGE_DELAY}s" if needs_stagger else "none",
     )
 
-    # Cached API has a 50k input tokens/minute rate limit. Each triage call
-    # uses ~18–20k tokens, so calls must be spaced ≥30s apart to stay safe.
-    # Batch API is async and not subject to this limit — no sleep needed.
-    CACHED_TRIAGE_DELAY = 30  # seconds between sequential cached-API calls
-
-    results = {}
-    for i, user_dir in enumerate(user_dirs):
-        if i > 0 and not use_batch:
-            log.info("Waiting %ds between cached triage calls (rate limit)...", CACHED_TRIAGE_DELAY)
-            time.sleep(CACHED_TRIAGE_DELAY)
+    def _triage_one(i: int, user_dir: Path) -> tuple[str, bool]:
+        delay = i * CACHED_TRIAGE_DELAY if needs_stagger else 0
+        if delay > 0:
+            log.info("--- [%s] Triage in %ds ---", user_dir.name, delay)
+            time.sleep(delay)
         log.info("--- [%s] Triage ---", user_dir.name)
         try:
-            profile = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
+            profile   = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
             today_dir = user_dir / "data" / date_str
             today_dir.mkdir(parents=True, exist_ok=True)
 
@@ -241,17 +284,25 @@ def run_centralized_triage(
                 triage_prompt, triage_journal_prompt,
                 debug_dir=today_dir,
                 api_key=api_key,
-                use_batch=use_batch,
+                use_batch_arxiv=use_batch_arxiv,
+                use_batch_journals=use_batch_journals,
             )
 
             filtered_path = today_dir / "filtered_papers.json"
             with open(filtered_path, "w", encoding="utf-8") as f:
                 json.dump(filtered, f, indent=2, ensure_ascii=False)
             log.info("--- [%s] Triage done: %d papers passed ---", user_dir.name, len(filtered))
-            results[user_dir.name] = True
+            return user_dir.name, True
         except Exception as e:
             log.error("--- [%s] Triage FAILED: %s ---", user_dir.name, e)
-            results[user_dir.name] = False
+            return user_dir.name, False
+
+    results: dict[str, bool] = {}
+    with ThreadPoolExecutor(max_workers=len(user_dirs)) as executor:
+        futures = [executor.submit(_triage_one, i, u) for i, u in enumerate(user_dirs)]
+        for future in as_completed(futures):
+            name, ok = future.result()
+            results[name] = ok
 
     return results
 
@@ -364,6 +415,12 @@ def main():
 
     if not args.refine and not args.score_only:
         shared_data_dir.mkdir(parents=True, exist_ok=True)
+
+        # Snapshot watermarks at the start of the run — useful for manual recovery
+        # if a re-run is needed and watermarks have already advanced.
+        watermarks_src = BASE_DIR / "journal_watermarks.json"
+        if watermarks_src.exists():
+            shutil.copy2(watermarks_src, shared_data_dir / "journal_watermarks_snapshot.json")
 
         user_fields  = {u.name: _user_field(u) for u in users}
         active_fields = sorted(set(user_fields.values()))

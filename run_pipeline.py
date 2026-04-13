@@ -424,29 +424,51 @@ def run_triage(
     system_prompt: str, journal_system_prompt: str,
     debug_dir: Path | None = None, api_key: str | None = None,
     use_batch: bool = False,
+    use_batch_arxiv: bool | None = None,
+    use_batch_journals: bool | None = None,
 ) -> list[dict]:
     """
     Run triage in two separate calls (arXiv and journals) to avoid
     cross-pool calibration effects. Returns only high/medium papers with
     'triage' field added, capped independently per source type.
 
-    use_batch: if True, use the Batch API for both calls (50% cost discount).
-               if False (default), use the cached synchronous API.
+    use_batch_arxiv / use_batch_journals: per-call overrides. If not set,
+    both fall back to use_batch. This allows the token-budget check in
+    run_all_users.py to force Batch API for whichever call exceeds 45k tokens
+    without affecting the other call.
     """
     arxiv_papers  = [p for p in papers if not p.get("source")]
     journal_papers = [p for p in papers if p.get("source")]
 
+    batch_arxiv   = use_batch_arxiv   if use_batch_arxiv   is not None else use_batch
+    batch_journals = use_batch_journals if use_batch_journals is not None else use_batch
+
     arxiv_ranked:  list[tuple[dict, str]] = []
     journal_ranked: list[tuple[dict, str]] = []
 
-    if arxiv_papers:
-        arxiv_ranked = _run_single_triage(
-            arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, use_batch
-        )
-    if journal_papers:
-        journal_ranked = _run_single_triage(
-            journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, use_batch
-        )
+    # Always run the cached call before the batch call so the cache is still
+    # warm (warmed by the previous user in the field) when it fires. Batch calls
+    # are not subject to the 50k token/minute cached-API limit and can run after.
+    arxiv_first = not batch_arxiv or batch_journals  # cached arXiv goes first unless journals is also cached (default order)
+    if arxiv_first:
+        if arxiv_papers:
+            arxiv_ranked = _run_single_triage(
+                arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, batch_arxiv
+            )
+        if journal_papers:
+            journal_ranked = _run_single_triage(
+                journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, batch_journals
+            )
+    else:
+        # arXiv is batch, journals is cached — run journals first
+        if journal_papers:
+            journal_ranked = _run_single_triage(
+                journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, batch_journals
+            )
+        if arxiv_papers:
+            arxiv_ranked = _run_single_triage(
+                arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, batch_arxiv
+            )
 
     # Apply caps independently for each source type.
     filtered = []
