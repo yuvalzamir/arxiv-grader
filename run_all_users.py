@@ -24,6 +24,7 @@ import shutil
 import smtplib
 import subprocess
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from email.mime.text import MIMEText
@@ -100,6 +101,24 @@ def filter_for_field(scraped_papers: list[dict], field_config: dict) -> list[dic
             result.append({k: v for k, v in paper.items() if k != "subject_tags"})
 
     return result
+
+
+def cleanup_old_shared_folders(keep_days: int = 3) -> None:
+    """Delete shared data/YYYY-MM-DD folders older than keep_days."""
+    shared_root = BASE_DIR / "data"
+    if not shared_root.exists():
+        return
+    cutoff = date.today().toordinal() - keep_days
+    for folder in shared_root.iterdir():
+        if not folder.is_dir():
+            continue
+        try:
+            folder_date = date.fromisoformat(folder.name)
+        except ValueError:
+            continue
+        if folder_date.toordinal() < cutoff:
+            shutil.rmtree(folder)
+            log.info("Removed old shared data folder: %s", folder)
 
 
 def run_journal_scrape(date_str: str, active_fields: list[str], shared_data_dir: Path, no_advance_watermark: bool = False) -> Path | None:
@@ -201,8 +220,16 @@ def run_centralized_triage(
         field, len(user_dirs), "batch API" if use_batch else "cached API",
     )
 
+    # Cached API has a 50k input tokens/minute rate limit. Each triage call
+    # uses ~18–20k tokens, so calls must be spaced ≥30s apart to stay safe.
+    # Batch API is async and not subject to this limit — no sleep needed.
+    CACHED_TRIAGE_DELAY = 30  # seconds between sequential cached-API calls
+
     results = {}
-    for user_dir in user_dirs:
+    for i, user_dir in enumerate(user_dirs):
+        if i > 0 and not use_batch:
+            log.info("Waiting %ds between cached triage calls (rate limit)...", CACHED_TRIAGE_DELAY)
+            time.sleep(CACHED_TRIAGE_DELAY)
         log.info("--- [%s] Triage ---", user_dir.name)
         try:
             profile = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
@@ -478,10 +505,8 @@ def main():
         print(f"  {name:20s}  {'OK' if ok else 'FAILED'}")
     print()
 
-    # Clean up shared journal data folder — not needed after all users have run.
-    if shared_data_dir and shared_data_dir.exists():
-        shutil.rmtree(shared_data_dir)
-        log.info("Removed shared data folder: %s", shared_data_dir)
+    # Clean up shared data folders older than 3 days (keeps today's for --no-fetch re-runs).
+    cleanup_old_shared_folders(keep_days=3)
 
     # --- Weekly digest phase: runs after all daily work is complete ---
     # Only triggered on non-refine, non-triage-only runs. Each user's weekly_day
