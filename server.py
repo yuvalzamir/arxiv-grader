@@ -13,9 +13,12 @@ Production (on Red Pitaya):
 """
 
 import json
+import os
 import re
+import smtplib
 import threading
 from datetime import date, datetime
+from email.mime.text import MIMEText
 from pathlib import Path
 
 from flask import Flask, request, send_from_directory
@@ -30,6 +33,31 @@ VALID_RATINGS     = {"excellent", "good", "irrelevant"}
 REQUIRED_ONBOARDING_FIELDS = {"email", "field", "interests_description", "researchers"}
 
 _write_lock = threading.Lock()   # guard concurrent writes to ratings.json
+
+_SMTP_HOST     = os.environ.get("EMAIL_SMTP_HOST", "smtp.gmail.com")
+_SMTP_PORT     = int(os.environ.get("EMAIL_SMTP_PORT", "587"))
+_SMTP_USER     = os.environ.get("EMAIL_SMTP_USER", "")
+_SMTP_PASSWORD = os.environ.get("EMAIL_SMTP_PASSWORD", "")
+_EMAIL_FROM    = os.environ.get("EMAIL_FROM", "")
+
+
+def _send_signup_notification(slug: str, field: str, submitted_at: str) -> None:
+    """Send a signup notification email to the operator account."""
+    if not _SMTP_USER or not _SMTP_PASSWORD:
+        return
+    msg = MIMEText(f"New signup\n\nSlug:  {slug}\nField: {field}\nTime:  {submitted_at}\n")
+    msg["Subject"] = f"Incoming Science — new signup: {slug}"
+    msg["From"]    = _EMAIL_FROM
+    msg["To"]      = _EMAIL_FROM  # send to itself
+    try:
+        with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=15) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(_SMTP_USER, _SMTP_PASSWORD)
+            server.sendmail(_EMAIL_FROM, [_EMAIL_FROM], msg.as_string())
+    except Exception:
+        pass  # notification failure must never break the signup response
 
 
 # ── Page template — mobile-first, matches digest palette ─────────────────────
@@ -308,6 +336,8 @@ def onboarding_submit():
 
     out_path = pending_dir / "onboarding.json"
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    _send_signup_notification(slug, data.get("field", ""), payload["submitted_at"])
 
     return {"status": "ok"}, 200
 
