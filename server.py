@@ -279,6 +279,9 @@ def onboarding_submit():
     Receive the completed onboarding JSON from the web flow and save it
     to users_pending/<email_slug>/onboarding.json for manual processing.
     """
+    if request.content_length and request.content_length > 50_000:
+        return {"status": "error", "message": "Payload too large."}, 413
+
     data = request.get_json(silent=True)
     if not data:
         return {"status": "error", "message": "Invalid JSON body."}, 400
