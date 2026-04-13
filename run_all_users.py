@@ -258,18 +258,30 @@ def run_centralized_triage(
 
     # Stagger only needed when at least one call is on the cached API.
     needs_stagger = not use_batch_arxiv or not use_batch_journals
-    CACHED_TRIAGE_DELAY = 61  # seconds between cached call launches
+
+    # Delay strategy:
+    #   User 0: fires immediately — warms both caches (~50k cache_creation tokens).
+    #   User 1: waits 61s — ensures user 0's calls have completed and the rate-limit
+    #            estimate is settled before another large request is estimated.
+    #   Users 2+: fire 1s apart — cache is warm, each only consumes ~1k uncached
+    #            profile tokens, so rapid-fire is safe.
+    def _delay_for(i: int) -> int:
+        if not needs_stagger or i == 0:
+            return 0
+        if i == 1:
+            return 61
+        return 61 + (i - 1)  # 62, 63, 64 ...
 
     log.info(
         "Field '%s': %d user(s) — triage mode: arXiv=%s  journals=%s  stagger=%s",
         field, len(user_dirs),
         "batch" if use_batch_arxiv else "cached",
         "batch" if use_batch_journals else "cached",
-        f"{CACHED_TRIAGE_DELAY}s" if needs_stagger else "none",
+        "user0→61s→user1→1s→rest" if needs_stagger else "none",
     )
 
     def _triage_one(i: int, user_dir: Path) -> tuple[str, bool]:
-        delay = i * CACHED_TRIAGE_DELAY if needs_stagger else 0
+        delay = _delay_for(i)
         if delay > 0:
             log.info("--- [%s] Triage in %ds ---", user_dir.name, delay)
             time.sleep(delay)
@@ -478,8 +490,9 @@ def main():
                         json.dump(filtered, f, indent=2)
                     log.info("Field '%s': %d journal papers after filtering.", field, len(filtered))
 
-        # Step 3: Merge arXiv + journals and run centralized triage per field.
-        for field in fields_with_papers:
+        # Step 3: Merge arXiv + journals and run centralized triage per field — in parallel.
+        # Each field uses its own API key so rate limits are fully independent.
+        def _run_field_triage(field: str) -> tuple[dict[str, Path], dict[str, bool]]:
             field_users = [u for u in users if user_fields[u.name] == field]
             arxiv_papers = arxiv_papers_by_field[field]
 
@@ -496,13 +509,23 @@ def main():
                 field, len(arxiv_papers), len(journal_papers), len(merged_papers),
             )
 
-            for user_dir in field_users:
-                user_papers[user_dir.name] = merged_path
-
+            field_user_papers = {u.name: merged_path for u in field_users}
             triage_results = run_centralized_triage(field, field_users, merged_papers, date_str, no_batch=args.no_batch)
-            for user_name, ok in triage_results.items():
-                if not ok:
-                    triage_failed.add(user_name)
+            return field_user_papers, triage_results
+
+        with ThreadPoolExecutor(max_workers=len(fields_with_papers)) as executor:
+            field_futures = {executor.submit(_run_field_triage, f): f for f in fields_with_papers}
+            for future in as_completed(field_futures):
+                field = field_futures[future]
+                try:
+                    field_user_papers, triage_results = future.result()
+                    user_papers.update(field_user_papers)
+                    for user_name, ok in triage_results.items():
+                        if not ok:
+                            triage_failed.add(user_name)
+                except Exception as e:
+                    log.error("Field '%s' triage FAILED: %s", field, e)
+                    triage_failed.update(u.name for u in users if user_fields[u.name] == field)
 
     # --- Triage-only mode: stop here, skip scoring/PDF/email ---
     if args.triage_only:
