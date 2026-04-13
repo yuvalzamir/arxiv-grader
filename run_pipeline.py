@@ -390,7 +390,11 @@ def _run_single_triage(
     if use_batch:
         custom_id = label.lower().replace(" ", "-")
         user_message = f"{papers_block}\n\n{profile_block}"
-        response = _submit_and_poll(client, custom_id, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
+        try:
+            response = _submit_and_poll(client, custom_id, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
+        except BatchTimeoutError:
+            log.warning("%s: batch timed out — falling back to cached API.", label)
+            response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
     else:
         response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
 
