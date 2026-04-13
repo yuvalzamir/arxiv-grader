@@ -125,13 +125,9 @@
 <script>
 (function() {
     const raw = localStorage.getItem('is_onboarding_final');
-    const el = document.getElementById('profile-json');
     let payload = null;
     if (raw) {
         payload = JSON.parse(raw);
-        el.textContent = JSON.stringify(payload, null, 2);
-    } else {
-        el.textContent = '{}';
     }
 
     // Submit to server, then clear localStorage regardless of outcome
