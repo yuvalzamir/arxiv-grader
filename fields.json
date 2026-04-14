@@ -81,6 +81,12 @@
         "tag_filter": null
       },
       {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=phys",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
         "name": "NanoLett",
         "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
         "publisher": "acs",
@@ -167,6 +173,12 @@
         "name": "Science",
         "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
         "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=phys",
+        "publisher": "pnas",
         "tag_filter": null
       },
       {
@@ -260,9 +272,121 @@
         "tag_filter": null
       },
       {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=phys",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
         "name": "Science",
         "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
         "publisher": "science",
+        "tag_filter": null
+      }
+    ]
+  },
+  "optics": {
+    "arxiv_categories": ["physics.optics", "quant-ph"],
+    "description": "Optics, photonics, and quantum optics",
+    "journals": [
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-AtomicMolecularandOpticalPhysics.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRA",
+        "url": "https://feeds.aps.org/rss/tocsec/PRA-Quantumopticsphysicsoflasersnonlinearopticsclassicaloptics.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRA",
+        "url": "https://feeds.aps.org/rss/tocsec/PRA-Quantuminformation.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRA",
+        "url": "https://feeds.aps.org/rss/tocsec/PRA-Fundamentalconcepts.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "photonics",
+          "optical physics",
+          "nonlinear optics",
+          "quantum optics",
+          "laser",
+          "nanophotonics",
+          "fibre optics",
+          "optical spectroscopy",
+          "optical manipulation"
+        ]
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatPhoton",
+        "url": "https://www.nature.com/nphoton.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/physics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/optics-and-photonics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=phys",
+        "publisher": "pnas",
+        "tag_filter": null
+      },
+      {
+        "name": "Optica",
+        "url": "https://opg.optica.org/rss/optica_feed.xml",
+        "publisher": "optica",
+        "tag_filter": null
+      },
+      {
+        "name": "OpticsLetters",
+        "url": "https://opg.optica.org/rss/ol_feed.xml",
+        "publisher": "optica",
+        "tag_filter": null
+      },
+      {
+        "name": "OpticsExpress",
+        "url": "https://opg.optica.org/rss/opex_feed.xml",
+        "publisher": "optica",
+        "tag_filter": null
+      },
+      {
+        "name": "ACSPhotonics",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=apchd5",
+        "publisher": "acs",
         "tag_filter": null
       }
     ]

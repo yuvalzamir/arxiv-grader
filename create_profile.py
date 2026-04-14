@@ -259,7 +259,7 @@ def read_excel_papers(path: str) -> list[str]:
 # Delivery preferences
 # ---------------------------------------------------------------------------
 
-_VALID_DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"]
+_VALID_DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
 
 def _parse_emails(raw: str) -> list[str]:
@@ -332,11 +332,11 @@ def collect_delivery_preferences(env_path: Path) -> dict:
             break
 
         while True:
-            raw = input("  Which day of the week? (Monday–Friday): ").strip().lower()
+            raw = input("  Which day of the week? (Monday–Sunday): ").strip().lower()
             if raw in _VALID_DAYS:
                 weekly_day = raw
                 break
-            print("  The weekly digest can only be sent on a weekday (Monday–Friday). Please try again.")
+            print("  Please enter a valid day (Monday–Sunday). Please try again.")
 
     if changed:
         _write_env_file(env, env_path)

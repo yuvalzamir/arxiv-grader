@@ -206,7 +206,20 @@ https://doi.org/10.1145/3544548..."></textarea>
 </div>
 </section>
 </div>
+<!-- Google Scholar Section -->
+<section class="mt-8 bg-surface-container-low p-8 rounded-lg">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-fixed-variant text-xl">school</span>
 </div>
+<h3 class="text-xl font-headline text-primary">Google Scholar Profile <span class="font-body text-sm text-on-surface-variant font-normal">(optional)</span></h3>
+</div>
+<p class="font-body text-sm text-on-surface-variant mb-6 leading-relaxed">
+Paste your Scholar profile URL and we'll import up to 60 of your publications automatically. This gives the AI a strong signal from your actual research output.
+</p>
+<input id="scholar-url" type="url" placeholder="https://scholar.google.com/citations?user=..." class="w-full bg-surface-container border border-outline-variant/40 focus:ring-1 focus:ring-primary rounded-lg font-mono text-sm px-4 py-3 placeholder:text-outline-variant/60">
+<div id="scholar-error" class="hidden mt-2 text-xs text-error font-label">Please enter a valid Google Scholar profile URL (must contain scholar.google.com/citations?user=).</div>
+</section>
 </div>
 <!-- Footer Actions Fixed -->
 <footer class="fixed bottom-0 left-0 md:left-64 right-0 h-20 px-4 md:px-12 bg-surface/80 backdrop-blur-md flex items-center justify-between z-40 border-t border-outline-variant/10">
@@ -308,8 +321,21 @@ function clearXlsx() {
 function saveAndNext() {
     const raw = document.getElementById('urls-textarea').value;
     const paper_urls = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    // Validate Scholar URL if provided
+    const scholarInput = document.getElementById('scholar-url');
+    const scholarUrl = scholarInput.value.trim();
+    const scholarError = document.getElementById('scholar-error');
+    if (scholarUrl && !scholarUrl.includes('scholar.google.com/citations') && !scholarUrl.includes('user=')) {
+        scholarError.classList.remove('hidden');
+        scholarInput.focus();
+        return;
+    }
+    scholarError.classList.add('hidden');
+
     const state = JSON.parse(localStorage.getItem('is_onboarding') || '{}');
     state.paper_urls = paper_urls;
+    if (scholarUrl) state.scholar_url = scholarUrl;
     localStorage.setItem('is_onboarding', JSON.stringify(state));
 
     const finalJson = {
@@ -320,7 +346,8 @@ function saveAndNext() {
         field: state.field || '',
         interests_description: state.interests_description || '',
         researchers: state.researchers || [],
-        paper_urls: paper_urls
+        paper_urls: paper_urls,
+        scholar_url: scholarUrl || ''
     };
     localStorage.setItem('is_onboarding_final', JSON.stringify(finalJson));
     window.location.href = '/signup/done';
@@ -331,6 +358,9 @@ function saveAndNext() {
     const state = JSON.parse(localStorage.getItem('is_onboarding') || '{}');
     if (state.paper_urls && state.paper_urls.length) {
         document.getElementById('urls-textarea').value = state.paper_urls.join('\n');
+    }
+    if (state.scholar_url) {
+        document.getElementById('scholar-url').value = state.scholar_url;
     }
 })();
 </script>

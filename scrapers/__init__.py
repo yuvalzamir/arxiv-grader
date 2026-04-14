@@ -10,6 +10,7 @@ from .acs import ACSScraper
 from .aps import APSScraper
 from .cell import CellScraper
 from .nature import NatureScraper
+from .optica import OpticaScraper
 from .plos import PlosScraper
 from .pnas import PnasScraper
 from .science import ScienceScraper
@@ -20,6 +21,7 @@ SCRAPERS: dict = {
     "aps":     APSScraper,
     "cell":    CellScraper,
     "nature":  NatureScraper,
+    "optica":  OpticaScraper,
     "plos":    PlosScraper,
     "pnas":    PnasScraper,
     "science": ScienceScraper,

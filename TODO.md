@@ -159,25 +159,22 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 ## Upcoming
 
 - [ ] **ACS abstract access — awaiting response** — email sent to ACS requesting API or institutional access to paper abstracts. If granted, implement in `scrapers/acs.py` (currently returns empty abstract). Follow up if no response.
+- [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token). Fix `create_profile.py` APS fetcher alongside main solution.
 - [x] **systems-biology field + Yael onboarding** — scrapers and fields.json complete, deployed to server 2026-04-11. `ANTHROPIC_API_KEY_SYSTEMS_BIOLOGY` added to server root `.env`. Yael onboarded via `create_profile.py`. New scrapers: `cell.py`, `plos.py`, `pnas.py`. Extended `science.py` (Science Immunology + Science Advances). 18 journals. arXiv: `q-bio` + `physics.bio-ph`.
   - [x] **tag_filter tuning** — PNAS uses 4 topic-specific RSS feeds (biophys/immun/cell-bio/microbio); Science Advances uses its dedicated eTOC feed. Both are pre-filtered at the RSS level; `tag_filter: null` is correct.
 - [x] **quantum-sensing field** — deployed and first user onboarded ✓
 
 ## Backlog
 
-- [ ] **Website mobile responsiveness** — the onboarding flow and landing page look poor on mobile. All pages need a mobile-first layout pass: sidebar navigation, footer action bar, grid layouts, font sizes, and spacing all need adjusting for small screens.
+- [x] **Website mobile responsiveness** — done.
 
-- [ ] **Weekly highlight report** — optional weekly email (e.g. every Friday) containing only papers scored 8 and above from the past week. Opt-in per user via `taste_profile.json` flag. Useful for users who want a curated high-signal summary without reading daily digests.
-  - **Opt-in flag:** add `"weekly_digest": true` to `taste_profile.json`; default false
-  - **Trigger:** new cron entry, e.g. Friday 01:00 ET → `run_all_users.py --weekly`
-  - **Data source:** scan `users/<name>/data/*/scored_papers.json` for the past 7 days; collect all papers with `score >= 8`
-  - **Deduplication:** a paper may appear in multiple daily files if re-fetched; deduplicate by `arxiv_id` / DOI, keeping highest score
-  - **PDF:** reuse `build_digest_pdf.py` with a filter; add a "Weekly Highlights" header and date range
-  - **No triage/scoring needed** — purely a post-processing step over already-scored data
-  - **New file:** `run_weekly_digest.py` — loops users, checks opt-in flag, collects papers, builds PDF, emails it
-  - **Edge cases:** fewer than 7 days of data (new user), no papers scored ≥ 8 that week (skip or send empty notice)
+- [x] **`create_profile.py` — ask digest frequency during onboarding** — moved to website onboarding flow; no change needed in `create_profile.py`.
 
-- [ ] **`create_profile.py` — ask digest frequency during onboarding** — add interactive questions for `daily_digest` (yes/no), `weekly_digest` (yes/no), and `weekly_day` (if weekly enabled). Write these fields into `taste_profile.json` at creation time so they never need to be added manually (manual edits caused JSON corruption in April 2026).
+- [x] **Optics field + Amit Pando onboarding** — `optics` field added to `fields.json` (15 journals: PRL AMO, 3×PRA sections, Nature, NatPhys, NatPhoton, 2×NatComms, PNAS, Science, Optica, OpticsLetters, OpticsExpress, ACSPhotonics). New `scrapers/optica.py` built (OpenAlex abstract API). `ANTHROPIC_API_KEY_OPTICS` added to server. Amit onboarded via website. Also: PNAS `phys` feed added to cond-mat, cond-mat-optics, quantum-sensing. Field page now loads dynamically from `/fields.json` instead of hardcoded HTML.
+
+- [x] **Weekly digest on Saturday and Sunday** — `run_weekly_only.py` added; cron `30 1 * * 0,6` deployed. Website day picker extended to Sat/Sun. `create_profile.py` accepts all 7 days. `process_pending.py` was already pass-through.
+
+- [x] **Google Scholar profile import in onboarding** — optional Scholar URL field on the seed papers screen (`/signup/papers`). `scrapers/scholar.py` fetches the profile, resolves each paper via the Scholar citation detail page → publisher URL → citation meta tags, with OpenAlex fallback. Up to 60 papers, merged into seed papers in `process_pending.py`. Design doc: `docs/scholar_import_plan.md`.
 
 - [x] **Self-service user onboarding** — web onboarding flow live at `incomingscience.xyz`. 5-screen static HTML flow (landing, identity/delivery, research field, interests/researchers, seed papers, success). Owner activates accounts manually via `process_pending.py`.
   - [x] **Web form** — 5-screen static HTML flow served at clean URLs: `/` (landing), `/signup` (step 1), `/signup/field`, `/signup/interests`, `/signup/papers`, `/signup/done`

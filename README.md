@@ -8,7 +8,7 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 
 ## How it works
 
-1. **Fetch** — pulls the arXiv RSS feed and scrapes 11 top journals each morning
+1. **Fetch** — pulls the arXiv RSS feed and scrapes journals across multiple fields each morning
 2. **Triage** — Claude Haiku filters ~80–120 papers down to the ~30 most likely to be relevant (15 arXiv + 15 journal cap)
 3. **Score** — Claude Sonnet scores each surviving paper 1–10 with a one-line justification
 4. **Deliver** — a ranked PDF digest is emailed to you as an attachment
@@ -23,13 +23,18 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 
 **arXiv (`fetch_papers.py`):** Pulls the arXiv RSS feed, filters to new submissions only (no cross-listings, no replacements). Supports `--category` for field filtering (e.g. `cond-mat`). If the feed is empty (holiday or off-day), the pipeline exits cleanly. Fetched once per field, shared across all users in that field.
 
-**Journals (`fetch_journals.py`):** Scrapes journals via RSS/eTOC feeds. Publisher-specific scraper classes live under `scrapers/` (APS, Nature, Science, ACS, Wiley). Field configuration — which journals to monitor and tag filters for multi-discipline journals — is defined in `fields.json`. A per-journal watermark (`journal_watermarks.json`) prevents re-fetching papers already seen. Fetched once per run, filtered per field, shared across all users. Use `--since YYYY-MM-DD` to override the watermark for a manual re-run without advancing it.
+**Journals (`fetch_journals.py`):** Scrapes journals via RSS/eTOC feeds. Publisher-specific scraper classes live under `scrapers/` (APS, Nature, Science, ACS, Wiley, Optica, Cell, PLOS, PNAS). Field configuration — which journals to monitor and tag filters for multi-discipline journals — is defined in `fields.json`. A per-journal watermark (`journal_watermarks.json`) prevents re-fetching papers already seen. Fetched once per run, filtered per field, shared across all users. Use `--since YYYY-MM-DD` to override the watermark for a manual re-run without advancing it.
 
-**Abstract availability by publisher:** Nature scrapes article pages for full abstracts + subject tags. Science uses Semantic Scholar (~50% hit rate). APS uses the truncated RSS abstract (article pages Cloudflare-blocked, no API source). ACS has no abstract from any source (Cloudflare-blocked, no API) — triage uses title + authors only. Wiley extracts full abstracts directly from the RSS feed, no page fetches needed.
+**Abstract availability by publisher:** Nature scrapes article pages for full abstracts + subject tags. Science uses Semantic Scholar (~50% hit rate). APS uses the truncated RSS abstract (article pages Cloudflare-blocked, no API source). ACS has no abstract from any source (Cloudflare-blocked, no API) — triage uses title + authors only. Wiley extracts full abstracts directly from the RSS feed, no page fetches needed. Optica uses the RSS feed for metadata and OpenAlex API for full abstract reconstruction (high hit rate, no page fetches needed).
 
 **Holiday handling:** arXiv papers are fetched before journals. If all fields return empty arXiv feeds (holiday or off-day), the pipeline exits before the journal scraper runs — watermarks are not advanced and journal papers are preserved for the next day.
 
-**Journals covered:** Configured per field in `fields.json`. cond-mat: PRL (two section feeds), PRB, PRX, PRXQuantum, Nature, Nature Physics, Nature Materials, Nature Nanotechnology, Nature Communications, Science, Nano Letters. quantum-sensing: ACS Nano, ACS Photonics, ACS Sensors, Nano Letters, Advanced Materials, Advanced Functional Materials, Small, Nanophotonics, Nature, Nature Photonics, Nature Nanotechnology, Nature Materials, Nature Communications, Science.
+**Journals covered:** Configured per field in `fields.json`. All fields share large multidisciplinary journals (Nature, Science, PNAS physics feed) with tag filters applied per-field:
+- **cond-mat:** PRL (two section feeds), PRB, PRX, PRXQuantum, Nature, Nature Physics, Nature Materials, Nature Nanotechnology, Nature Communications, PNAS (physics), Science, Nano Letters
+- **cond-mat-optics:** same as cond-mat (AMO/optics tag filters)
+- **quantum-sensing:** ACS Nano, ACS Photonics, ACS Sensors, Nano Letters, Advanced Materials, Advanced Functional Materials, Small, Nanophotonics, Nature, Nature Photonics, Nature Nanotechnology, Nature Materials, Nature Communications, PNAS (physics), Science
+- **optics:** PRL (AMO section), PRA (quantum optics, quantum information, fundamental concepts sections), Nature, Nature Physics, Nature Photonics, Nature Communications (physics + optics-and-photonics feeds), PNAS (physics), Science, Optica, Optics Letters, Optics Express, ACS Photonics
+- **systems-biology:** Cell, PLOS Biology, PNAS (biophysics/immunology/cell-biology/microbiology feeds), Science, Science Immunology, Science Advances, Nature, Nature Communications, eLife
 
 **Output schema per paper:**
 - arXiv ID (or DOI for journal papers), title, abstract, authors, subcategories
@@ -152,8 +157,9 @@ Tapping opens the browser briefly, the server records the rating, and returns a 
 7. Run centralized triage per field — users triaged in parallel with staggered 61s launches
 8. Dispatch per-user scoring + PDF + daily email in parallel (`ThreadPoolExecutor`)
 9. Clean up shared data folders older than 3 days
-9. Send batch fallback alert email if any scoring job timed out
-10. Weekly digest phase — for any user with `weekly_digest: true` whose chosen weekday matches today, send their weekly email (runs after all daily work is complete)
+10. Send batch fallback alert email if any scoring job timed out
+11. Send run summary email — per-user OK/FAILED table to the operator (skipped for `--user` and `--no-email` runs)
+12. Weekly digest phase — for any user with `weekly_digest: true` whose chosen weekday matches today, send their weekly email (runs after all daily work is complete)
 
 **Per-user steps (`run_daily.py`):**
 1. Deduplicate yesterday's ratings (`deduplicate_ratings.py`)
@@ -179,6 +185,8 @@ Both flags default to their values above if absent — existing users are unaffe
 
 **Weekly digest (`run_weekly_digest.py`):** Collects all papers scored ≥ 8 from the past 7 days, deduplicates by paper ID, and delivers a single PDF titled "weekly digest". Scoring and PDF generation still run every day regardless of delivery mode — the daily PDF accumulates in `data/YYYY-MM-DD/` and is available for the weekly aggregator even when no daily email is sent.
 
+**Weekend weekly digest (`run_weekly_only.py`):** Standalone script for Saturday/Sunday cron runs. Discovers users whose `weekly_day` matches today and runs the weekly digest phase only — no arXiv fetch, no journal scraping, no triage or scoring. Use `--user <name>` to bypass the `weekly_day` check (useful for testing). Cron: `30 1 * * 0,6` → `run_weekly_only.py`.
+
 **Mailing lists:** Daily and weekly emails can go to different recipients. Set `EMAIL_TO_DAILY` and `EMAIL_TO_WEEKLY` in the user's `.env`; both fall back to `EMAIL_TO` if not set.
 
 **Refiner behaviour for weekly-only users:** When a user has `daily_digest: false` and `weekly_digest: true`, the monthly refiner automatically adjusts its analysis — it suppresses the "missed" and "underscored" discrepancy buckets (which are structurally impossible when the user only ever sees papers scored ≥ 8) and notes the filtered nature of the data to avoid misinterpreting sparse ratings.
@@ -198,6 +206,7 @@ Flask app serving the public website and rating endpoint, running under Gunicorn
 - `GET /signup/done` — success page
 - `POST /onboarding/submit` — receives completed onboarding JSON; saves to `users_pending/<slug>/onboarding.json`
 - `GET /assets/<filename>` — static assets (images, fonts, JS)
+- `GET /fields.json` — serves `fields.json` directly (used by the onboarding field-selection page to load available fields dynamically)
 - `GET /rate?paper_id=...&rating=...&date=...&user=...` — records a paper rating
 - `GET /health` — liveness check
 
@@ -219,6 +228,9 @@ python process_pending.py <slug>    # process one by email slug
 - Creates `users/<slug>/taste_profile.json`, `archive.json`, and `.env` with `EMAIL_TO_DAILY` / `EMAIL_TO_WEEKLY`
 - After processing, owner must add `ANTHROPIC_API_KEY=sk-ant-...` to `users/<slug>/.env` before the next pipeline run
 - Stamps `processed_at` on the submission JSON to prevent re-processing
+- If `scholar_url` is present in the submission, imports up to 60 papers from the Google Scholar profile before calling Claude (see below)
+
+**Google Scholar import (`scrapers/scholar.py`):** Optional — triggered when the user pastes their Scholar profile URL on the seed papers screen. Fetches the profile page, follows each paper's Scholar citation detail page to get the publisher URL, fetches the abstract via citation meta tags, and falls back to OpenAlex title search for blocked publishers (APS, ACS). Papers without resolvable abstracts are still included for author-frequency signal. Merged with any manually provided URLs before profile creation; deduplicated by arXiv ID then by title.
 
 ---
 
@@ -266,12 +278,17 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 | File | Purpose |
 |------|---------|
 | `fetch_papers.py` | Daily arXiv RSS fetch and parse (once per field) |
-| `fetch_journals.py` | Journal scraping — 11 journals via RSS/eTOC (once per run) |
+| `fetch_journals.py` | Journal scraping — journals across all fields via RSS/eTOC (once per run) |
 | `scrapers/aps.py` | APS publisher scraper (PRL, PRB, PRX, PRXQuantum) — truncated RSS abstract |
 | `scrapers/nature.py` | Nature publisher scraper — full abstract + subject tags from article page |
 | `scrapers/science.py` | Science eTOC scraper — full abstract via Semantic Scholar API |
 | `scrapers/acs.py` | ACS publisher scraper — no abstract available; title + authors only |
 | `scrapers/wiley.py` | Wiley publisher scraper — full abstract from RSS feed, no page fetches |
+| `scrapers/optica.py` | Optica Publishing Group scraper — RSS metadata + full abstract via OpenAlex API |
+| `scrapers/scholar.py` | Google Scholar profile scraper — resolves papers to abstracts for onboarding |
+| `scrapers/cell.py` | Cell Press scraper |
+| `scrapers/plos.py` | PLOS scraper |
+| `scrapers/pnas.py` | PNAS scraper (topic-specific RSS feeds) |
 | `fields.json` | Field definitions — arxiv category, journal list, tag filters |
 | `create_profile.py` | One-time interactive user onboarding |
 | `process_pending.py` | Owner tool — processes web signups from `users_pending/` into full user profiles |
@@ -282,8 +299,9 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 | `deduplicate_ratings.py` | Keeps the last rating per paper per day |
 | `archive.py` | Appends daily ratings to permanent `archive.json` |
 | `run_daily.py` | Per-user orchestrator — scoring, PDF, daily email (called by run_all_users.py) |
-| `run_all_users.py` | Master orchestrator — fetch, triage, parallel per-user scoring, weekly dispatch |
+| `run_all_users.py` | Master orchestrator — fetch, triage, parallel per-user scoring, weekly dispatch, run summary email |
 | `run_weekly_digest.py` | Weekly digest — collects scored ≥ 8 papers from past 7 days, builds PDF, emails |
+| `run_weekly_only.py` | Standalone weekend runner — runs weekly digest phase only (no fetch/triage/scoring) |
 | `run_profile_refiner.py` | Monthly taste profile refiner |
 | `prompts/profile_creator.txt` | System prompt for profile creation |
 | `prompts/triage.txt` | System prompt for arXiv triage agent |
@@ -314,7 +332,7 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 
 - **Hosting:** Any Linux VPS
 - **HTTPS:** Caddy (auto Let's Encrypt) → Gunicorn → Flask
-- **Scheduling:** Cron — daily pipeline runs shortly after arXiv's nightly release; monthly refiner runs on the 2nd of each month, offset by one hour to avoid a race on `archive.json`
+- **Scheduling:** Cron — daily pipeline (Mon–Fri 00:30 ET), weekend weekly digest (Sat/Sun 01:30 ET), monthly refiner (2nd of month 01:30 ET, offset by one hour to avoid a race on `archive.json`)
 - **Email:** Shared SMTP account configured in root `.env`. Each user configures `EMAIL_TO` (default), `EMAIL_TO_DAILY`, and/or `EMAIL_TO_WEEKLY` in their `.env` — daily and weekly emails can go to different recipient lists.
 - **LLM:** Anthropic Claude API — Haiku for triage (cached, one shared API key per field in root `.env`), Sonnet for scoring and refinement (Batch API, per-user `ANTHROPIC_API_KEY` in user `.env`).
 
@@ -374,7 +392,7 @@ Each top-level key is a field name (used as the `field` value in `taste_profile.
 }
 ```
 
-- `publisher`: one of `aps`, `nature`, `science` — selects the scraper class
+- `publisher`: one of `aps`, `nature`, `science`, `acs`, `wiley`, `optica`, `cell`, `plos`, `pnas` — selects the scraper class
 - `tag_filter`: `null` = field-specific journal, keep all papers; `[...]` = general journal, keep only papers whose subject tags contain at least one match
 - Root `.env` requires `ANTHROPIC_API_KEY_<FIELD_UPPERCASE>` for each field (e.g. `ANTHROPIC_API_KEY_COND_MAT`)
 
@@ -398,13 +416,27 @@ After processing, add `ANTHROPIC_API_KEY=sk-ant-...` to `users/<slug>/.env`. Req
 ### Run manually
 
 ```bash
-python run_all_users.py               # all users
-python run_all_users.py --user alice  # single user
-python run_all_users.py --no-email    # skip email (testing)
-python run_all_users.py --refine      # run monthly refiner
-python run_all_users.py --no-batch    # skip Batch API, use synchronous API (2× cost, instant)
-python run_all_users.py --no-fetch    # skip arXiv fetch — reuse existing {field}_arxiv_papers.json
-python run_all_users.py --triage-only # stop after triage, skip scoring/PDF/email (testing)
+python run_all_users.py                          # all users
+python run_all_users.py --user alice             # single user
+python run_all_users.py --no-email               # skip email (testing)
+python run_all_users.py --refine                 # run monthly refiner
+python run_all_users.py --no-batch               # skip Batch API, use synchronous API (2× cost, instant)
+python run_all_users.py --no-fetch               # skip arXiv fetch — reuse existing {field}_arxiv_papers.json
+python run_all_users.py --triage-only            # stop after triage, skip scoring/PDF/email (testing)
+python run_all_users.py --no-advance-watermark   # re-scrape journals but don't save watermark updates (safe re-run)
+
+# Weekend-only weekly digest (no pipeline overhead)
+python run_weekly_only.py
+python run_weekly_only.py --user alice  # run for specific user regardless of weekly_day
 ```
 
 `--no-fetch` + `--triage-only` together are useful for weekend testing: place a previously fetched `{field}_arxiv_papers.json` in the shared data dir and verify cache behaviour without running the full pipeline.
+
+**Re-running a failed user:** If a single user fails and needs to be re-run for a specific date, use `--no-advance-watermark` (not `--no-fetch` — `--no-fetch` only skips arXiv, not journal scraping):
+```bash
+python run_all_users.py --user alice --date 2026-04-14 --no-advance-watermark
+```
+If watermarks were already advanced incorrectly, restore from the snapshot saved at the start of every run:
+```bash
+cp data/2026-04-14/journal_watermarks_snapshot.json journal_watermarks.json
+```

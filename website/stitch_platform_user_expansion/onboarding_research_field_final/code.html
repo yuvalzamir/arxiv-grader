@@ -241,23 +241,34 @@
 </main>
 <!-- Mobile Nav -->
 <script>
-    const fieldData = {"cond-mat":{"arxiv_categories":["cond-mat","quant-ph"],"description":"Condensed matter physics","journals":[{"name":"PRL"},{"name":"PRL"},{"name":"PRB"},{"name":"PRX"},{"name":"PRXQuantum"},{"name":"Nature"},{"name":"NatPhys"},{"name":"NatMat"},{"name":"NatNano"},{"name":"NatComms"},{"name":"Science"},{"name":"NanoLett"}]},"cond-mat-optics":{"arxiv_categories":["cond-mat","physics.optics","quant-ph"],"description":"Condensed matter physics and optics","journals":[{"name":"PRL"},{"name":"PRL"},{"name":"PRB"},{"name":"PRX"},{"name":"PRXQuantum"},{"name":"Nature"},{"name":"NatPhys"},{"name":"NatMat"},{"name":"NatNano"},{"name":"NatComms"},{"name":"Science"},{"name":"NanoLett"}]},"quantum-sensing":{"arxiv_categories":["cond-mat","physics.app-ph","physics.optics","physics.chem-ph"],"description":"Quantum sensing and related photonics, nanoscience, and materials","journals":[{"name":"ACSNano"},{"name":"ACSPhotonics"},{"name":"ACSSensors"},{"name":"NanoLett"},{"name":"AdvMat"},{"name":"AdvFuncMat"},{"name":"Small"},{"name":"Nanophotonics"},{"name":"Nature"},{"name":"NatPhoton"},{"name":"NatNano"},{"name":"NatMat"},{"name":"NatComms"},{"name":"Science"}]},"systems-biology":{"arxiv_categories":["q-bio","physics.bio-ph"],"description":"Systems biology, computational biology, immunology, and cell biology","journals":[{"name":"Cell"},{"name":"CellSystems"},{"name":"iScience"},{"name":"Immunity"},{"name":"ScienceImmunology"},{"name":"ScienceAdvances"},{"name":"PNAS"},{"name":"PNAS"},{"name":"PNAS"},{"name":"PNAS"},{"name":"PLOSCompBio"},{"name":"NatCompSci"},{"name":"NatComms"},{"name":"NatComms"},{"name":"NatComms"},{"name":"NatComms"},{"name":"Nature"},{"name":"Science"}]}};
-
-    // Populate select from fieldData
+    let fieldData = {};
     const select = document.getElementById('research-field');
-    Object.entries(fieldData).forEach(([key, val]) => {
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = key + ' — ' + val.description;
-        select.appendChild(opt);
-    });
-
-    // Restore from localStorage
     const state = JSON.parse(localStorage.getItem('is_onboarding') || '{}');
-    if (state.field) {
-        select.value = state.field;
-        updateFieldCoverage(state.field);
-    }
+
+    fetch('/fields.json')
+        .then(r => r.json())
+        .then(data => {
+            fieldData = data;
+            // Populate select
+            Object.entries(fieldData).forEach(([key, val]) => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = key + ' — ' + val.description;
+                select.appendChild(opt);
+            });
+            // Restore from localStorage
+            if (state.field && fieldData[state.field]) {
+                select.value = state.field;
+                updateFieldCoverage(state.field);
+            }
+        })
+        .catch(() => {
+            // Fallback: show a message if fields can't be loaded
+            const opt = document.createElement('option');
+            opt.disabled = true;
+            opt.textContent = 'Could not load fields — please refresh.';
+            select.appendChild(opt);
+        });
 
     function updateNextButton() {
         const btn = document.getElementById('next-btn');

@@ -379,6 +379,55 @@ def _send_batch_fallback_alert(
         log.error("Failed to send batch fallback alert: %s", e)
 
 
+def _send_run_summary(results: dict[str, bool], date_str: str) -> None:
+    """Email the run summary table to the operator after every full pipeline run."""
+    smtp_host = os.environ.get("EMAIL_SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("EMAIL_SMTP_PORT", "587"))
+    smtp_user = os.environ.get("EMAIL_SMTP_USER", "")
+    smtp_pass = os.environ.get("EMAIL_SMTP_PASSWORD", "")
+    from_addr = os.environ.get("EMAIL_FROM", smtp_user)
+    to_addr   = "yuval.zamir@icfo.eu"
+
+    ok_users     = [u for u, ok in results.items() if ok]
+    failed_users = [u for u, ok in results.items() if not ok]
+
+    lines = [f"Run date: {date_str}", ""]
+    lines.append(f"{'User':<22} {'Status'}")
+    lines.append("-" * 32)
+    for name, ok in sorted(results.items()):
+        lines.append(f"{name:<22} {'OK' if ok else 'FAILED'}")
+    lines += [
+        "",
+        f"Total: {len(ok_users)} OK, {len(failed_users)} FAILED",
+        "",
+        "Full logs: /var/log/arxiv-grader/daily.log",
+    ]
+    body = "\n".join(lines)
+
+    all_ok = not failed_users
+    subject = (
+        f"[Incoming Science] Run complete — {date_str} — all OK"
+        if all_ok else
+        f"[Incoming Science] Run complete — {date_str} — {len(failed_users)} FAILED"
+    )
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"]    = from_addr
+    msg["To"]      = to_addr
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(from_addr, [to_addr], msg.as_string())
+        log.info("Run summary emailed to %s", to_addr)
+    except Exception as e:
+        log.error("Failed to send run summary: %s", e)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run the daily pipeline or monthly refiner for all users."
@@ -646,6 +695,10 @@ def main():
                     pass
         if fallback_reports:
             _send_batch_fallback_alert(fallback_reports, results, date_str)
+
+    # Send run summary email (full runs only — skip single-user and --no-email runs).
+    if not args.refine and not args.user and not args.no_email:
+        _send_run_summary(results, args.date or date.today().isoformat())
 
     if not all(results.values()):
         sys.exit(1)

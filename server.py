@@ -21,7 +21,10 @@ from datetime import date, datetime
 from email.mime.text import MIMEText
 from pathlib import Path
 
+from dotenv import load_dotenv
 from flask import Flask, request, send_from_directory
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -340,6 +343,11 @@ def onboarding_submit():
     _send_signup_notification(slug, data.get("field", ""), payload["submitted_at"])
 
     return {"status": "ok"}, 200
+
+
+@app.route("/fields.json")
+def fields_json():
+    return send_from_directory(BASE_DIR, "fields.json", mimetype="application/json")
 
 
 @app.route("/health")

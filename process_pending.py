@@ -35,6 +35,7 @@ from create_profile import (
     build_area_keyword_map,
     load_system_prompt,
 )
+from scrapers.scholar import fetch_scholar_papers, ScholarFetchError
 
 BASE_DIR    = Path(__file__).parent
 USERS_DIR   = BASE_DIR / "users"
@@ -125,6 +126,31 @@ def process_one(slug: str) -> None:
     # ---- Fetch seed paper metadata --------------------------------------------
     log.info("Fetching metadata for %d seed paper(s)...", len(inputs["paper_links"]))
     papers = fetch_all_papers(inputs["paper_links"])
+
+    # ---- Google Scholar import (optional) -------------------------------------
+    scholar_url = submission.get("scholar_url", "").strip()
+    if scholar_url:
+        log.info("Fetching Google Scholar papers from: %s", scholar_url)
+        try:
+            scholar_papers = fetch_scholar_papers(scholar_url)
+            # Merge: deduplicate by arxiv_id (where available) then by title
+            existing_ids    = {p.get("arxiv_id") for p in papers if p.get("arxiv_id")}
+            existing_titles = {p.get("title", "").lower().strip() for p in papers}
+            added = 0
+            for sp in scholar_papers:
+                aid = sp.get("arxiv_id", "")
+                if aid and aid in existing_ids:
+                    continue
+                if sp["title"].lower().strip() in existing_titles:
+                    continue
+                papers.append(sp)
+                if aid:
+                    existing_ids.add(aid)
+                existing_titles.add(sp["title"].lower().strip())
+                added += 1
+            log.info("Added %d paper(s) from Google Scholar (total seed: %d).", added, len(papers))
+        except ScholarFetchError as exc:
+            log.warning("Google Scholar import failed, continuing without: %s", exc)
 
     # ---- Claude: build rankings -----------------------------------------------
     system_prompt = load_system_prompt()

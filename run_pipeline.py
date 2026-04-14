@@ -149,13 +149,13 @@ def _sample_liked_papers(archive: list[dict], seed_papers: list[dict]) -> list[d
     4. Return however many we have (may be fewer than LIKED_MAX).
     """
     sample = random.sample(archive, min(LIKED_SAMPLE_SIZE, len(archive))) if archive else []
-    excellent = [e for e in sample if e.get("rating", "").lower() == "excellent"][:LIKED_MAX]
+    excellent = [e for e in sample if e.get("rating", "").lower() == "excellent" and e.get("title")][:LIKED_MAX]
 
     if len(excellent) >= LIKED_MAX:
         return excellent
 
     seen_ids = {e.get("arxiv_id") for e in excellent}
-    padding = [p for p in seed_papers if p.get("arxiv_id") not in seen_ids]
+    padding = [p for p in seed_papers if p.get("arxiv_id") not in seen_ids and p.get("title")]
     return excellent + padding[:LIKED_MAX - len(excellent)]
 
 
@@ -167,7 +167,7 @@ def build_scoring_message(filtered_papers: list[dict], profile: dict, archive: l
     seed_papers = profile.get("liked_papers", [])
     liked = _sample_liked_papers(archive or [], seed_papers)
     liked_str = "\n".join(
-        f"  - [{p.get('arxiv_id') or 'journal'}] {p['title']} — {p.get('why_relevant', '')}"
+        f"  - [{p.get('arxiv_id') or 'journal'}] {p.get('title', '')} — {p.get('why_relevant', '')}"
         for p in liked
     ) or "  (none)"
 
