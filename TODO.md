@@ -158,7 +158,7 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ## Upcoming
 
-- [ ] **ACS abstract access — awaiting response** — email sent to ACS requesting API or institutional access to paper abstracts. If granted, implement in `scrapers/acs.py` (currently returns empty abstract). Follow up if no response.
+- [x] **ACS abstract access** — solved via Europe PMC API (DOI lookup). Hit rate: NanoLett 95%, ACSNano 93%, ACSSensors 92%, ACSPhotonics 0% (not indexed). Implemented in `scrapers/acs.py`; ACSPhotonics skipped to avoid wasted calls.
 - [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token). Fix `create_profile.py` APS fetcher alongside main solution.
 - [x] **systems-biology field + Yael onboarding** — scrapers and fields.json complete, deployed to server 2026-04-11. `ANTHROPIC_API_KEY_SYSTEMS_BIOLOGY` added to server root `.env`. Yael onboarded via `create_profile.py`. New scrapers: `cell.py`, `plos.py`, `pnas.py`. Extended `science.py` (Science Immunology + Science Advances). 18 journals. arXiv: `q-bio` + `physics.bio-ph`.
   - [x] **tag_filter tuning** — PNAS uses 4 topic-specific RSS feeds (biophys/immun/cell-bio/microbio); Science Advances uses its dedicated eTOC feed. Both are pre-filtered at the RSS level; `tag_filter: null` is correct.
