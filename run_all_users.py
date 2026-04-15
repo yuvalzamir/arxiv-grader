@@ -91,8 +91,8 @@ def filter_for_field(scraped_papers: list[dict], field_config: dict) -> list[dic
     for paper in scraped_papers:
         source = paper.get("source", "")
         if source not in journal_tag_filters:
-            # Unknown source — keep it to be safe
-            keep = True
+            # Journal not in this field's config — exclude it
+            keep = False
         elif journal_tag_filters[source] is None:
             keep = True
         else:
