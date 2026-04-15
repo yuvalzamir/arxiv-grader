@@ -45,10 +45,10 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def discover_users(only: str | None = None) -> list[Path]:
+def discover_users(only: list[str] | None = None) -> list[Path]:
     """
     Return user directories under users/ that contain taste_profile.json.
-    If `only` is given, return only that user's directory (or exit if not found).
+    If `only` is given, return only those users' directories.
     """
     if not USERS_DIR.is_dir():
         log.error("users/ directory not found at %s", USERS_DIR)
@@ -60,9 +60,12 @@ def discover_users(only: str | None = None) -> list[Path]:
     )
 
     if only:
-        matches = [u for u in users if u.name == only]
+        matches = [u for u in users if u.name in only]
+        missing = set(only) - {u.name for u in matches}
+        for name in missing:
+            log.warning("User '%s' not found under %s — skipping.", name, USERS_DIR)
         if not matches:
-            log.error("User '%s' not found under %s", only, USERS_DIR)
+            log.error("None of the specified users found under %s", USERS_DIR)
             sys.exit(1)
         return matches
 
@@ -437,8 +440,8 @@ def main():
         help="Run monthly profile refiner instead of daily pipeline.",
     )
     parser.add_argument(
-        "--user", default=None,
-        help="Run for a single user only (e.g. --user alice).",
+        "--user", nargs="+", default=None,
+        help="Run for specific user(s) only (e.g. --user alice bob).",
     )
     # Daily pipeline flags (passed through to run_daily.py)
     parser.add_argument("--no-email",     action="store_true", help="Skip email delivery.")
