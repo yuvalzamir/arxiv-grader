@@ -218,18 +218,6 @@
         "tag_filter": null
       },
       {
-        "name": "AdvMat",
-        "url": "https://advanced.onlinelibrary.wiley.com/feed/15214095/most-recent",
-        "publisher": "wiley",
-        "tag_filter": null
-      },
-      {
-        "name": "AdvFuncMat",
-        "url": "https://advanced.onlinelibrary.wiley.com/feed/16163028/most-recent",
-        "publisher": "wiley",
-        "tag_filter": null
-      },
-      {
         "name": "Small",
         "url": "https://onlinelibrary.wiley.com/feed/16136829/most-recent",
         "publisher": "wiley",
