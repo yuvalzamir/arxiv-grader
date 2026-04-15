@@ -635,7 +635,10 @@ def main():
     print()
 
     # Clean up shared data folders older than 3 days (keeps today's for --no-fetch re-runs).
-    cleanup_old_shared_folders(keep_days=3)
+    try:
+        cleanup_old_shared_folders(keep_days=3)
+    except Exception as e:
+        log.error("Shared folder cleanup failed: %s", e)
 
     # --- Weekly digest phase: runs after all daily work is complete ---
     # Only triggered on non-refine, non-triage-only runs. Each user's weekly_day
@@ -682,6 +685,11 @@ def main():
             if not all(weekly_results.values()):
                 results.update({k: False for k, v in weekly_results.items() if not v})
 
+    # Send run summary email (full runs only — skip single-user and --no-email runs).
+    # Sent after the weekly phase so weekly delivery results are included.
+    if not args.refine and not args.user and not args.no_email:
+        _send_run_summary(results, args.date or date.today().isoformat())
+
     # Check for batch API fallback reports and send alert if any.
     if not args.refine:
         date_str = args.date or date.today().isoformat()
@@ -695,10 +703,6 @@ def main():
                     pass
         if fallback_reports:
             _send_batch_fallback_alert(fallback_reports, results, date_str)
-
-    # Send run summary email (full runs only — skip single-user and --no-email runs).
-    if not args.refine and not args.user and not args.no_email:
-        _send_run_summary(results, args.date or date.today().isoformat())
 
     if not all(results.values()):
         sys.exit(1)
