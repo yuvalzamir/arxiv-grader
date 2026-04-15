@@ -85,7 +85,7 @@ Design documents: `docs/journal_sources_design.md` (architecture) and `docs/jour
 - [x] **`create_profile.py` — empty archive on onboarding** — creates `archive.json = []` alongside `taste_profile.json` on first save, so new users don't hit NameError on first run.
 - [x] **`run_pipeline.py` — debug prompt files** — triage and scoring prompts (system + user) are written to `triage_arxiv_input.txt`, `triage_journals_input.txt`, `scoring_input.txt` in the data folder on every run.
 - [x] **`run_pipeline.py` — `--no-batch` flag** — `_call_direct()` added; pass `--no-batch` to bypass Batch API queue and use synchronous messages API (2x cost, instant response). Threaded through `run_daily.py` and `run_all_users.py`.
-- [x] **Batch API auto-fallback + alert email** — `BatchTimeoutError` raised after 1-hour timeout. Both triage and scoring catch it, retry with `_call_direct()`, and write `batch_fallback.json` to the data folder. `run_all_users.py` scans for these files after all users complete and sends an alert email to `yuval.zamir@icfo.eu` with per-user/per-stage report.
+- [x] **Batch API auto-fallback + alert email** — `BatchTimeoutError` raised after 20-minute timeout. Both triage and scoring catch it, retry with `_call_direct()`, and write `batch_fallback.json` to the data folder. `run_all_users.py` scans for these files after all users complete and sends an alert email to `yuval.zamir@icfo.eu` with per-user/per-stage report.
 
 ---
 
@@ -108,7 +108,7 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 - [x] **Journal triage tuning** — monitoring confirmed current tuning is working well. No action needed.
 - [x] **April 2nd refiner check** — confirmed refiner ran (2026-04-02). Revealed need for refiner v2 (see below).
 - [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token).
-  - [ ] **`create_profile.py` APS fetcher** — `fetch_journal_paper()` will also fail on APS URLs (same Cloudflare block). Once an APS access solution is found, update the journal fetcher in `create_profile.py` to handle `link.aps.org` URLs.
+  - [ ] **`create_profile.py` APS fetcher** — `fetch_journal_paper()` fails on APS URLs (Cloudflare block). Deferred until institutional APS access is available.
 - [x] **Security audit** — `porkbun key.txt` found committed in initial commit; keys were already dead and repo is private. Purged from all git history via `git filter-repo`, force-pushed all branches. `.gitignore` updated with `*key*.txt`, `*secret*.txt`, `*token*.txt`, `*credentials*.txt` patterns. Server checked — clean.
 
 ---
@@ -159,12 +159,16 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 ## Upcoming
 
 - [x] **ACS abstract access** — solved via Europe PMC API (DOI lookup). Hit rate: NanoLett 95%, ACSNano 93%, ACSSensors 92%, ACSPhotonics 0% (not indexed). Implemented in `scrapers/acs.py`; ACSPhotonics skipped to avoid wasted calls.
-- [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token). Fix `create_profile.py` APS fetcher alongside main solution.
+- [ ] **APS full abstracts** — investigated all viable sources (CrossRef, Europe PMC, CORE, Unpaywall, SS→arXiv preprint). Best option was SS DOI→arXiv ID + batched arXiv fetch: 48% hit rate, ~2min overhead. Not worth it given truncated RSS abstracts are sufficient for triage. Only remaining option: ICFO institutional APS access (IP whitelist or API token) — check with library if ever needed.
 - [x] **systems-biology field + Yael onboarding** — scrapers and fields.json complete, deployed to server 2026-04-11. `ANTHROPIC_API_KEY_SYSTEMS_BIOLOGY` added to server root `.env`. Yael onboarded via `create_profile.py`. New scrapers: `cell.py`, `plos.py`, `pnas.py`. Extended `science.py` (Science Immunology + Science Advances). 18 journals. arXiv: `q-bio` + `physics.bio-ph`.
   - [x] **tag_filter tuning** — PNAS uses 4 topic-specific RSS feeds (biophys/immun/cell-bio/microbio); Science Advances uses its dedicated eTOC feed. Both are pre-filtered at the RSS level; `tag_filter: null` is correct.
 - [x] **quantum-sensing field** — deployed and first user onboarded ✓
 
 ## Backlog
+
+- [ ] **Science Advances — add to other fields** — currently only in `systems-biology`. Consider adding to `cond-mat`, `cond-mat-optics`, `quantum-sensing`, and `optics` with appropriate `tag_filter`.
+- [ ] **PR Materials — add to cond-mat** — APS journal, RSS at `http://feeds.aps.org/rss/recent/prmaterials.xml`, publisher `aps`, no tag filter needed.
+- [ ] **ACS Nano — add to cond-mat** — already in `quantum-sensing`; add to `cond-mat` with same config. Abstract via Europe PMC (~93% hit rate).
 
 - [x] **Website mobile responsiveness** — done.
 

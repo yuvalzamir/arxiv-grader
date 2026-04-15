@@ -35,7 +35,7 @@ MAX_TRIAGE_PASS         = 15  # hard cap on arXiv papers forwarded to scoring
 MAX_TRIAGE_PASS_JOURNAL = 15  # hard cap on journal papers forwarded to scoring
 
 BATCH_POLL_INTERVAL = 15   # seconds between batch status checks
-BATCH_TIMEOUT       = 3600 # give up after 1 hour
+BATCH_TIMEOUT       = 1200 # give up after 20 minutes
 
 ALERT_EMAIL = "yuval.zamir@icfo.eu"  # recipient for batch-timeout alerts
 
@@ -387,16 +387,20 @@ def _run_single_triage(
 
     log.info("%s: running on %d papers (model: %s, mode: %s)...",
              label, len(papers), TRIAGE_MODEL, "batch" if use_batch else "cached")
+    user_message = f"{papers_block}\n\n{profile_block}"
     if use_batch:
         custom_id = label.lower().replace(" ", "-")
-        user_message = f"{papers_block}\n\n{profile_block}"
         try:
             response = _submit_and_poll(client, custom_id, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
         except BatchTimeoutError:
-            log.warning("%s: batch timed out — falling back to cached API.", label)
-            response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
+            log.warning("%s: batch timed out — falling back to direct API.", label)
+            response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
     else:
-        response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
+        try:
+            response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
+        except Exception as e:
+            log.warning("%s: cached API failed (%s) — falling back to direct API.", label, e)
+            response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
 
     ranked: list[tuple[dict, str]] = []
     seen: set[int] = set()

@@ -71,7 +71,7 @@ Two-stage design using Anthropic Batch API (50% cost discount, async):
 - **Triage** (Claude Haiku, `prompts/triage.txt`): Receives lean profile (keywords, areas, authors) + all ~80 papers. Classifies high/medium/low. Hard caps: max 15 arXiv + 15 journal papers forwarded.
 - **Scoring** (Claude Sonnet, `prompts/scoring.txt`): Receives full profile + triage survivors. Outputs score 1–10 + one-line justification + tags.
 
-On 1-hour batch timeout, auto-falls back to direct API and sends an alert email. Flag file `batch_fallback.json` is written when fallback occurs; `run_all_users.py` scans for these post-pipeline.
+On 20-minute batch timeout, auto-falls back to direct API and sends an alert email. Flag file `batch_fallback.json` is written when fallback occurs; `run_all_users.py` scans for these post-pipeline.
 
 ### User Data Layout
 

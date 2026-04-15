@@ -113,7 +113,7 @@ Each call has its own pair of cache entries (system prompt + papers block), both
 
 #### Stage 2: Scoring (Claude Sonnet) — Batch API
 
-Runs per-user in parallel via `ThreadPoolExecutor`. Uses the Anthropic Message Batches API (50% cost discount, async processing). Falls back to synchronous API after 1-hour timeout — a `batch_fallback.json` flag file is written to the user's data folder, and an alert email is sent to the operator after all users complete. Pass `--no-batch` to skip the Batch API for both triage and scoring (useful for single-user testing — fields with fewer than 4 users use the Batch API for triage by default).
+Runs per-user in parallel via `ThreadPoolExecutor`. Uses the Anthropic Message Batches API (50% cost discount, async processing). Falls back to synchronous API after 20-minute timeout — a `batch_fallback.json` flag file is written to the user's data folder, and an alert email is sent to the operator after all users complete. Pass `--no-batch` to skip the Batch API for both triage and scoring (useful for single-user testing — fields with fewer than 4 users use the Batch API for triage by default).
 
 - **Input:** Triage survivors + full profile (including `evolved_interests` and up to 5 liked papers sampled from `archive.json` — prioritising excellent-rated papers, padded with profile seed papers if needed)
 - **Task:** Score each paper 1–10 with a one-line justification and tags
