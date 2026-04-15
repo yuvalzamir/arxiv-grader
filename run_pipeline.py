@@ -332,6 +332,11 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
             break
         if time.time() > deadline:
             log.error("%s: batch timed out after %d seconds.", label, BATCH_TIMEOUT)
+            try:
+                client.messages.batches.cancel(batch.id)
+                log.info("%s: batch %s cancelled.", label, batch.id)
+            except Exception as e:
+                log.warning("%s: failed to cancel batch %s: %s", label, batch.id, e)
             raise BatchTimeoutError(label)
         time.sleep(BATCH_POLL_INTERVAL)
 
