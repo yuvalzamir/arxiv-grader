@@ -190,6 +190,7 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
             "authors":       result.get("authors") or _parse_authors(entry),
             "subcategories": [],
             "source":        journal["name"],
+            "feed_url":      journal["url"],
             "subject_tags":  result["subject_tags"],
         })
 

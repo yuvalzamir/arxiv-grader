@@ -86,17 +86,17 @@ def filter_for_field(scraped_papers: list[dict], field_config: dict) -> list[dic
     tag_filter: [...]  → general journal, keep only papers whose subject_tags
                          contain at least one case-insensitive substring match.
     """
-    journal_tag_filters = {j["name"]: j["tag_filter"] for j in field_config["journals"]}
+    url_tag_filters = {j["url"]: j["tag_filter"] for j in field_config["journals"]}
     result = []
     for paper in scraped_papers:
-        source = paper.get("source", "")
-        if source not in journal_tag_filters:
-            # Journal not in this field's config — exclude it
+        feed_url = paper.get("feed_url", "")
+        if feed_url not in url_tag_filters:
+            # Feed URL not in this field's config — exclude it
             keep = False
-        elif journal_tag_filters[source] is None:
+        elif url_tag_filters[feed_url] is None:
             keep = True
         else:
-            tag_filter = journal_tag_filters[source]
+            tag_filter = url_tag_filters[feed_url]
             paper_tags = [t.lower() for t in paper.get("subject_tags", [])]
             keep = any(f.lower() in tag for f in tag_filter for tag in paper_tags)
 
