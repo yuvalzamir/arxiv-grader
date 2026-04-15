@@ -25,6 +25,8 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 
 **Journals (`fetch_journals.py`):** Scrapes journals via RSS/eTOC feeds. Publisher-specific scraper classes live under `scrapers/` (APS, Nature, Science, ACS, Wiley, Optica, Cell, PLOS, PNAS). Field configuration — which journals to monitor and tag filters for multi-discipline journals — is defined in `fields.json`. A per-journal watermark (`journal_watermarks.json`) prevents re-fetching papers already seen. Fetched once per run, filtered per field, shared across all users. Use `--since YYYY-MM-DD` to override the watermark for a manual re-run without advancing it.
 
+Each scraped paper is tagged with `feed_url` (the RSS URL it came from). `filter_for_field` uses this URL — not the display name — to decide whether a paper belongs to a field. This means the same journal can appear in multiple fields with different RSS subfeeds (e.g. a photonics subfeed for optics, a physics subfeed for cond-mat) and papers will be routed correctly. The `source` field (journal display name) is unaffected and used only for display in the PDF. `feed_url` is never passed to triage or scoring prompts.
+
 **Abstract availability by publisher:** Nature scrapes article pages for full abstracts + subject tags. Science uses Semantic Scholar (~50% hit rate). APS uses the truncated RSS abstract (article pages Cloudflare-blocked, no API source). ACS uses the Europe PMC API (DOI lookup) — ~93–95% hit rate for NanoLett, ACSNano, ACSSensors; ACSPhotonics is not indexed by Europe PMC and falls back to empty abstract. Wiley extracts full abstracts directly from the RSS feed, no page fetches needed. Optica uses the RSS feed for metadata and OpenAlex API for full abstract reconstruction (high hit rate, no page fetches needed).
 
 **Holiday handling:** arXiv papers are fetched before journals. If all fields return empty arXiv feeds (holiday or off-day), the pipeline exits before the journal scraper runs — watermarks are not advanced and journal papers are preserved for the next day.
@@ -32,7 +34,7 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 **Journals covered:** Configured per field in `fields.json`. All fields share large multidisciplinary journals (Nature, Science, PNAS physics feed) with tag filters applied per-field:
 - **cond-mat:** PRL (two section feeds), PRB, PRX, PRXQuantum, Nature, Nature Physics, Nature Materials, Nature Nanotechnology, Nature Communications, PNAS (physics), Science, Nano Letters
 - **cond-mat-optics:** same as cond-mat (AMO/optics tag filters)
-- **quantum-sensing:** ACS Nano, ACS Photonics, ACS Sensors, Nano Letters, Advanced Materials, Advanced Functional Materials, Small, Nanophotonics, Nature, Nature Photonics, Nature Nanotechnology, Nature Materials, Nature Communications, PNAS (physics), Science
+- **quantum-sensing:** ACS Nano, ACS Photonics, ACS Sensors, Nano Letters, Small, Nanophotonics, Nature, Nature Photonics, Nature Nanotechnology, Nature Materials, Nature Communications, PNAS (physics), Science
 - **optics:** PRL (AMO section), PRA (quantum optics, quantum information, fundamental concepts sections), Nature, Nature Physics, Nature Photonics, Nature Communications (physics + optics-and-photonics feeds), PNAS (physics), Science, Optica, Optics Letters, Optics Express, ACS Photonics
 - **systems-biology:** Cell, PLOS Biology, PNAS (biophysics/immunology/cell-biology/microbiology feeds), Science, Science Immunology, Science Advances, Nature, Nature Communications, eLife
 
@@ -394,6 +396,7 @@ Each top-level key is a field name (used as the `field` value in `taste_profile.
 
 - `publisher`: one of `aps`, `nature`, `science`, `acs`, `wiley`, `optica`, `cell`, `plos`, `pnas` — selects the scraper class
 - `tag_filter`: `null` = field-specific journal, keep all papers; `[...]` = general journal, keep only papers whose subject tags contain at least one match
+- The same journal can appear in multiple fields with different RSS URLs (e.g. a photonics subfeed for optics, a physics subfeed for cond-mat). Filtering is by URL, so papers are routed to the correct field regardless of the display `name`.
 - Root `.env` requires `ANTHROPIC_API_KEY_<FIELD_UPPERCASE>` for each field (e.g. `ANTHROPIC_API_KEY_COND_MAT`)
 
 See `docs/add_new_field.md` for a step-by-step guide.
