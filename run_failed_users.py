@@ -33,8 +33,9 @@ def parse_failed_users(log_file: Path, date_str: str) -> list[str]:
     """
     Return usernames that failed for the given date.
 
-    Primary source: the printed run summary block (last occurrence whose
-    surrounding log context contains the target date). This captures both
+    Primary source: the FIRST printed run summary block for the date (the
+    cron run). Taking the first avoids picking up later manual/retry runs
+    whose summaries only contain a subset of users. Captures both
     triage-failed and scoring-failed users.
 
     Fallback: scan for 'Skipped — triage failed' log lines stamped with
@@ -43,24 +44,25 @@ def parse_failed_users(log_file: Path, date_str: str) -> list[str]:
     text  = log_file.read_text(errors="replace")
     lines = text.splitlines()
 
-    # --- Primary: parse the last run summary block for this date ---
-    # The summary is printed (no timestamp), so we find the last occurrence
-    # of "Run summary" that appears after a log line stamped with date_str.
-    last_date_line = -1
-    for i, line in enumerate(lines):
-        if line.startswith(date_str):
-            last_date_line = i
+    # Find the first log line for this date — everything before it is irrelevant.
+    first_date_line = next(
+        (i for i, line in enumerate(lines) if line.startswith(date_str)), None
+    )
+    if first_date_line is None:
+        return []
 
+    # --- Primary: parse the FIRST run summary block for this date ---
+    # The summary is printed (no timestamp), so scan forward from the first
+    # date-stamped line and stop at the first "Run summary" header.
     summary_start = None
-    for i, line in enumerate(lines):
-        if i > last_date_line:
-            break
-        if "Run summary" in line and "Weekly" not in line:
+    for i in range(first_date_line, len(lines)):
+        if "Run summary" in lines[i] and "Weekly" not in lines[i]:
             summary_start = i
+            break  # first occurrence only — avoids picking up later retry runs
 
     if summary_start is not None:
         failed: list[str] = []
-        # Skip the two separator lines (==== Run summary ====)
+        # Skip the separator line after "Run summary" (==== … ====)
         for line in lines[summary_start + 2:]:
             m = re.match(r"^\s+(\S+)\s+(OK|FAILED)\s*$", line)
             if m:
@@ -77,7 +79,7 @@ def parse_failed_users(log_file: Path, date_str: str) -> list[str]:
     pattern = re.compile(r"--- \[(.+?)\] Skipped — triage failed")
     failed = []
     seen: set[str] = set()
-    for line in lines:
+    for line in lines[first_date_line:]:
         if not line.startswith(date_str):
             continue
         m = pattern.search(line)
