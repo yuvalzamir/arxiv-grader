@@ -1,6 +1,6 @@
 {
   "cond-mat": {
-    "arxiv_categories": ["cond-mat", "quant-ph"],
+    "arxiv_categories": ["cond-mat"],
     "description": "Condensed matter physics",
     "journals": [
       {
@@ -95,7 +95,7 @@
     ]
   },
   "cond-mat-optics": {
-    "arxiv_categories": ["cond-mat", "physics.optics", "quant-ph"],
+    "arxiv_categories": ["cond-mat", "physics.optics"],
     "description": "Condensed matter physics and optics",
     "journals": [
       {
@@ -274,7 +274,7 @@
     ]
   },
   "optics": {
-    "arxiv_categories": ["physics.optics", "quant-ph"],
+    "arxiv_categories": ["physics.optics"],
     "description": "Optics, photonics, and quantum optics",
     "journals": [
       {
