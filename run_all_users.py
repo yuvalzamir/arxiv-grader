@@ -221,12 +221,18 @@ def run_centralized_triage(
     triage_prompt         = load_prompt("triage.txt")
     triage_journal_prompt = load_prompt("triage_journals.txt")
 
-    # The cached API has a 50k input-token/minute rate limit shared across all
-    # calls in that window. Both triage calls (arXiv + journals) fire within
-    # seconds for the same user, so their token counts must be budgeted together.
-    # Token estimate (chars/4) is intentionally rough, so we use 40k as the
-    # combined safety threshold — a 20% buffer below the 50k hard limit.
-    CACHED_BUDGET = 40_000
+    # The cached API has a 50k input-token/minute rate limit (ITPM).
+    # For Haiku 4.5, cache_read tokens do NOT count toward ITPM — only the first
+    # user's calls (cache_creation) impose real ITPM burden.
+    #
+    # Three cases:
+    #   1. A single call > 50k → that call goes to Batch API.
+    #   2. Both calls ≤ 50k and combined ≤ 50k → both cached, 61s between users
+    #      (user0 warms both caches; subsequent users are cheap cache_reads).
+    #   3. Both calls ≤ 50k but combined > 50k → both cached, but user0's two calls
+    #      are spread inner_gap seconds apart (so the rate-limit window resets between them).
+    #      Between consecutive users: 1s stagger (cache_reads are free ITPM).
+    CACHED_BUDGET = 50_000
     arxiv_papers   = [p for p in papers if not p.get("source")]
     journal_papers = [p for p in papers if p.get("source")]
 
@@ -236,51 +242,63 @@ def run_centralized_triage(
 
     base_batch = len(user_dirs) < 4 and not no_batch
 
-    # Individual overflow: a single call exceeds the full budget on its own.
+    # Case 1: individual call exceeds 50k → Batch.
     arxiv_overflow   = arxiv_tokens   > CACHED_BUDGET
     journal_overflow = journal_tokens > CACHED_BUDGET
 
-    # Combined overflow: both calls together exceed the shared per-minute budget.
-    # Force the larger pool to Batch so the smaller can stay on the cheaper cached API.
-    combined_overflow = (not arxiv_overflow and not journal_overflow) and (combined_tokens > CACHED_BUDGET)
-    if combined_overflow:
-        if arxiv_tokens >= journal_tokens:
-            arxiv_overflow = True
-        else:
-            journal_overflow = True
+    # Case 3: both individually safe but combined > 50k → split cached with 61s inner gap.
+    split_cached = (not arxiv_overflow and not journal_overflow and combined_tokens > CACHED_BUDGET)
 
     use_batch_arxiv    = base_batch or arxiv_overflow
     use_batch_journals = base_batch or journal_overflow
 
     if arxiv_overflow:
-        log.warning("Field '%s': arXiv ~%d tokens — forcing Batch API for arXiv triage.", field, arxiv_tokens)
+        log.warning("Field '%s': arXiv ~%d tokens > 50k — forcing Batch API for arXiv triage.", field, arxiv_tokens)
     if journal_overflow:
-        log.warning("Field '%s': journals ~%d tokens — forcing Batch API for journal triage.", field, journal_tokens)
-    if combined_overflow:
-        log.warning("Field '%s': combined ~%d tokens exceeds budget — offloaded larger pool to Batch.", field, combined_tokens)
+        log.warning("Field '%s': journals ~%d tokens > 50k — forcing Batch API for journal triage.", field, journal_tokens)
+    split_cached_pause = 1  # seconds between consecutive user thread starts in split_cached mode
+    inner_gap = max(61, len(user_dirs) * split_cached_pause)
+    if split_cached:
+        log.info(
+            "Field '%s': combined ~%d tokens > 50k — both cached with %ds inner gap per user, %ds inter-user stagger.",
+            field, combined_tokens, inner_gap, split_cached_pause,
+        )
 
     # Stagger only needed when at least one call is on the cached API.
     needs_stagger = not use_batch_arxiv or not use_batch_journals
 
-    # Delay strategy:
-    #   User 0: fires immediately — warms both caches (~50k cache_creation tokens).
-    #   User 1: waits 61s — ensures user 0's calls have completed and the rate-limit
-    #            estimate is settled before another large request is estimated.
-    #   Users 2+: fire 1s apart — cache is warm, each only consumes ~1k uncached
-    #            profile tokens, so rapid-fire is safe.
+    # Delay strategy (thread-start offset):
+    #   Case 2 (combined ≤ 50k, both cached):
+    #     User 0: fires immediately.
+    #     User 1: waits 61s — lets user0's cache_creation ITPM window expire.
+    #     Users 2+: fire 1s apart — cache_reads are free, only ~1k uncached profile tokens.
+    #   Case 3 (split_cached — combined > 50k, each < 50k):
+    #     Users stagger 1s apart — cache_reads are free ITPM (same as case 2 users 1+),
+    #     so no extra buffer is needed between user starts.
+    #     Within each thread, a 61s gap is inserted between the arXiv and journals calls
+    #     so user0's two cache_creation calls land in separate 60s windows.
     def _delay_for(i: int) -> int:
         if not needs_stagger or i == 0:
             return 0
+        if split_cached:
+            return i * split_cached_pause  # cache_reads are free ITPM
         if i == 1:
             return 61
         return 61 + (i - 1)  # 62, 63, 64 ...
+
+    if split_cached:
+        stagger_desc = f"{split_cached_pause}s×user, {inner_gap}s inner gap"
+    elif needs_stagger:
+        stagger_desc = "user0→61s→user1→1s→rest"
+    else:
+        stagger_desc = "none"
 
     log.info(
         "Field '%s': %d user(s) — triage mode: arXiv=%s  journals=%s  stagger=%s",
         field, len(user_dirs),
         "batch" if use_batch_arxiv else "cached",
         "batch" if use_batch_journals else "cached",
-        "user0→61s→user1→1s→rest" if needs_stagger else "none",
+        stagger_desc,
     )
 
     def _triage_one(i: int, user_dir: Path) -> tuple[str, bool]:
@@ -301,6 +319,7 @@ def run_centralized_triage(
                 api_key=api_key,
                 use_batch_arxiv=use_batch_arxiv,
                 use_batch_journals=use_batch_journals,
+                inter_call_min_gap=inner_gap if split_cached else 0,
             )
 
             filtered_path = today_dir / "filtered_papers.json"

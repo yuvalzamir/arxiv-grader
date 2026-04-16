@@ -439,6 +439,7 @@ def run_triage(
     use_batch: bool = False,
     use_batch_arxiv: bool | None = None,
     use_batch_journals: bool | None = None,
+    inter_call_min_gap: float = 0,
 ) -> list[dict]:
     """
     Run triage in two separate calls (arXiv and journals) to avoid
@@ -464,10 +465,16 @@ def run_triage(
     # are not subject to the 50k token/minute cached-API limit and can run after.
     arxiv_first = not batch_arxiv or batch_journals  # cached arXiv goes first unless journals is also cached (default order)
     if arxiv_first:
+        t0 = time.monotonic()
         if arxiv_papers:
             arxiv_ranked = _run_single_triage(
                 arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, batch_arxiv
             )
+        if inter_call_min_gap > 0:
+            remaining = inter_call_min_gap - (time.monotonic() - t0)
+            if remaining > 0:
+                log.info("Triage inter-call gap: sleeping %.0fs before journals call.", remaining)
+                time.sleep(remaining)
         if journal_papers:
             journal_ranked = _run_single_triage(
                 journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, batch_journals
