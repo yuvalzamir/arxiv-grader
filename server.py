@@ -18,6 +18,7 @@ import re
 import smtplib
 import threading
 from datetime import date, datetime
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
@@ -61,6 +62,58 @@ def _send_signup_notification(slug: str, field: str, submitted_at: str) -> None:
             server.sendmail(_EMAIL_FROM, [_EMAIL_FROM], msg.as_string())
     except Exception:
         pass  # notification failure must never break the signup response
+
+
+def _send_welcome_email(to_email: str) -> None:
+    """Send a welcome email with how-to instructions to the new user."""
+    if not _SMTP_USER or not _SMTP_PASSWORD:
+        return
+    html = """\
+<!DOCTYPE html>
+<html>
+<body style="font-family:Arial,sans-serif;max-width:650px;margin:0 auto;color:#222;">
+<p>Hello,</p>
+<p>Welcome to <strong>Incoming Science</strong>! It's great to have you, and we hope you find the
+daily (or weekly) digests helpful in the never-ending chase after the academic wave-front.
+Your request will be processed soon — probably by tomorrow you'll receive your first email
+(according to the schedule you chose).</p>
+
+<p><strong>Quick How-To (1 minute read)</strong></p>
+<ul>
+  <li>The digests look like the image below. Notice the paper score — this is the main feature
+  of the digest. Generally speaking: <strong>9–10</strong> are a must-read,
+  <strong>6–8</strong> are interesting, and below 5 it becomes noise.</li>
+  <li>At the bottom of each paper block there is a rating panel, used for the monthly
+  refinement of your taste profile. You don't need to rate many papers —
+  <strong>1–3 per day</strong> is more than enough. Focus on papers where there is a
+  discrepancy between the received score and your genuine level of interest: if an OK paper
+  got a 10, rate it <em>Interesting</em>; if a must-read got a 5, rate it
+  <em>Very Relevant</em>. Don't bother rating mildly interesting papers that got a 6.</li>
+</ul>
+
+<p><img src="https://incomingscience.xyz/assets/Welcome_Email.png"
+     alt="Digest example" style="max-width:600px;width:100%;border:1px solid #ddd;"></p>
+
+<p>Incoming Science is a non-profit project, but there are operating costs (~$1/month per user).
+We don't ask for payment, but if you'd like to support the project, feel free to get in touch.</p>
+
+<p>Good day,<br><strong>Incoming Science</strong></p>
+</body>
+</html>"""
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "Welcome to Incoming Science"
+    msg["From"]    = _EMAIL_FROM
+    msg["To"]      = to_email
+    msg.attach(MIMEText(html, "html"))
+    try:
+        with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=15) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(_SMTP_USER, _SMTP_PASSWORD)
+            server.sendmail(_EMAIL_FROM, [to_email], msg.as_string())
+    except Exception:
+        pass  # welcome email failure must never break the signup response
 
 
 # ── Page template — mobile-first, matches digest palette ─────────────────────
@@ -341,6 +394,7 @@ def onboarding_submit():
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
     _send_signup_notification(slug, data.get("field", ""), payload["submitted_at"])
+    _send_welcome_email(email)
 
     return {"status": "ok"}, 200
 
