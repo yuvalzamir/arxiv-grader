@@ -246,7 +246,7 @@ def run_centralized_triage(
     arxiv_overflow   = arxiv_tokens   > CACHED_BUDGET
     journal_overflow = journal_tokens > CACHED_BUDGET
 
-    # Case 3: both individually safe but combined > 50k → split cached with 61s inner gap.
+    # Case 3: both individually safe but combined > 50k → split cached with inner gap.
     split_cached = (not arxiv_overflow and not journal_overflow and combined_tokens > CACHED_BUDGET)
 
     use_batch_arxiv    = base_batch or arxiv_overflow
@@ -256,7 +256,7 @@ def run_centralized_triage(
         log.warning("Field '%s': arXiv ~%d tokens > 50k — forcing Batch API for arXiv triage.", field, arxiv_tokens)
     if journal_overflow:
         log.warning("Field '%s': journals ~%d tokens > 50k — forcing Batch API for journal triage.", field, journal_tokens)
-    split_cached_pause = 1  # seconds between consecutive user thread starts in split_cached mode
+    split_cached_pause = 10  # seconds between consecutive user thread starts in split_cached mode
     inner_gap = max(61, len(user_dirs) * split_cached_pause)
     if split_cached:
         log.info(
@@ -284,7 +284,7 @@ def run_centralized_triage(
             return i * split_cached_pause  # cache_reads are free ITPM
         if i == 1:
             return 61
-        return 61 + (i - 1)  # 62, 63, 64 ...
+        return 61 + (i - 1) * 10  # 71, 81, 91 ...
 
     if split_cached:
         stagger_desc = f"{split_cached_pause}s×user, {inner_gap}s inner gap"
