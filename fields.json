@@ -91,6 +91,18 @@
         "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
         "publisher": "acs",
         "tag_filter": null
+      },
+      {
+        "name": "ACSNano",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ScienceAdvances",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
+        "publisher": "science",
+        "tag_filter": null
       }
     ]
   },
@@ -185,6 +197,18 @@
         "name": "NanoLett",
         "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
         "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ACSNano",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ScienceAdvances",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
+        "publisher": "science",
         "tag_filter": null
       }
     ]
