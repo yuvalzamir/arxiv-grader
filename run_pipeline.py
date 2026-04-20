@@ -364,6 +364,7 @@ def _run_single_triage(
     papers: list[dict], profile: dict, system_prompt: str, label: str,
     debug_dir: Path | None = None, api_key: str | None = None,
     use_batch: bool = False,
+    orchestrator=None, is_first_user: bool = True,
 ) -> list[tuple[dict, str]]:
     """
     Run triage for one paper list.
@@ -373,6 +374,11 @@ def _run_single_triage(
     use_batch: if True, use the Batch API (50% cost discount, async).
                if False (default), use the cached synchronous API.
     api_key: if provided, used directly (centralized field key); otherwise reads from env.
+    orchestrator: TokenBucketOrchestrator instance from run_all_users.py. When provided,
+                  acquire() is called before each cached API call to enforce the org-level
+                  50k ITPM rate limit. Batch API calls bypass the orchestrator entirely.
+    is_first_user: True for the first user in a field (cache_write); False for subsequent
+                   users (cache_read, free ITPM).
     """
     client = Anthropic(api_key=api_key) if api_key else Anthropic()
     papers_block  = build_triage_papers_block(papers)
@@ -402,6 +408,9 @@ def _run_single_triage(
             response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
     else:
         try:
+            if orchestrator is not None:
+                estimated_tokens = (len(system_prompt) + len(papers_block)) // 4
+                orchestrator.acquire(estimated_tokens, is_cache_write=is_first_user)
             response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
         except Exception as e:
             log.warning("%s: cached API failed (%s) — falling back to direct API.", label, e)
@@ -439,7 +448,8 @@ def run_triage(
     use_batch: bool = False,
     use_batch_arxiv: bool | None = None,
     use_batch_journals: bool | None = None,
-    inter_call_min_gap: float = 0,
+    orchestrator=None,
+    is_first_user: bool = True,
 ) -> list[dict]:
     """
     Run triage in two separate calls (arXiv and journals) to avoid
@@ -450,6 +460,11 @@ def run_triage(
     both fall back to use_batch. This allows the token-budget check in
     run_all_users.py to force Batch API for whichever call exceeds 45k tokens
     without affecting the other call.
+
+    orchestrator: TokenBucketOrchestrator from run_all_users.py — passed through
+    to _run_single_triage to gate each cached API call against the org-level ITPM limit.
+    is_first_user: True for the first user in a field (cache_write cost), False for
+    subsequent users (cache_read, free ITPM).
     """
     arxiv_papers  = [p for p in papers if not p.get("source")]
     journal_papers = [p for p in papers if p.get("source")]
@@ -465,29 +480,27 @@ def run_triage(
     # are not subject to the 50k token/minute cached-API limit and can run after.
     arxiv_first = not batch_arxiv or batch_journals  # cached arXiv goes first unless journals is also cached (default order)
     if arxiv_first:
-        t0 = time.monotonic()
         if arxiv_papers:
             arxiv_ranked = _run_single_triage(
-                arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, batch_arxiv
+                arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, batch_arxiv,
+                orchestrator=orchestrator, is_first_user=is_first_user,
             )
-        if inter_call_min_gap > 0:
-            remaining = inter_call_min_gap - (time.monotonic() - t0)
-            if remaining > 0:
-                log.info("Triage inter-call gap: sleeping %.0fs before journals call.", remaining)
-                time.sleep(remaining)
         if journal_papers:
             journal_ranked = _run_single_triage(
-                journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, batch_journals
+                journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, batch_journals,
+                orchestrator=orchestrator, is_first_user=is_first_user,
             )
     else:
         # arXiv is batch, journals is cached — run journals first
         if journal_papers:
             journal_ranked = _run_single_triage(
-                journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, batch_journals
+                journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, batch_journals,
+                orchestrator=orchestrator, is_first_user=is_first_user,
             )
         if arxiv_papers:
             arxiv_ranked = _run_single_triage(
-                arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, batch_arxiv
+                arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, batch_arxiv,
+                orchestrator=orchestrator, is_first_user=is_first_user,
             )
 
     # Apply caps independently for each source type.

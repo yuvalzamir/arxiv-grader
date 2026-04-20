@@ -24,6 +24,7 @@ import shutil
 import smtplib
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
@@ -43,6 +44,69 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 log = logging.getLogger(__name__)
+
+
+class TokenBucketOrchestrator:
+    """
+    Central rate-limit guard for all Anthropic cached API calls across all
+    fields and users.
+
+    The cached API has a 50k input-token-per-minute (ITPM) limit shared
+    across the entire organisation. Only cache_creation tokens count;
+    cache_read tokens are free. This orchestrator serialises cached calls
+    so we never exceed the limit.
+
+    Two call types:
+      cache_write (is_cache_write=True):  first user in a field — creates the
+          cache entry, costs full estimated_tokens.  The orchestrator waits until
+          the bucket has enough capacity, deducts the tokens, then returns.
+      cache_read  (is_cache_write=False): subsequent users — free ITPM, but we
+          hold the lock for CACHE_READ_HOLD seconds so Claude has time to register
+          the preceding cache_write before this read request arrives.
+    """
+    CAPACITY        = 50_000
+    REFILL_RATE     = 50_000 / 60   # tokens per second
+    BUFFER_SECS     = 5.0
+    CACHE_READ_HOLD = 1.0            # seconds to hold lock for cache reads
+
+    def __init__(self):
+        self.bucket      = self.CAPACITY
+        self.last_update = time.monotonic()
+        self.lock        = threading.Lock()
+
+    def _refill(self):
+        """Must be called with lock held."""
+        now = time.monotonic()
+        self.bucket = min(
+            self.CAPACITY,
+            self.bucket + (now - self.last_update) * self.REFILL_RATE,
+        )
+        self.last_update = now
+
+    def acquire(self, tokens: int, is_cache_write: bool) -> None:
+        if not is_cache_write:
+            # Hold lock for CACHE_READ_HOLD so Claude registers the preceding
+            # cache_write before this read request arrives.
+            with self.lock:
+                self._refill()
+                time.sleep(self.CACHE_READ_HOLD)
+            return
+
+        # cache_write: wait until bucket has enough tokens, then deduct.
+        while True:
+            with self.lock:
+                self._refill()
+                if self.bucket >= tokens:
+                    self.bucket -= tokens
+                    return
+                deficit   = tokens - self.bucket
+                wait_secs = deficit / self.REFILL_RATE + self.BUFFER_SECS
+            log.info(
+                "Orchestrator: bucket low (%d tokens available, %d needed) — waiting %.1fs.",
+                int(self.bucket), tokens, wait_secs,
+            )
+            time.sleep(wait_secs)
+            # Loop — re-check after sleep; another thread may have consumed tokens.
 
 
 def discover_users(only: list[str] | None = None) -> list[Path]:
@@ -196,17 +260,17 @@ def run_centralized_triage(
     papers: list[dict],
     date_str: str,
     no_batch: bool = False,
+    orchestrator: "TokenBucketOrchestrator | None" = None,
 ) -> dict[str, bool]:
     """
-    Run triage for all users in a field in parallel with staggered launches.
+    Run triage for all users in a field in parallel.
 
     The merged paper list (arXiv + journals) is the cached prefix — identical for
     all users in the field. Each user's taste profile is the non-cached per-user suffix.
 
-    Users launch in parallel but each thread sleeps i*61s before firing its cached
-    call, ensuring no two cached API calls overlap within the same 60s rate-limit
-    window. Batch calls are not subject to the 50k token/minute limit and run
-    immediately after the cached call within each thread.
+    Rate-limit timing is managed centrally by the TokenBucketOrchestrator, which
+    serialises all cached API calls across all fields and users. Batch API calls
+    are unaffected and run immediately.
 
     Returns {user_name: success} dict.
     """
@@ -221,92 +285,36 @@ def run_centralized_triage(
     triage_prompt         = load_prompt("triage.txt")
     triage_journal_prompt = load_prompt("triage_journals.txt")
 
-    # The cached API has a 50k input-token/minute rate limit (ITPM).
-    # For Haiku 4.5, cache_read tokens do NOT count toward ITPM — only the first
-    # user's calls (cache_creation) impose real ITPM burden.
-    #
-    # Three cases:
-    #   1. A single call > 50k → that call goes to Batch API.
-    #   2. Both calls ≤ 50k and combined ≤ 50k → both cached, 61s between users
-    #      (user0 warms both caches; subsequent users are cheap cache_reads).
-    #   3. Both calls ≤ 50k but combined > 50k → both cached, but user0's two calls
-    #      are spread inner_gap seconds apart (so the rate-limit window resets between them).
-    #      Between consecutive users: 1s stagger (cache_reads are free ITPM).
     CACHED_BUDGET = 45_000
     arxiv_papers   = [p for p in papers if not p.get("source")]
     journal_papers = [p for p in papers if p.get("source")]
 
     arxiv_tokens   = len(json.dumps(arxiv_papers))   // 4
     journal_tokens = len(json.dumps(journal_papers)) // 4
-    combined_tokens = arxiv_tokens + journal_tokens
 
     base_batch = len(user_dirs) < 4 and not no_batch
 
-    # Case 1: individual call exceeds 50k → Batch.
+    # Force Batch API for any individual call that exceeds the token budget.
     arxiv_overflow   = arxiv_tokens   > CACHED_BUDGET
     journal_overflow = journal_tokens > CACHED_BUDGET
-
-    # Case 3: both individually safe but combined > 50k → split cached with inner gap.
-    split_cached = (not arxiv_overflow and not journal_overflow and combined_tokens > CACHED_BUDGET)
 
     use_batch_arxiv    = base_batch or arxiv_overflow
     use_batch_journals = base_batch or journal_overflow
 
     if arxiv_overflow:
-        log.warning("Field '%s': arXiv ~%d tokens > 50k — forcing Batch API for arXiv triage.", field, arxiv_tokens)
+        log.warning("Field '%s': arXiv ~%d tokens > %dk — forcing Batch API for arXiv triage.", field, arxiv_tokens, CACHED_BUDGET // 1000)
     if journal_overflow:
-        log.warning("Field '%s': journals ~%d tokens > 50k — forcing Batch API for journal triage.", field, journal_tokens)
-    split_cached_pause = 31  # seconds between consecutive user thread starts in split_cached mode
-    inner_gap = max(61, len(user_dirs) * split_cached_pause)
-    if split_cached:
-        log.info(
-            "Field '%s': combined ~%d tokens > 50k — both cached with %ds inner gap per user, %ds inter-user stagger.",
-            field, combined_tokens, inner_gap, split_cached_pause,
-        )
-
-    # Stagger only needed when at least one call is on the cached API.
-    needs_stagger = not use_batch_arxiv or not use_batch_journals
-
-    # Delay strategy (thread-start offset):
-    #   Case 2 (combined ≤ 50k, both cached):
-    #     User 0: fires immediately.
-    #     User 1: waits 61s — lets user0's cache_creation ITPM window expire.
-    #     Users 2+: fire 1s apart — cache_reads are free, only ~1k uncached profile tokens.
-    #   Case 3 (split_cached — combined > 50k, each < 50k):
-    #     Users stagger 1s apart — cache_reads are free ITPM (same as case 2 users 1+),
-    #     so no extra buffer is needed between user starts.
-    #     Within each thread, a 61s gap is inserted between the arXiv and journals calls
-    #     so user0's two cache_creation calls land in separate 60s windows.
-    def _delay_for(i: int) -> int:
-        if not needs_stagger or i == 0:
-            return 0
-        if split_cached:
-            return i * split_cached_pause  # cache_reads are free ITPM
-        if i == 1:
-            return 61
-        return 61 + (i - 1) * 10  # 71, 81, 91 ...
-
-    if split_cached:
-        stagger_desc = f"{split_cached_pause}s×user, {inner_gap}s inner gap"
-    elif needs_stagger:
-        stagger_desc = "user0→61s→user1→1s→rest"
-    else:
-        stagger_desc = "none"
+        log.warning("Field '%s': journals ~%d tokens > %dk — forcing Batch API for journal triage.", field, journal_tokens, CACHED_BUDGET // 1000)
 
     log.info(
-        "Field '%s': %d user(s) — triage mode: arXiv=%s  journals=%s  stagger=%s",
+        "Field '%s': %d user(s) — triage mode: arXiv=%s  journals=%s  (orchestrator-managed)",
         field, len(user_dirs),
         "batch" if use_batch_arxiv else "cached",
         "batch" if use_batch_journals else "cached",
-        stagger_desc,
     )
 
     def _triage_one(i: int, user_dir: Path) -> tuple[str, bool]:
-        delay = _delay_for(i)
-        if delay > 0:
-            log.info("--- [%s] Triage in %ds ---", user_dir.name, delay)
-            time.sleep(delay)
-        log.info("--- [%s] Triage ---", user_dir.name)
+        log.info("--- [%s] Triage starting ---", user_dir.name)
         try:
             profile   = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
             today_dir = user_dir / "data" / date_str
@@ -319,7 +327,8 @@ def run_centralized_triage(
                 api_key=api_key,
                 use_batch_arxiv=use_batch_arxiv,
                 use_batch_journals=use_batch_journals,
-                inter_call_min_gap=inner_gap if split_cached else 0,
+                orchestrator=orchestrator,
+                is_first_user=(i == 0),
             )
 
             filtered_path = today_dir / "filtered_papers.json"
@@ -561,8 +570,11 @@ def main():
                         json.dump(filtered, f, indent=2)
                     log.info("Field '%s': %d journal papers after filtering.", field, len(filtered))
 
-        # Step 3: Merge arXiv + journals and run centralized triage per field — in parallel.
-        # Each field uses its own API key so rate limits are fully independent.
+        # Step 3: Merge arXiv + journals per field, then run triage for all fields
+        # in parallel. All cached API calls across all fields share one orchestrator
+        # that enforces the org-level 50k ITPM rate limit.
+        orchestrator = TokenBucketOrchestrator()
+
         def _run_field_triage(field: str) -> tuple[dict[str, Path], dict[str, bool]]:
             field_users = [u for u in users if user_fields[u.name] == field]
             arxiv_papers = arxiv_papers_by_field[field]
@@ -581,7 +593,10 @@ def main():
             )
 
             field_user_papers = {u.name: merged_path for u in field_users}
-            triage_results = run_centralized_triage(field, field_users, merged_papers, date_str, no_batch=args.no_batch)
+            triage_results = run_centralized_triage(
+                field, field_users, merged_papers, date_str,
+                no_batch=args.no_batch, orchestrator=orchestrator,
+            )
             return field_user_papers, triage_results
 
         with ThreadPoolExecutor(max_workers=len(fields_with_papers)) as executor:
