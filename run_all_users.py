@@ -232,7 +232,7 @@ def run_centralized_triage(
     #   3. Both calls ≤ 50k but combined > 50k → both cached, but user0's two calls
     #      are spread inner_gap seconds apart (so the rate-limit window resets between them).
     #      Between consecutive users: 1s stagger (cache_reads are free ITPM).
-    CACHED_BUDGET = 50_000
+    CACHED_BUDGET = 45_000
     arxiv_papers   = [p for p in papers if not p.get("source")]
     journal_papers = [p for p in papers if p.get("source")]
 
@@ -256,7 +256,7 @@ def run_centralized_triage(
         log.warning("Field '%s': arXiv ~%d tokens > 50k — forcing Batch API for arXiv triage.", field, arxiv_tokens)
     if journal_overflow:
         log.warning("Field '%s': journals ~%d tokens > 50k — forcing Batch API for journal triage.", field, journal_tokens)
-    split_cached_pause = 10  # seconds between consecutive user thread starts in split_cached mode
+    split_cached_pause = 31  # seconds between consecutive user thread starts in split_cached mode
     inner_gap = max(61, len(user_dirs) * split_cached_pause)
     if split_cached:
         log.info(

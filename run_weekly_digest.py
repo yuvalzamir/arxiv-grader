@@ -97,6 +97,37 @@ def collect_weekly_papers(data_dir: Path, today_str: str) -> list[dict]:
 # Email delivery
 # ---------------------------------------------------------------------------
 
+def send_no_papers_weekly_email(start_date: str, end_date: str, username: str) -> None:
+    """Send a short notification email when no papers scored 8+ this week."""
+    raw = os.environ.get("EMAIL_TO_WEEKLY") or os.environ.get("EMAIL_TO", "")
+    to_addr = [a.strip() for a in raw.split(",") if a.strip()]
+    if not to_addr:
+        log.warning("[email] EMAIL_TO not set — skipping no-papers notification.")
+        return
+
+    subject = f"Incoming Science Weekly — {start_date} to {end_date} — no relevant papers this week"
+    body = (
+        f"No papers scored {MIN_SCORE}+ this week.\n\n"
+        f"User: {username}\n"
+        f"Period: {start_date} to {end_date}\n"
+    )
+
+    msg = MIMEMultipart()
+    msg["From"]    = _EMAIL_FROM
+    msg["To"]      = ", ".join(to_addr)
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+
+    with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=30) as server:
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login(_SMTP_USER, _SMTP_PASSWORD)
+        server.sendmail(_EMAIL_FROM, to_addr, msg.as_string())
+
+    log.info("No-papers weekly notification sent to %s.", to_addr)
+
+
 def send_weekly_email(
     pdf_path: Path,
     start_date: str,
@@ -193,7 +224,10 @@ def main():
     log.info("Collected %d paper(s) with score >= %d over the past 7 days.", len(papers), MIN_SCORE)
 
     if not papers:
-        log.info("No papers scored %d+ this week — skipping weekly email.", MIN_SCORE)
+        log.info("No papers scored %d+ this week — sending no-papers notification.", MIN_SCORE)
+        start_date = (date.fromisoformat(today_str) - timedelta(days=6)).isoformat()
+        if not args.no_email:
+            send_no_papers_weekly_email(start_date, today_str, username)
         return
 
     # Determine date range label for the email subject.

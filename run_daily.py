@@ -89,6 +89,37 @@ def run(cmd: list[str], step: str) -> None:
 # Email delivery
 # ---------------------------------------------------------------------------
 
+def send_no_papers_email(today_str: str, username: str, list_env_var: str = "EMAIL_TO_DAILY") -> None:
+    """Send a short notification email when no papers passed triage."""
+    raw = os.environ.get(list_env_var) or os.environ.get("EMAIL_TO", "")
+    to_addr = [a.strip() for a in raw.split(",") if a.strip()]
+    if not to_addr:
+        log.warning("[email] EMAIL_TO not set — skipping no-papers notification.")
+        return
+
+    subject = f"Incoming Science — {today_str} — no relevant papers today"
+    body = (
+        f"No papers matched your taste profile today.\n\n"
+        f"Digest for: {username}\n"
+        f"Date: {today_str}\n"
+    )
+
+    msg = MIMEMultipart()
+    msg["From"]    = _EMAIL_FROM
+    msg["To"]      = ", ".join(to_addr)
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+
+    with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=30) as server:
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login(_SMTP_USER, _SMTP_PASSWORD)
+        server.sendmail(_EMAIL_FROM, to_addr, msg.as_string())
+
+    log.info("No-papers notification sent to %s.", to_addr)
+
+
 def send_email(pdf_path: Path, today_str: str, username: str, list_env_var: str = "EMAIL_TO_DAILY") -> None:
     """Send the PDF digest as an email attachment via SMTP (STARTTLS)."""
     raw = os.environ.get(list_env_var) or os.environ.get("EMAIL_TO", "")
@@ -269,6 +300,18 @@ def main():
     if args.no_batch:
         grade_cmd.append("--no-batch")
     run(grade_cmd, step="grade")
+
+    # If nothing passed triage, scored_papers.json is not written. Send a
+    # notification and skip the PDF/email steps.
+    if not scored_path.exists():
+        log.info("[grade] No papers passed triage — skipping PDF build.")
+        profile_data = json.loads(profile.read_text(encoding="utf-8"))
+        send_daily = profile_data.get("daily_digest", True)
+        if not args.no_email and send_daily:
+            send_no_papers_email(today_str, username, list_env_var="EMAIL_TO_DAILY")
+        cleanup_old_folders(data_dir, args.keep_days)
+        log.info("=== Daily run complete for %s [user: %s] ===", today_str, username)
+        return
 
     # ------------------------------------------------------------------
     # Step 4: Build PDF digest
