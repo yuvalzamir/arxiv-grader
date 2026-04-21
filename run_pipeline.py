@@ -126,6 +126,51 @@ def build_triage_papers_block(papers: list[dict]) -> str:
     )
 
 
+def split_papers_block(papers_block: str, n_chunks: int) -> list[str]:
+    """Split a formatted papers block at paper boundaries into n_chunks parts.
+
+    Target split positions are at equal fractions of total length. For each
+    target, the nearest paper boundary (\\n\\n[N]) is found and the cut is
+    made there — no paper is ever split mid-entry.
+
+    The first chunk keeps the full header. Subsequent chunks start directly
+    at their first paper [N] (the leading \\n\\n is consumed by the split).
+    Returns the original single-element list if n_chunks <= 1 or if there
+    are not enough papers to form the requested number of chunks.
+    """
+    if n_chunks <= 1:
+        return [papers_block]
+
+    # Find all positions where \n\n[digit] begins — these are paper separators.
+    # The very first match separates the header from [1]; skip it as a cut point.
+    separators = [m.start() for m in re.finditer(r'\n\n(?=\[\d)', papers_block)]
+    cut_candidates = separators[1:]  # skip header→[1]
+
+    if len(cut_candidates) < n_chunks - 1:
+        return [papers_block]
+
+    total = len(papers_block)
+
+    # For each of the n_chunks-1 dividing points, pick the nearest cut candidate.
+    # Remove each chosen candidate so no two targets map to the same boundary.
+    remaining = list(cut_candidates)
+    selected = []
+    for k in range(1, n_chunks):
+        target = total * k // n_chunks
+        best = min(remaining, key=lambda p: abs(p - target))
+        selected.append(best)
+        remaining.remove(best)
+    selected.sort()
+
+    chunks = []
+    prev = 0
+    for pos in selected:
+        chunks.append(papers_block[prev:pos])
+        prev = pos + 2  # skip the \n\n that precedes the next chunk's first paper
+    chunks.append(papers_block[prev:])
+    return chunks
+
+
 def build_triage_profile_block(profile: dict) -> str:
     """Non-cached suffix: the user's taste profile (varies per user)."""
     subcategories = profile.get("arxiv_subcategories", [])
@@ -259,15 +304,23 @@ def _call_direct(client: Anthropic, model: str, max_tokens: int,
 
 
 def _call_cached(client: Anthropic, model: str, max_tokens: int,
-                 system: str, papers_block: str, profile_block: str, label: str):
+                 system: str, papers_blocks: list[str], profile_block: str, label: str):
     """Call the messages API with prompt caching (synchronous).
 
-    The system prompt and papers block are marked for caching — they are identical
-    for all users in the same field, so the first call warms the cache and subsequent
-    users pay only the cache-read rate (~10% of normal input cost).
-    The profile block is the non-cached per-user suffix.
+    Each element of papers_blocks gets its own cache_control breakpoint, so the
+    system prompt and all paper chunks are independently cached. All users in the
+    same field share the same cached content; the profile_block is the uncached
+    per-user suffix.
+
+    When used for a cache-warming call, pass max_tokens=1 and a dummy profile_block
+    — the response is cheap and the return value can be discarded.
     """
     log.info("%s: calling cached API...", label)
+    content = [
+        {"type": "text", "text": chunk, "cache_control": {"type": "ephemeral"}}
+        for chunk in papers_blocks
+    ]
+    content.append({"type": "text", "text": profile_block})
     msg = client.messages.create(
         model=model,
         max_tokens=max_tokens,
@@ -276,20 +329,7 @@ def _call_cached(client: Anthropic, model: str, max_tokens: int,
             "text": system,
             "cache_control": {"type": "ephemeral"},
         }],
-        messages=[{
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": papers_block,
-                    "cache_control": {"type": "ephemeral"},
-                },
-                {
-                    "type": "text",
-                    "text": profile_block,
-                },
-            ],
-        }],
+        messages=[{"role": "user", "content": content}],
     )
     cache_read    = getattr(msg.usage, "cache_read_input_tokens",    0) or 0
     cache_created = getattr(msg.usage, "cache_creation_input_tokens", 0) or 0
@@ -365,6 +405,7 @@ def _run_single_triage(
     debug_dir: Path | None = None, api_key: str | None = None,
     use_batch: bool = False,
     orchestrator=None, is_first_user: bool = True,
+    n_chunks: int = 1,
 ) -> list[tuple[dict, str]]:
     """
     Run triage for one paper list.
@@ -379,25 +420,37 @@ def _run_single_triage(
                   50k ITPM rate limit. Batch API calls bypass the orchestrator entirely.
     is_first_user: True for the first user in a field (cache_write); False for subsequent
                    users (cache_read, free ITPM).
+    n_chunks: number of cache breakpoints to split the papers block across (1–3).
+              When > 1, the first user sends n_chunks-1 lightweight warming calls to
+              establish each intermediate cache entry before the actual triage call.
+              Subsequent users pay only cache-read cost (free ITPM) on all chunks.
     """
     client = Anthropic(api_key=api_key) if api_key else Anthropic()
     papers_block  = build_triage_papers_block(papers)
+    papers_blocks = split_papers_block(papers_block, n_chunks)
     profile_block = build_triage_profile_block(profile)
 
     if debug_dir:
         slug = label.lower().replace("-", "_")
         debug_path = debug_dir / f"{slug}_input.txt"
-        mode = "batch" if use_batch else "cached"
+        n = len(papers_blocks)
+        mode = "batch" if use_batch else (f"cached({n}-chunk)" if n > 1 else "cached")
+        blocks_text = "\n\n".join(
+            f"=== USER BLOCK {i + 1}: PAPERS (chunk {i + 1}/{n}) ===\n{b}"
+            for i, b in enumerate(papers_blocks)
+        )
         debug_path.write_text(
             f"=== SYSTEM ({mode}) ===\n{system_prompt}\n\n"
-            f"=== USER BLOCK 1: PAPERS ===\n{papers_block}\n\n"
-            f"=== USER BLOCK 2: PROFILE ===\n{profile_block}",
+            f"{blocks_text}\n\n"
+            f"=== USER BLOCK {n + 1}: PROFILE ===\n{profile_block}",
             encoding="utf-8",
         )
         log.info("%s: prompt saved to %s", label, debug_path)
 
+    n = len(papers_blocks)
+    mode_str = "batch" if use_batch else (f"cached({n}-chunk)" if n > 1 else "cached")
     log.info("%s: running on %d papers (model: %s, mode: %s)...",
-             label, len(papers), TRIAGE_MODEL, "batch" if use_batch else "cached")
+             label, len(papers), TRIAGE_MODEL, mode_str)
     user_message = f"{papers_block}\n\n{profile_block}"
     if use_batch:
         custom_id = label.lower().replace(" ", "-")
@@ -409,9 +462,32 @@ def _run_single_triage(
     else:
         try:
             if orchestrator is not None:
-                estimated_tokens = (len(system_prompt) + len(papers_block)) // 4
-                orchestrator.acquire(estimated_tokens, is_cache_write=is_first_user)
-            response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_block, profile_block, label)
+                if is_first_user and n > 1:
+                    # Warming phase: send n-1 lightweight calls to establish the
+                    # cache entry for each intermediate breakpoint. Call k sends
+                    # chunks 1..k with cache_control and a dummy tail (max_tokens=1).
+                    # Call k=1 also writes the system prompt for the first time;
+                    # subsequent warming calls only write their new chunk.
+                    for k in range(1, n):
+                        warm_tokens = (
+                            (len(system_prompt) + len(papers_blocks[0])) // 4
+                            if k == 1
+                            else len(papers_blocks[k - 1]) // 4
+                        )
+                        orchestrator.acquire(warm_tokens, is_cache_write=True)
+                        _call_cached(
+                            client, TRIAGE_MODEL, 1,
+                            system_prompt, papers_blocks[:k],
+                            "[CACHE WARMUP]",
+                            f"{label}-warm{k}",
+                        )
+                    # Actual call: system + chunks 1..n-1 are now cache_reads (free);
+                    # only the last chunk is a new cache_write.
+                    orchestrator.acquire(len(papers_blocks[-1]) // 4, is_cache_write=True)
+                else:
+                    tokens = (len(system_prompt) + len(papers_blocks[0])) // 4 if is_first_user else 0
+                    orchestrator.acquire(tokens, is_cache_write=is_first_user)
+            response = _call_cached(client, TRIAGE_MODEL, 4096, system_prompt, papers_blocks, profile_block, label)
         except Exception as e:
             log.warning("%s: cached API failed (%s) — falling back to direct API.", label, e)
             response = _call_direct(client, TRIAGE_MODEL, 4096, system_prompt, user_message, label)
@@ -448,6 +524,8 @@ def run_triage(
     use_batch: bool = False,
     use_batch_arxiv: bool | None = None,
     use_batch_journals: bool | None = None,
+    arxiv_n_chunks: int = 1,
+    journal_n_chunks: int = 1,
     orchestrator=None,
     is_first_user: bool = True,
 ) -> list[dict]:
@@ -483,24 +561,24 @@ def run_triage(
         if arxiv_papers:
             arxiv_ranked = _run_single_triage(
                 arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, batch_arxiv,
-                orchestrator=orchestrator, is_first_user=is_first_user,
+                orchestrator=orchestrator, is_first_user=is_first_user, n_chunks=arxiv_n_chunks,
             )
         if journal_papers:
             journal_ranked = _run_single_triage(
                 journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, batch_journals,
-                orchestrator=orchestrator, is_first_user=is_first_user,
+                orchestrator=orchestrator, is_first_user=is_first_user, n_chunks=journal_n_chunks,
             )
     else:
         # arXiv is batch, journals is cached — run journals first
         if journal_papers:
             journal_ranked = _run_single_triage(
                 journal_papers, profile, journal_system_prompt, "Triage-journals", debug_dir, api_key, batch_journals,
-                orchestrator=orchestrator, is_first_user=is_first_user,
+                orchestrator=orchestrator, is_first_user=is_first_user, n_chunks=journal_n_chunks,
             )
         if arxiv_papers:
             arxiv_ranked = _run_single_triage(
                 arxiv_papers, profile, system_prompt, "Triage-arXiv", debug_dir, api_key, batch_arxiv,
-                orchestrator=orchestrator, is_first_user=is_first_user,
+                orchestrator=orchestrator, is_first_user=is_first_user, n_chunks=arxiv_n_chunks,
             )
 
     # Apply caps independently for each source type.

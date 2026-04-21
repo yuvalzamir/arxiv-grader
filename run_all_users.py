@@ -19,6 +19,7 @@ Usage:
 import argparse
 import json
 import logging
+import math
 import os
 import shutil
 import smtplib
@@ -285,7 +286,9 @@ def run_centralized_triage(
     triage_prompt         = load_prompt("triage.txt")
     triage_journal_prompt = load_prompt("triage_journals.txt")
 
-    CACHED_BUDGET = 45_000
+    CACHED_BUDGET_PER_CHUNK = 45_000
+    MAX_CACHE_CHUNKS        = 3       # system prompt uses the 4th breakpoint
+
     arxiv_papers   = [p for p in papers if not p.get("source")]
     journal_papers = [p for p in papers if p.get("source")]
 
@@ -294,23 +297,32 @@ def run_centralized_triage(
 
     base_batch = len(user_dirs) < 4 and not no_batch
 
-    # Force Batch API for any individual call that exceeds the token budget.
-    arxiv_overflow   = arxiv_tokens   > CACHED_BUDGET
-    journal_overflow = journal_tokens > CACHED_BUDGET
+    def _triage_mode(tokens: int) -> tuple[bool, int]:
+        """Return (use_batch, n_chunks) for a given token estimate."""
+        if base_batch:
+            return True, 1
+        n = max(1, math.ceil(tokens / CACHED_BUDGET_PER_CHUNK))
+        if n > MAX_CACHE_CHUNKS:
+            log.warning(
+                "Field '%s': %d tokens exceeds %d-chunk capacity (%dk max) — falling back to Batch API.",
+                field, tokens, MAX_CACHE_CHUNKS, CACHED_BUDGET_PER_CHUNK * MAX_CACHE_CHUNKS // 1000,
+            )
+            return True, 1
+        return False, n
 
-    use_batch_arxiv    = base_batch or arxiv_overflow
-    use_batch_journals = base_batch or journal_overflow
+    use_batch_arxiv,    arxiv_n_chunks    = _triage_mode(arxiv_tokens)
+    use_batch_journals, journal_n_chunks  = _triage_mode(journal_tokens)
 
-    if arxiv_overflow:
-        log.warning("Field '%s': arXiv ~%d tokens > %dk — forcing Batch API for arXiv triage.", field, arxiv_tokens, CACHED_BUDGET // 1000)
-    if journal_overflow:
-        log.warning("Field '%s': journals ~%d tokens > %dk — forcing Batch API for journal triage.", field, journal_tokens, CACHED_BUDGET // 1000)
+    def _mode_str(use_batch: bool, n_chunks: int) -> str:
+        if use_batch:
+            return "batch"
+        return f"cached({n_chunks}-chunk)" if n_chunks > 1 else "cached"
 
     log.info(
         "Field '%s': %d user(s) — triage mode: arXiv=%s  journals=%s  (orchestrator-managed)",
         field, len(user_dirs),
-        "batch" if use_batch_arxiv else "cached",
-        "batch" if use_batch_journals else "cached",
+        _mode_str(use_batch_arxiv, arxiv_n_chunks),
+        _mode_str(use_batch_journals, journal_n_chunks),
     )
 
     def _triage_one(i: int, user_dir: Path) -> tuple[str, bool]:
@@ -327,6 +339,8 @@ def run_centralized_triage(
                 api_key=api_key,
                 use_batch_arxiv=use_batch_arxiv,
                 use_batch_journals=use_batch_journals,
+                arxiv_n_chunks=arxiv_n_chunks,
+                journal_n_chunks=journal_n_chunks,
                 orchestrator=orchestrator,
                 is_first_user=(i == 0),
             )

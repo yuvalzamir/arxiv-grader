@@ -164,6 +164,10 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
   - [x] **tag_filter tuning** — PNAS uses 4 topic-specific RSS feeds (biophys/immun/cell-bio/microbio); Science Advances uses its dedicated eTOC feed. Both are pre-filtered at the RSS level; `tag_filter: null` is correct.
 - [x] **quantum-sensing field** — deployed and first user onboarded ✓
 
+- [x] **Multi-chunk prompt caching for large triage calls** — replaces the Monday batch-fallback for oversized arXiv feeds. `split_papers_block()` splits the formatted paper list at paper boundaries into up to 3 cache-control breakpoints (system prompt uses the 4th). For the first user, `n-1` lightweight warming calls (max_tokens=1) establish intermediate cache entries before the actual triage call; the orchestrator spaces them via the token bucket. Subsequent users pay only cache-read cost (free ITPM). Batch fallback now only triggers if a single pool exceeds 135k tokens (essentially impossible). Log shows `cached(2-chunk)` etc.
+
+---
+
 ## Backlog
 
 - [ ] **Science Advances — add to other fields** — currently only in `systems-biology`. Consider adding to `cond-mat`, `cond-mat-optics`, `quantum-sensing`, and `optics` with appropriate `tag_filter`.
