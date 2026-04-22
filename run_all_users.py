@@ -314,7 +314,11 @@ def run_centralized_triage(
     triage_prompt         = load_prompt("triage.txt")
     triage_journal_prompt = load_prompt("triage_journals.txt")
 
-    CACHED_BUDGET_PER_CHUNK = 45_000
+    # Per-chunk token budget: 90% of the org's ITPM limit, capped at the
+    # Anthropic API hard limit of 4 cache breakpoints (3 usable for papers).
+    # At tier 1 (50k ITPM) → 45k/chunk; at tier 2 (450k) → 405k/chunk,
+    # which effectively disables chunking for current paper volumes.
+    CACHED_BUDGET_PER_CHUNK = int(0.9 * orchestrator.CAPACITY) if orchestrator else 45_000
     MAX_CACHE_CHUNKS        = 3       # system prompt uses the 4th breakpoint
 
     arxiv_papers   = [p for p in papers if not p.get("source")]
@@ -634,7 +638,7 @@ def main():
 
         # Step 3: Merge arXiv + journals per field, then run triage for all fields
         # in parallel. All cached API calls across all fields share one orchestrator
-        # that enforces the org-level 50k ITPM rate limit.
+        # that enforces the org-level ITPM rate limit (detected dynamically at startup).
         # Probe the current ITPM limit from Anthropic's response headers so the
         # orchestrator automatically adapts to tier changes without code edits.
         probe_key = next(
