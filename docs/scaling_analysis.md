@@ -85,3 +85,17 @@ Current onboarding: SSH in, create directory, write `.env`, run `create_profile.
 | Anthropic Batch API | >1,000 users | None | N/A |
 
 **Bottom line:** Fine as-is up to ~20 users. At 30–50, cap `max_workers` and swap Gmail for a real SMTP provider. Beyond that, admin overhead becomes the dominant constraint.
+
+---
+
+## Future architectural steps (deferred)
+
+### Separate Flask server from pipeline runner (#43)
+Currently Flask (rating endpoint + website) and the cron pipeline run on the same machine. At 50+ users, the 30-minute pipeline window may saturate the CPU and slow Flask responses (rating clicks arriving during the morning pipeline window). Move Flask to a separate small VPS (Hetzner CX11, ~€4/month). No code changes — just a deployment split and a DNS/proxy update.
+
+**When to do it:** When the pipeline window regularly exceeds 15 minutes, or if rating latency complaints arise from users.
+
+### Job queue to replace ThreadPoolExecutor (#44)
+Replace `ThreadPoolExecutor` with Redis + RQ (or Celery). Enables: distributing work across machines, retrying individual failed jobs without re-running all users, monitoring queue depth, graceful shutdown. Currently `ThreadPoolExecutor` is simple, sufficient, and has no operational overhead.
+
+**When to do it:** At ~50 concurrent users, or when per-job retry granularity becomes important (e.g., a single Batch API timeout shouldn't require re-running all users).

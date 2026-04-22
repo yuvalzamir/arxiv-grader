@@ -170,6 +170,33 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ## Backlog
 
+### Funding & sustainability
+- [ ] **Sponsorship / small grant** (#42) — Apply for small grants (Sloan Foundation, NSF CAREER supplements, EU Open Science) to fund the service as public scientific infrastructure. No billing complexity, keeps it free for users. One grant typically covers 1–2 years of operating costs. Worth pursuing in parallel with any monetisation work.
+
+### Failure recovery
+- [ ] **Watermark auto-restore on total field failure** (#2) — If every user in a field failed triage, automatically restore `journal_watermarks.json` from the per-run snapshot. Currently requires manual `cp` command. Rare but high-stakes when it happens.
+- [ ] **Per-scraper try/except** (#3) — If one publisher scraper raises an exception it can propagate and kill the whole journal fetch. Wrap each scraper call in `fetch_journals.py` in try/except, log the failure, and continue. A run would lose e.g. APS papers but still deliver everything else. Low effort, medium blast-radius reduction.
+
+### Refinement cadence
+- [ ] **Accelerated refiner for new users** — New users have sparse rating history; monthly refinement is too slow for first-impression calibration. For users with `total_ratings < 30` (or `account_age_days < 60`), run the refiner every 2 weeks instead of monthly. Reuse the existing cron slot on the 16th; check each user's eligibility at run time. Once they accumulate enough ratings, graduate them to the standard monthly cycle.
+- [ ] **Biweekly refiner for active users** (#15) — Users with ≥15 ratings in the past 2 weeks get an extra refiner run on the 16th of the month. The ±1 grade cap still applies per run (±2/month max for active users). Small API cost (~$0.02/user/run). Could be merged with the new-user accelerated refiner into a single 16th-of-month cron pass that checks each user's eligibility.
+
+### Discovery
+- [ ] **Exploration slot — forced adjacency paper per digest** (#17) — Reserve 1 slot in each digest for the highest-scored paper from outside the user's core areas (tagged "adjacent interest" or "new direction" by scoring, but that wouldn't normally rank in top 10). Label it clearly. Requires no new data source, no extra API call. Low risk — it's one paper per digest.
+- [ ] **Cross-user "field favorites" signal** (#18) — Track papers that multiple users in the same field independently rated excellent. Surface as a "popular in your field this week" section even if the user's personal score was moderate. Privacy-preserving (aggregate counts only, no user identity). Requires a shared field-level ratings aggregator written post-archive.
+
+### Abstract quality
+- [ ] **Abstract truncation flag in triage prompt** (#23) — Add `"abstract_quality": "full" | "truncated" | "missing"` to each paper dict (scrapers already know what they returned). Pass this to the triage prompt so Haiku knows to be more conservative about downgrading APS papers for "lack of detail". Needs deeper thought: how does the prompt instruction interact with the concrete-anchor rule? Don't want to lower the bar for weak abstracts wholesale.
+- [ ] **Semantic Scholar batch lookup across all publishers** (#24) — Semantic Scholar has a batch endpoint (up to 500 papers per call). Refactor the abstract-enrichment step to send all journal papers across all publishers through one batch call after scraping completes. Most benefit for Science and Wiley; reduces latency and catches papers missed by individual scrapers.
+
+### Adaptation speed
+- [ ] **Topic-aware liked-paper selection for scoring** (#32) — Make `_sample_liked_papers()` select papers most semantically similar to today's triage survivors (keyword overlap in Python, no embeddings). The scoring agent sees few-shot examples most relevant to today's specific batch rather than sampling broadly from the archive.
+- [ ] **Negative examples in scoring prompt** (#34) — Extend the scoring prompt to include the last 3 irrelevant-rated papers as negative few-shot examples alongside the excellent ones. Currently negative signal is invisible to scoring. Low effort, slight token cost increase.
+
+### Cost at scale
+- [ ] **Dormant user handling** (#36) — Users who haven't rated anything in 30+ days provide no feedback signal. Consider: (a) Haiku scoring instead of Sonnet for dormant users (revert when they rate something), (b) operator alert after N days of no ratings, (c) automatic "are you still interested?" email. Decide on the right intervention before implementing.
+
+### Journal sources (backlog)
 - [ ] **Science Advances — add to other fields** — currently only in `systems-biology`. Consider adding to `cond-mat`, `cond-mat-optics`, `quantum-sensing`, and `optics` with appropriate `tag_filter`.
 - [ ] **PR Materials — add to cond-mat** — APS journal, RSS at `http://feeds.aps.org/rss/recent/prmaterials.xml`, publisher `aps`, no tag filter needed.
 - [ ] **ACS Nano — add to cond-mat** — already in `quantum-sensing`; add to `cond-mat` with same config. Abstract via Europe PMC (~93% hit rate).
