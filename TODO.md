@@ -175,7 +175,7 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ### Failure recovery
 - [ ] **Watermark auto-restore on total field failure** (#2) — If every user in a field failed triage, automatically restore `journal_watermarks.json` from the per-run snapshot. Currently requires manual `cp` command. Rare but high-stakes when it happens.
-- [ ] **Per-scraper try/except** (#3) — If one publisher scraper raises an exception it can propagate and kill the whole journal fetch. Wrap each scraper call in `fetch_journals.py` in try/except, log the failure, and continue. A run would lose e.g. APS papers but still deliver everything else. Low effort, medium blast-radius reduction.
+- [x] **Per-scraper try/except** (#3) — Per-article try/except added inside `scrape_journal()`. One bad article is skipped; rest of the journal continues. Per-journal try/except was already in `main()`. Two-level protection now in place.
 
 ### Refinement cadence
 - [ ] **Accelerated refiner for new users** — New users have sparse rating history; monthly refinement is too slow for first-impression calibration. For users with `total_ratings < 30` (or `account_age_days < 60`), run the refiner every 2 weeks instead of monthly. Reuse the existing cron slot on the 16th; check each user's eligibility at run time. Once they accumulate enough ratings, graduate them to the standard monthly cycle.
@@ -186,7 +186,7 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 - [ ] **Cross-user "field favorites" signal** (#18) — Track papers that multiple users in the same field independently rated excellent. Surface as a "popular in your field this week" section even if the user's personal score was moderate. Privacy-preserving (aggregate counts only, no user identity). Requires a shared field-level ratings aggregator written post-archive.
 
 ### Abstract quality
-- [ ] **Abstract truncation flag in triage prompt** (#23) — Add `"abstract_quality": "full" | "truncated" | "missing"` to each paper dict (scrapers already know what they returned). Pass this to the triage prompt so Haiku knows to be more conservative about downgrading APS papers for "lack of detail". Needs deeper thought: how does the prompt instruction interact with the concrete-anchor rule? Don't want to lower the bar for weak abstracts wholesale.
+- [x] **Abstract truncation flag in triage prompt** (#23) — `abstract_quality: full | truncated | missing` added to all journal papers in `fetch_journals.py` (length heuristic: <400 chars → truncated, empty → missing). `_paper_block()` emits the flag line only when degraded. `triage_journals.txt` instructs Haiku not to penalize papers for abstract quality. Also: subcategories line now omitted for journal papers (always empty), removing dead tokens from every journal triage call.
 - [ ] **Semantic Scholar batch lookup across all publishers** (#24) — Semantic Scholar has a batch endpoint (up to 500 papers per call). Refactor the abstract-enrichment step to send all journal papers across all publishers through one batch call after scraping completes. Most benefit for Science and Wiley; reduces latency and catches papers missed by individual scrapers.
 
 ### Adaptation speed
