@@ -325,12 +325,26 @@ def run_centralized_triage(
         _mode_str(use_batch_journals, journal_n_chunks),
     )
 
+    # Event set by user 0 (first user) after their triage call completes.
+    # User 1 (second user) waits on it before firing, ensuring the cache is
+    # warm before user 1's request arrives. Users 2+ proceed immediately.
+    CACHE_READY_BUFFER = 2.0  # seconds to sleep after cache is confirmed warm
+    cache_ready = threading.Event()
+
     def _triage_one(i: int, user_dir: Path) -> tuple[str, bool]:
         log.info("--- [%s] Triage starting ---", user_dir.name)
         try:
             profile   = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
             today_dir = user_dir / "data" / date_str
             today_dir.mkdir(parents=True, exist_ok=True)
+
+            # User 1 waits for user 0's response before firing — ensures the
+            # cache is warm and avoids a double write.
+            if i == 1 and not use_batch_arxiv:
+                log.info("[%s] Waiting for field cache to be established...", user_dir.name)
+                cache_ready.wait()
+                time.sleep(CACHE_READY_BUFFER)
+                log.info("[%s] Cache ready — proceeding.", user_dir.name)
 
             filtered = run_triage(
                 papers, profile,
@@ -345,6 +359,10 @@ def run_centralized_triage(
                 is_first_user=(i == 0),
             )
 
+            if i == 0 and not use_batch_arxiv:
+                cache_ready.set()
+                log.info("Cache established for field '%s'.", field)
+
             filtered_path = today_dir / "filtered_papers.json"
             with open(filtered_path, "w", encoding="utf-8") as f:
                 json.dump(filtered, f, indent=2, ensure_ascii=False)
@@ -352,6 +370,8 @@ def run_centralized_triage(
             return user_dir.name, True
         except Exception as e:
             log.error("--- [%s] Triage FAILED: %s ---", user_dir.name, e)
+            if i == 0:
+                cache_ready.set()  # unblock user 1 even on failure
             return user_dir.name, False
 
     results: dict[str, bool] = {}
