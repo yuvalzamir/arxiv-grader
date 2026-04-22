@@ -111,8 +111,9 @@ def _paper_block(i: int, paper: dict, include_triage: bool = False) -> str:
         f"arxiv_id: {paper['arxiv_id']}",
         f"title: {paper['title']}",
         f"authors: {', '.join(paper['authors']) if paper.get('authors') else 'unknown'}",
-        f"subcategories: {', '.join(paper.get('subcategories', [])) or 'unknown'}",
     ]
+    if not paper.get("source"):  # journal papers never have subcategories
+        lines.append(f"subcategories: {', '.join(paper.get('subcategories', [])) or 'unknown'}")
     if abstract_quality in ("truncated", "missing"):
         lines.append(f"abstract_quality: {abstract_quality}")
     lines.append(f"abstract: {paper.get('abstract', '(not available)')}")
