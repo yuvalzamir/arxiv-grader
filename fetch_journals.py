@@ -160,45 +160,53 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
     max_date = None
     skipped_date = 0
 
+    skipped_error = 0
     for entry in feed.entries:
-        entry_date = _entry_date(entry)
-        if entry_date is not None and entry_date <= since:
-            skipped_date += 1
-            continue
+        try:
+            entry_date = _entry_date(entry)
+            if entry_date is not None and entry_date <= since:
+                skipped_date += 1
+                continue
 
-        if not scraper.editorial_filter(entry):
-            continue
+            if not scraper.editorial_filter(entry):
+                continue
 
-        url = getattr(entry, "link", "")
-        result = scraper.scrape_article(url, entry=entry)
-        if result is None:
-            continue
+            url = getattr(entry, "link", "")
+            result = scraper.scrape_article(url, entry=entry)
+            if result is None:
+                continue
 
-        doi = _extract_doi(entry)
-        arxiv_id = doi if doi else url
+            doi = _extract_doi(entry)
+            arxiv_id = doi if doi else url
 
-        abstract = result["abstract"]
-        if not abstract and not result.get("skip_rss_fallback"):
-            rss_summary = getattr(entry, "summary", "")
-            if rss_summary:
-                abstract = BeautifulSoup(rss_summary, "lxml").get_text(separator=" ", strip=True)
+            abstract = result["abstract"]
+            if not abstract and not result.get("skip_rss_fallback"):
+                rss_summary = getattr(entry, "summary", "")
+                if rss_summary:
+                    abstract = BeautifulSoup(rss_summary, "lxml").get_text(separator=" ", strip=True)
 
-        papers.append({
-            "arxiv_id":      arxiv_id,
-            "title":         getattr(entry, "title", "").strip(),
-            "abstract":      abstract,
-            "authors":       result.get("authors") or _parse_authors(entry),
-            "subcategories": [],
-            "source":        journal["name"],
-            "feed_url":      journal["url"],
-            "subject_tags":  result["subject_tags"],
-        })
+            papers.append({
+                "arxiv_id":      arxiv_id,
+                "title":         getattr(entry, "title", "").strip(),
+                "abstract":      abstract,
+                "authors":       result.get("authors") or _parse_authors(entry),
+                "subcategories": [],
+                "source":        journal["name"],
+                "feed_url":      journal["url"],
+                "subject_tags":  result["subject_tags"],
+            })
 
-        if entry_date and (max_date is None or entry_date > max_date):
-            max_date = entry_date
+            if entry_date and (max_date is None or entry_date > max_date):
+                max_date = entry_date
 
-    log.info("%s: %d articles scraped (skipped %d at or before watermark).",
-             journal["name"], len(papers), skipped_date)
+        except Exception as e:
+            title = getattr(entry, "title", "<unknown>")
+            log.warning("%s: skipping article '%s' due to error: %s", journal["name"], title, e)
+            skipped_error += 1
+
+    log.info("%s: %d articles scraped (skipped %d at or before watermark%s).",
+             journal["name"], len(papers), skipped_date,
+             f", {skipped_error} errors" if skipped_error else "")
     return papers, max_date
 
 
