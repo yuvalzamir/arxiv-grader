@@ -152,7 +152,7 @@ def send_email(pdf_path: Path, today_str: str, username: str, list_env_var: str 
         attachment = MIMEApplication(f.read(), _subtype="pdf")
     attachment.add_header(
         "Content-Disposition", "attachment",
-        filename=f"arxiv_digest_{today_str}_{username}.pdf",
+        filename=f"incoming_science_{today_str}_{username}.pdf",
     )
     msg.attach(attachment)
 
