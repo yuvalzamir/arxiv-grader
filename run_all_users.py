@@ -47,15 +47,43 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
+def probe_itpm_limit(api_key: str, fallback: int = 50_000) -> int:
+    """
+    Make a minimal API call and read the ITPM limit from Anthropic's response
+    headers. Uses 'anthropic-ratelimit-input-tokens-limit', which reflects the
+    account's current tier limit and is returned on every response.
+
+    Falls back to `fallback` if the header is missing or the call fails.
+    """
+    from anthropic import Anthropic  # noqa: PLC0415
+    client = Anthropic(api_key=api_key)
+    try:
+        raw = client.messages.with_raw_response.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1,
+            messages=[{"role": "user", "content": "hi"}],
+        )
+        limit_str = raw.headers.get("anthropic-ratelimit-input-tokens-limit")
+        if limit_str:
+            limit = int(limit_str)
+            log.info("Anthropic ITPM limit detected: %d tokens/min", limit)
+            return limit
+        log.warning("Rate-limit header missing — defaulting to %d ITPM.", fallback)
+        return fallback
+    except Exception as e:
+        log.warning("ITPM probe failed (%s) — defaulting to %d.", e, fallback)
+        return fallback
+
+
 class TokenBucketOrchestrator:
     """
     Central rate-limit guard for all Anthropic cached API calls across all
     fields and users.
 
-    The cached API has a 50k input-token-per-minute (ITPM) limit shared
-    across the entire organisation. Only cache_creation tokens count;
-    cache_read tokens are free. This orchestrator serialises cached calls
-    so we never exceed the limit.
+    The cached API has an ITPM limit shared across the entire organisation
+    (50k on tier 1, higher on upper tiers). Only cache_creation tokens count;
+    cache_read tokens are free. This orchestrator serialises cached calls so
+    we never exceed the limit.
 
     Two call types:
       cache_write (is_cache_write=True):  first user in a field — creates the
@@ -65,13 +93,13 @@ class TokenBucketOrchestrator:
           hold the lock for CACHE_READ_HOLD seconds so Claude has time to register
           the preceding cache_write before this read request arrives.
     """
-    CAPACITY        = 50_000
-    REFILL_RATE     = 50_000 / 60   # tokens per second
     BUFFER_SECS     = 5.0
     CACHE_READ_HOLD = 1.0            # seconds to hold lock for cache reads
 
-    def __init__(self):
-        self.bucket      = self.CAPACITY
+    def __init__(self, itpm_limit: int = 50_000):
+        self.CAPACITY    = itpm_limit
+        self.REFILL_RATE = itpm_limit / 60   # tokens per second
+        self.bucket      = itpm_limit
         self.last_update = time.monotonic()
         self.lock        = threading.Lock()
 
@@ -607,7 +635,16 @@ def main():
         # Step 3: Merge arXiv + journals per field, then run triage for all fields
         # in parallel. All cached API calls across all fields share one orchestrator
         # that enforces the org-level 50k ITPM rate limit.
-        orchestrator = TokenBucketOrchestrator()
+        # Probe the current ITPM limit from Anthropic's response headers so the
+        # orchestrator automatically adapts to tier changes without code edits.
+        probe_key = next(
+            (os.environ.get(f"ANTHROPIC_API_KEY_{f.upper().replace('-', '_')}")
+             for f in fields_with_papers
+             if os.environ.get(f"ANTHROPIC_API_KEY_{f.upper().replace('-', '_')}")),
+            None,
+        )
+        itpm_limit = probe_itpm_limit(probe_key) if probe_key else 50_000
+        orchestrator = TokenBucketOrchestrator(itpm_limit=itpm_limit)
 
         def _run_field_triage(field: str) -> tuple[dict[str, Path], dict[str, bool]]:
             field_users = [u for u in users if user_fields[u.name] == field]
