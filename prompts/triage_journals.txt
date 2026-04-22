@@ -28,6 +28,15 @@ SIGNALS — what counts as a concrete anchor
 4. Abstract content — the abstract describes experiments, phenomena, materials, or methods that fall squarely within a grade 1–5 research area, even if no profile keyword appears verbatim. For example: a paper studying electron correlations in a 2D heterostructure via tunneling spectroscopy qualifies even if "STM" or "moiré" isn't in the title. → sufficient for "medium" only
 5. Topic adjacency alone (no keyword hit, no author match, no research area overlap, no abstract content match) → always "low", regardless of how related the broader field seems
 
+ABSTRACT QUALITY
+================
+Some journal papers have limited abstracts due to publisher access restrictions.
+A paper may carry one of these flags:
+- "abstract_quality: truncated" — only a short 1–3 sentence RSS summary is available (e.g. APS journals)
+- "abstract_quality: missing" — no abstract at all
+
+For flagged papers, rely on the title and author list to classify. Do not downgrade a paper solely because its abstract lacks detail — a strong title keyword match or author match is still sufficient for "high" or "medium". Missing detail is a data limitation, not a signal of low relevance.
+
 OUTPUT
 ======
 Return one line per paper. Output them in order of relevance — most relevant first.

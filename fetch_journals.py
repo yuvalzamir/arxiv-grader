@@ -185,15 +185,23 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
                 if rss_summary:
                     abstract = BeautifulSoup(rss_summary, "lxml").get_text(separator=" ", strip=True)
 
+            if not abstract:
+                abstract_quality = "missing"
+            elif len(abstract) < 400:
+                abstract_quality = "truncated"
+            else:
+                abstract_quality = "full"
+
             papers.append({
-                "arxiv_id":      arxiv_id,
-                "title":         getattr(entry, "title", "").strip(),
-                "abstract":      abstract,
-                "authors":       result.get("authors") or _parse_authors(entry),
-                "subcategories": [],
-                "source":        journal["name"],
-                "feed_url":      journal["url"],
-                "subject_tags":  result["subject_tags"],
+                "arxiv_id":        arxiv_id,
+                "title":           getattr(entry, "title", "").strip(),
+                "abstract":        abstract,
+                "abstract_quality": abstract_quality,
+                "authors":         result.get("authors") or _parse_authors(entry),
+                "subcategories":   [],
+                "source":          journal["name"],
+                "feed_url":        journal["url"],
+                "subject_tags":    result["subject_tags"],
             })
 
             if entry_date and (max_date is None or entry_date > max_date):

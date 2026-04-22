@@ -106,13 +106,16 @@ def _paper_block(i: int, paper: dict, include_triage: bool = False) -> str:
         lines.append(f"triage: {paper.get('triage', 'unknown')}")
         if paper.get("source"):
             lines.append("source: journal")
+    abstract_quality = paper.get("abstract_quality")
     lines += [
         f"arxiv_id: {paper['arxiv_id']}",
         f"title: {paper['title']}",
         f"authors: {', '.join(paper['authors']) if paper.get('authors') else 'unknown'}",
         f"subcategories: {', '.join(paper.get('subcategories', [])) or 'unknown'}",
-        f"abstract: {paper.get('abstract', '(not available)')}",
     ]
+    if abstract_quality in ("truncated", "missing"):
+        lines.append(f"abstract_quality: {abstract_quality}")
+    lines.append(f"abstract: {paper.get('abstract', '(not available)')}")
     return "\n".join(lines)
 
 
