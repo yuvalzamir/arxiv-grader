@@ -777,7 +777,7 @@ def main():
         for u in users:
             profile = json.loads((u / "taste_profile.json").read_text(encoding="utf-8"))
             created_at = profile.get("created_at", "")
-            if created_at and created_at > new_user_cutoff:
+            if created_at and created_at > new_user_cutoff and profile.get("daily_digest", True):
                 log.info("[%s] Skipped biweekly refiner — new user on weekly track (created %s).", u.name, created_at)
             else:
                 refine_users.append(u)
