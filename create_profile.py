@@ -20,6 +20,7 @@ import re
 import smtplib
 import sys
 import xml.etree.ElementTree as ET
+from datetime import date
 from pathlib import Path
 
 import openpyxl
@@ -772,6 +773,7 @@ def assemble_profile(rankings: dict, inputs: dict, papers: list[dict]) -> dict:
         "authors": rankings.get("authors", []),
         "liked_papers": liked_papers,
         "evolved_interests": "",
+        "created_at": date.today().isoformat(),
     }
 
 

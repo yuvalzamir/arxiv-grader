@@ -28,7 +28,7 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date
+from datetime import date, timedelta
 from email.mime.text import MIMEText
 from pathlib import Path
 
@@ -531,7 +531,11 @@ def main():
     )
     parser.add_argument(
         "--refine", action="store_true",
-        help="Run monthly profile refiner instead of daily pipeline.",
+        help="Run biweekly profile refiner instead of daily pipeline.",
+    )
+    parser.add_argument(
+        "--new-user-refine", action="store_true",
+        help="Run weekly refiner for new users (daily_digest=true, created_at within 8 weeks, rated in past 7 days).",
     )
     parser.add_argument(
         "--user", nargs="+", default=None,
@@ -560,6 +564,50 @@ def main():
         sys.exit(0)
 
     log.info("Found %d user(s): %s", len(users), [u.name for u in users])
+
+    # --- New-user weekly refiner: early-exit mode ---
+    if args.new_user_refine:
+        NEW_USER_WINDOW = 56      # 8 weeks in days
+        RECENT_WINDOW   = 7       # must have rated at least once in the past week
+        today_iso = date.today().isoformat()
+        cutoff_created = (date.today() - timedelta(days=NEW_USER_WINDOW)).isoformat()
+        cutoff_recent  = (date.today() - timedelta(days=RECENT_WINDOW)).isoformat()
+
+        eligible = []
+        for user_dir in users:
+            profile = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
+            if not profile.get("daily_digest", True):
+                continue
+            created_at = profile.get("created_at", "")
+            if not created_at or created_at <= cutoff_created:
+                continue
+            archive_path = user_dir / "archive.json"
+            if not archive_path.exists():
+                continue
+            archive = json.loads(archive_path.read_text(encoding="utf-8"))
+            if not any(e.get("date", "") >= cutoff_recent for e in archive):
+                continue
+            eligible.append(user_dir)
+
+        if not eligible:
+            log.info("New-user weekly refiner: no eligible users today.")
+            return
+
+        log.info(
+            "New-user weekly refiner: %d eligible user(s): %s",
+            len(eligible), [u.name for u in eligible],
+        )
+        results: dict[str, bool] = {}
+        with ThreadPoolExecutor(max_workers=len(eligible)) as executor:
+            futures = {
+                executor.submit(run_for_user, u, "run_profile_refiner.py", ["--days", "7"]): u.name
+                for u in eligible
+            }
+            for future in as_completed(futures):
+                results[futures[future]] = future.result()
+        for name, ok in results.items():
+            log.info("  %-20s  %s", name, "OK" if ok else "FAILED")
+        return
 
     # --- Daily pipeline setup: fetch, triage (skipped for refiner) ---
     # Maps user name → path to their field's merged papers (arXiv + journals).
