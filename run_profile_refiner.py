@@ -39,7 +39,7 @@ ARCHIVE_PATH   = Path(__file__).parent / "archive.json"
 PROFILE_PATH   = Path(__file__).parent / "taste_profile.json"
 REFINER_MODEL       = "claude-sonnet-4-6"
 AREA_MODEL          = "claude-haiku-4-5-20251001"
-WINDOW_DAYS         = 14
+WINDOW_DAYS         = 17  # covers worst-case gap between 16th and 2nd across 31-day months
 BATCH_POLL_INTERVAL = 15    # seconds between batch status checks
 BATCH_TIMEOUT       = 3600  # give up after 1 hour
 
