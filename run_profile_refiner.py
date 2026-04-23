@@ -39,7 +39,7 @@ ARCHIVE_PATH   = Path(__file__).parent / "archive.json"
 PROFILE_PATH   = Path(__file__).parent / "taste_profile.json"
 REFINER_MODEL       = "claude-sonnet-4-6"
 AREA_MODEL          = "claude-haiku-4-5-20251001"
-WINDOW_DAYS         = 30
+WINDOW_DAYS         = 14
 BATCH_POLL_INTERVAL = 15    # seconds between batch status checks
 BATCH_TIMEOUT       = 3600  # give up after 1 hour
 
@@ -306,7 +306,7 @@ def build_discrepancy_section(recent_ratings: list[dict], weekly_only_mode: bool
     return "\n".join(parts)
 
 
-def build_refiner_message(profile: dict, recent_ratings: list[dict], weekly_only_mode: bool = False) -> str:
+def build_refiner_message(profile: dict, recent_ratings: list[dict], window_days: int = WINDOW_DAYS, weekly_only_mode: bool = False) -> str:
     # Group by rating.
     by_rating: dict[str, list[dict]] = {"excellent": [], "good": [], "irrelevant": []}
     for entry in recent_ratings:
@@ -360,7 +360,7 @@ def build_refiner_message(profile: dict, recent_ratings: list[dict], weekly_only
     )
 
     ratings_block = (
-        f"30-DAY RATING HISTORY\n"
+        f"{window_days}-DAY RATING HISTORY\n"
         f"=====================\n"
         f"Total rated papers: {len(recent_ratings)}\n"
         f"{tag_summary}\n"
@@ -771,7 +771,7 @@ def main():
     )
     if weekly_only_mode:
         log.info("Weekly-only delivery mode detected — suppressing MISSED/UNDERSCORED buckets.")
-    user_message = build_refiner_message(profile, recent, weekly_only_mode=weekly_only_mode)
+    user_message = build_refiner_message(profile, recent, window_days=args.days, weekly_only_mode=weekly_only_mode)
     client = Anthropic()
 
     response = _submit_and_poll(

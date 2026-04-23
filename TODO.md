@@ -178,8 +178,7 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 - [x] **Per-scraper try/except** (#3) — Per-article try/except added inside `scrape_journal()`. One bad article is skipped; rest of the journal continues. Per-journal try/except was already in `main()`. Two-level protection now in place.
 
 ### Refinement cadence
-- [ ] **Accelerated refiner for new users** — New users have sparse rating history; monthly refinement is too slow for first-impression calibration. For users with `total_ratings < 30` (or `account_age_days < 60`), run the refiner every 2 weeks instead of monthly. Reuse the existing cron slot on the 16th; check each user's eligibility at run time. Once they accumulate enough ratings, graduate them to the standard monthly cycle.
-- [ ] **Biweekly refiner for active users** (#15) — Users with ≥15 ratings in the past 2 weeks get an extra refiner run on the 16th of the month. The ±1 grade cap still applies per run (±2/month max for active users). Small API cost (~$0.02/user/run). Could be merged with the new-user accelerated refiner into a single 16th-of-month cron pass that checks each user's eligibility.
+- [x] **Biweekly refiner for all users** (#15) — Refiner now runs on the 2nd and 16th of each month (was monthly). `WINDOW_DAYS` changed to 14 (was 30). Cron updated to `30 1 2,16 * *`. The ±1 grade cap still applies per run.
 
 ### Discovery
 - [ ] **Exploration slot — forced adjacency paper per digest** (#17) — Reserve 1 slot in each digest for the highest-scored paper from outside the user's core areas (tagged "adjacent interest" or "new direction" by scoring, but that wouldn't normally rank in top 10). Label it clearly. Requires no new data source, no extra API call. Low risk — it's one paper per digest.
