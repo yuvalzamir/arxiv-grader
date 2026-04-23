@@ -191,7 +191,7 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ### Adaptation speed
 - [ ] **Topic-aware liked-paper selection for scoring** (#32) — Make `_sample_liked_papers()` select papers most semantically similar to today's triage survivors (keyword overlap in Python, no embeddings). The scoring agent sees few-shot examples most relevant to today's specific batch rather than sampling broadly from the archive.
-- [ ] **Negative examples in scoring prompt** (#34) — Extend the scoring prompt to include the last 3 irrelevant-rated papers as negative few-shot examples alongside the excellent ones. Currently negative signal is invisible to scoring. Low effort, slight token cost increase.
+- [x] **Negative examples in scoring prompt** (#34) — `_sample_irrelevant_papers()` added to `run_pipeline.py`; samples up to 3 most recent irrelevant-rated papers from archive and includes them in the scoring message. Scoring prompt updated to instruct Sonnet to score similar patterns lower.
 
 ### Cost at scale
 - [ ] **Dormant user handling** (#36) — Users who haven't rated anything in 30+ days provide no feedback signal. Consider: (a) Haiku scoring instead of Sonnet for dormant users (revert when they rate something), (b) operator alert after N days of no ratings, (c) automatic "are you still interested?" email. Decide on the right intervention before implementing.

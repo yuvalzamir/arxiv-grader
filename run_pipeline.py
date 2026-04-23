@@ -30,7 +30,8 @@ PROMPTS_DIR = Path(__file__).parent / "prompts"
 TRIAGE_MODEL  = "claude-haiku-4-5-20251001"
 SCORING_MODEL = "claude-sonnet-4-6"
 LIKED_MAX         = 5   # max liked papers shown to scoring agent
-LIKED_SAMPLE_SIZE = 10  # how many archive entries to randomly sample from
+LIKED_SAMPLE_SIZE  = 10  # how many archive entries to randomly sample from
+IRRELEVANT_MAX     = 3   # negative examples shown to scoring agent
 MAX_TRIAGE_PASS         = 10  # hard cap on arXiv papers forwarded to scoring
 MAX_TRIAGE_PASS_JOURNAL = 10  # hard cap on journal papers forwarded to scoring
 
@@ -208,6 +209,13 @@ def _sample_liked_papers(archive: list[dict], seed_papers: list[dict]) -> list[d
     return excellent + padding[:LIKED_MAX - len(excellent)]
 
 
+def _sample_irrelevant_papers(archive: list[dict]) -> list[dict]:
+    """Return the IRRELEVANT_MAX most recently irrelevant-rated papers that have a title."""
+    irrelevant = [e for e in archive if e.get("rating", "").lower() == "irrelevant" and e.get("title")]
+    irrelevant.sort(key=lambda e: e.get("date", ""), reverse=True)
+    return irrelevant[:IRRELEVANT_MAX]
+
+
 def build_scoring_message(filtered_papers: list[dict], profile: dict, archive: list[dict] | None = None) -> str:
     categories = profile.get("field", "not specified")
     evolved = profile.get("evolved_interests", "").strip() or "(not yet populated)"
@@ -220,6 +228,13 @@ def build_scoring_message(filtered_papers: list[dict], profile: dict, archive: l
         for p in liked
     ) or "  (none)"
 
+    # Irrelevant papers: most recent irrelevant-rated papers as negative examples.
+    irrelevant = _sample_irrelevant_papers(archive or [])
+    irrelevant_str = "\n".join(
+        f"  - [{e.get('paper_id') or 'journal'}] {e.get('title', '')}"
+        for e in irrelevant
+    ) or "  (none yet)"
+
     header = (
         f"TASTE PROFILE\n"
         f"=============\n"
@@ -229,7 +244,8 @@ def build_scoring_message(filtered_papers: list[dict], profile: dict, archive: l
         f"Research areas (grade 1 = most relevant, grade 7 = fading):\n{_areas_str(profile.get('research_areas', []))}\n\n"
         f"Followed authors (rank 1 = highest priority):\n{_authors_str(profile.get('authors', []))}\n\n"
         f"Recent trajectory (evolved interests):\n{evolved}\n\n"
-        f"Recently liked papers (up to {LIKED_MAX}, sampled from ratings):\n{liked_str}"
+        f"Recently liked papers (up to {LIKED_MAX}, sampled from ratings):\n{liked_str}\n\n"
+        f"Recently irrelevant-rated papers (negative examples — avoid scoring these patterns highly):\n{irrelevant_str}"
     )
 
     paper_blocks = "\n\n".join(

@@ -23,7 +23,8 @@ WEIGHTING PRINCIPLES
 - Grade matters: a grade-1 keyword match outweighs a grade-5 match significantly
 - Multi-signal papers score higher: keyword + author match + relevant subcategory beats any single signal
 - Evolved interests (if present) reflect recent trajectory — align with it for a boost
-- Liked papers provide concrete pattern: papers closely resembling Excellent-rated liked papers score higher
+- Liked papers provide a positive pattern: papers closely resembling Excellent-rated liked papers score higher
+- Irrelevant-rated papers provide a negative pattern: papers closely resembling the irrelevant examples score lower — they reveal topics, methods, or framings the user actively does not want
 - Methodology: pay attention to experimental vs. theoretical preferences indicated in the research interests description
 - Novelty: a paper introducing a genuinely new technique or result relevant to the user's field outscores an incremental one in the same topic
 
