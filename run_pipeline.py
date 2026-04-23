@@ -31,8 +31,8 @@ TRIAGE_MODEL  = "claude-haiku-4-5-20251001"
 SCORING_MODEL = "claude-sonnet-4-6"
 LIKED_MAX         = 5   # max liked papers shown to scoring agent
 LIKED_SAMPLE_SIZE = 10  # how many archive entries to randomly sample from
-MAX_TRIAGE_PASS         = 15  # hard cap on arXiv papers forwarded to scoring
-MAX_TRIAGE_PASS_JOURNAL = 15  # hard cap on journal papers forwarded to scoring
+MAX_TRIAGE_PASS         = 10  # hard cap on arXiv papers forwarded to scoring
+MAX_TRIAGE_PASS_JOURNAL = 10  # hard cap on journal papers forwarded to scoring
 
 BATCH_POLL_INTERVAL = 15   # seconds between batch status checks
 BATCH_TIMEOUT       = 1200 # give up after 20 minutes
