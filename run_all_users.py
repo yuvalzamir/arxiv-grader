@@ -769,8 +769,22 @@ def main():
         if args.score_only:
             base_extra_args += ["--skip-dedup", "--skip-archive"]
 
+    # For the biweekly refiner, skip new users — they are on the weekly track
+    # (run_all_users.py --new-user-refine, Saturday cron) for their first 8 weeks.
+    if args.refine:
+        new_user_cutoff = (date.today() - timedelta(days=56)).isoformat()
+        refine_users = []
+        for u in users:
+            profile = json.loads((u / "taste_profile.json").read_text(encoding="utf-8"))
+            created_at = profile.get("created_at", "")
+            if created_at and created_at > new_user_cutoff:
+                log.info("[%s] Skipped biweekly refiner — new user on weekly track (created %s).", u.name, created_at)
+            else:
+                refine_users.append(u)
+        users = refine_users
+
     results: dict[str, bool] = {}
-    with ThreadPoolExecutor(max_workers=len(users)) as executor:
+    with ThreadPoolExecutor(max_workers=max(len(users), 1)) as executor:
         futures = {}
         for user_dir in users:
             if user_dir.name in triage_failed:
