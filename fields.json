@@ -300,6 +300,12 @@
         "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
         "publisher": "science",
         "tag_filter": null
+      },
+      {
+        "name": "ScienceAdvances",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
+        "publisher": "science",
+        "tag_filter": null
       }
     ]
   },
@@ -405,6 +411,12 @@
         "name": "ACSPhotonics",
         "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=apchd5",
         "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ScienceAdvances",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
+        "publisher": "science",
         "tag_filter": null
       }
     ]
