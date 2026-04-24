@@ -370,9 +370,11 @@ def run_centralized_triage(
             today_dir = user_dir / "data" / date_str
             today_dir.mkdir(parents=True, exist_ok=True)
 
-            # User 1 waits for user 0's response before firing — ensures the
-            # cache is warm and avoids a double write.
-            if i == 1 and not use_batch_arxiv:
+            # All users after user 0 wait for cache_ready — ensures user 0's
+            # cache write is established before any other user fires.
+            # User 1 adds a CACHE_READY_BUFFER delay; users 2+ proceed
+            # immediately after the event (token bucket handles spacing).
+            if i >= 1 and not use_batch_arxiv:
                 log.info("[%s] Waiting for field cache to be established...", user_dir.name)
                 cache_ready.wait()
                 time.sleep(CACHE_READY_BUFFER)
