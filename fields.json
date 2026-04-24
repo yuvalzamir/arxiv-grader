@@ -99,6 +99,12 @@
         "tag_filter": null
       },
       {
+        "name": "PRMaterials",
+        "url": "http://feeds.aps.org/rss/recent/prmaterials.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
         "name": "ScienceAdvances",
         "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
         "publisher": "science",
