@@ -9,8 +9,8 @@ will also use this scraper.
 Abstract coverage: GOOD — scraped from open-access article pages.
   - Both A&A and EPJC are fully open access; article pages are publicly
     accessible without authentication.
-  - Abstract selector: <div class="abstract">, <section class="abstract">,
-    or <p class="a-plus-plus"> (A&A-specific), tried in order.
+  - A&A full-HTML page structure: <p class="bold">Abstract</p> followed
+    by the abstract <p> sibling. No wrapper div/section.
   - Fallback: truncated RSS summary when the page fetch fails or the
     abstract element is not found.
 
@@ -28,17 +28,6 @@ log = logging.getLogger(__name__)
 
 _ERRATA_TITLES = ("erratum", "corrigendum", "correction", "comment on", "reply to", "retraction")
 _DOI_RE = re.compile(r"10\.\d{4}/")
-
-# Try these CSS selectors in order; take the first non-empty match.
-_ABSTRACT_SELECTORS = [
-    "div.abstract",
-    "section.abstract",
-    "div#abstract",
-    "div.Abs",
-    "section.Abs",
-]
-
-# Prefix labels to strip from the extracted text.
 _LABEL_RE = re.compile(r"^(Abstract[:\s]*|ABSTRACT[:\s]*)", re.IGNORECASE)
 
 
@@ -57,7 +46,19 @@ class EDPScraper(BaseScraper):
             return {"abstract": "", "subject_tags": []}
 
         soup = BeautifulSoup(response.text, "lxml")
-        for selector in _ABSTRACT_SELECTORS:
+
+        # A&A full-HTML structure: <p class="bold">Abstract</p> followed by
+        # the abstract text in the next <p> sibling.
+        for bold_p in soup.find_all("p", class_="bold"):
+            if "abstract" in bold_p.get_text(strip=True).lower():
+                sibling = bold_p.find_next_sibling("p")
+                if sibling:
+                    text = sibling.get_text(separator=" ", strip=True)
+                    if len(text) > 50:
+                        return {"abstract": text, "subject_tags": []}
+
+        # Generic fallback selectors (EPJC and other EDP journals)
+        for selector in ("div.abstract", "section.abstract", "div#abstract"):
             el = soup.select_one(selector)
             if el:
                 text = el.get_text(separator=" ", strip=True)
