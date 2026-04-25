@@ -421,6 +421,203 @@
       }
     ]
   },
+  "soft-matter": {
+    "arxiv_categories": ["cond-mat.soft", "physics.bio-ph"],
+    "description": "Soft matter physics — polymers, colloids, active matter, and biological physics",
+    "journals": [
+      {
+        "name": "PRL",
+        "url": "http://feeds.aps.org/rss/tocsec/PRL-SoftMatterBiologicalandInterdisciplinaryPhysics.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRE",
+        "url": "http://feeds.aps.org/rss/recent/pre.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "Langmuir",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=langd5",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "Macromolecules",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=mamobx",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "Biomacromolecules",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=bomaf6",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/colloids/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/polymers/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/biological-physics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/self-assembly/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/membranes/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/gels-and-hydrogels/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "soft matter",
+          "colloids",
+          "polymers",
+          "self-assembly",
+          "liquid crystals",
+          "active matter",
+          "biological physics",
+          "biophysics",
+          "gels and hydrogels",
+          "membranes"
+        ]
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "ScienceAdvances",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
+        "publisher": "science",
+        "tag_filter": null
+      }
+    ]
+  },
+  "astrophysics": {
+    "arxiv_categories": ["astro-ph", "gr-qc"],
+    "description": "Astrophysics, cosmology, and gravitational physics",
+    "journals": [
+      {
+        "name": "PRL",
+        "url": "http://feeds.aps.org/rss/tocsec/PRL-GravitationandAstrophysics.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRD",
+        "url": "http://feeds.aps.org/rss/recent/prd.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "ApJ",
+        "url": "https://iopscience.iop.org/journal/rss/0004-637X",
+        "publisher": "iop",
+        "tag_filter": null
+      },
+      {
+        "name": "ApJL",
+        "url": "https://iopscience.iop.org/journal/rss/2041-8205",
+        "publisher": "iop",
+        "tag_filter": null
+      },
+      {
+        "name": "AJ",
+        "url": "https://iopscience.iop.org/journal/rss/1538-3881",
+        "publisher": "iop",
+        "tag_filter": null
+      },
+      {
+        "name": "JCAP",
+        "url": "https://iopscience.iop.org/journal/rss/1475-7516",
+        "publisher": "iop",
+        "tag_filter": null
+      },
+      {
+        "name": "MNRAS",
+        "url": "https://academic.oup.com/rss/site_5326/3192.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "A&A",
+        "url": "https://feeds.feedburner.com/edp_aa?format=xml",
+        "publisher": "edp",
+        "tag_filter": null
+      },
+      {
+        "name": "NatAstron",
+        "url": "https://www.nature.com/natastron.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/subjects/astronomy-and-astrophysics/nature.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/astronomy-and-astrophysics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/cosmology/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      }
+    ]
+  },
   "systems-biology": {
     "arxiv_categories": ["q-bio", "physics.bio-ph"],
     "description": "Systems biology, computational biology, immunology, and cell biology",
