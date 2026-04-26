@@ -40,6 +40,7 @@ PROFILE_PATH   = Path(__file__).parent / "taste_profile.json"
 REFINER_MODEL       = "claude-sonnet-4-6"
 AREA_MODEL          = "claude-haiku-4-5-20251001"
 WINDOW_DAYS         = 17  # covers worst-case gap between 16th and 2nd across 31-day months
+MIN_RATINGS         = 5   # minimum ratings required to run the refiner
 BATCH_POLL_INTERVAL = 15    # seconds between batch status checks
 BATCH_TIMEOUT       = 3600  # give up after 1 hour
 
@@ -143,8 +144,10 @@ def _submit_and_poll(client: Anthropic, custom_id: str, model: str, max_tokens: 
 # Archive filtering
 # ---------------------------------------------------------------------------
 
-def filter_recent(archive: list[dict], days: int) -> list[dict]:
-    """Return archive entries from the last `days` days (inclusive)."""
+def filter_recent(archive: list[dict], days: int, since: str | None = None) -> list[dict]:
+    """Return archive entries since `since` date (exclusive), or last `days` days as fallback."""
+    if since:
+        return [e for e in archive if e.get("date", "") > since]
     cutoff = (date.today() - timedelta(days=days)).isoformat()
     return [e for e in archive if e.get("date", "") >= cutoff]
 
@@ -714,14 +717,28 @@ def main():
     refiner_schema = load_schema("refiner_output_schema.json")
     area_schema    = load_schema("area_management_schema.json")
 
-    recent = filter_recent(archive, args.days)
-    log.info(
-        "Archive: %d total entries; %d in the last %d days.",
-        len(archive), len(recent), args.days,
-    )
+    last_refined_at = profile.get("last_refined_at")
+    recent = filter_recent(archive, args.days, since=last_refined_at)
+    if last_refined_at:
+        log.info(
+            "Archive: %d total entries; %d since last refiner run (%s).",
+            len(archive), len(recent), last_refined_at,
+        )
+    else:
+        log.info(
+            "Archive: %d total entries; %d in the last %d days (no last_refined_at yet).",
+            len(archive), len(recent), args.days,
+        )
 
     if not recent:
         log.warning("No ratings in the last %d days — nothing to refine.", args.days)
+        sys.exit(0)
+
+    if len(recent) < MIN_RATINGS:
+        log.warning(
+            "Only %d rating(s) in the last %d days — need at least %d to refine. Skipping.",
+            len(recent), args.days, MIN_RATINGS,
+        )
         sys.exit(0)
 
     # Count by rating type.
@@ -897,12 +914,13 @@ def main():
         log.info("Dry run — taste_profile.json NOT updated.")
         return
 
-    # Write updated profile.
+    # Stamp last_refined_at and write updated profile.
+    profile["last_refined_at"] = date.today().isoformat()
     profile_path.write_text(
         json.dumps(profile, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    log.info("taste_profile.json updated successfully.")
+    log.info("taste_profile.json updated successfully (last_refined_at = %s).", profile["last_refined_at"])
 
 
 if __name__ == "__main__":

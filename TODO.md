@@ -124,6 +124,8 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
   2. Area management as a separate Haiku call — keyword-driven, decoupled from paper ratings; bidirectional grade recommendations; new area suggestions (min 3 unmatched keywords); static `area_keyword_map` stored in `taste_profile.json`
   3. Remove area grade changes from the main refiner (Sonnet) entirely — areas exclusively managed by the Haiku step
   - [ ] **Refiner v2 — May check** — Verify refiner v2 runs correctly on real data after May 2nd cron. Check area management recommendations make sense given a full month of ratings.
+  - [ ] **Refiner — check 2026-05-03 (Sunday)** — Pull `refiner.log` and verify: new-user Saturday refiner ran with correct python, `last_refined_at` is being stamped, no JSON parse errors, no `python: not found`.
+  - [ ] **Refiner — check 2026-05-10 (Sunday)** — Second check: confirm accumulated ratings since last run are picked up correctly via `last_refined_at`, min-rating threshold working as expected.
 
 - [x] **Multiple arXiv categories per field** — allow a field to span more than one top-level arXiv category (e.g. `cond-mat` + `physics`).
   - **`fields.json`**: renamed `"arxiv_category"` (string) → `"arxiv_categories"` (list). Old string form still supported as fallback.
