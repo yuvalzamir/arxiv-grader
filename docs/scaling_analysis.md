@@ -99,3 +99,19 @@ Currently Flask (rating endpoint + website) and the cron pipeline run on the sam
 Replace `ThreadPoolExecutor` with Redis + RQ (or Celery). Enables: distributing work across machines, retrying individual failed jobs without re-running all users, monitoring queue depth, graceful shutdown. Currently `ThreadPoolExecutor` is simple, sufficient, and has no operational overhead.
 
 **When to do it:** At ~50 concurrent users, or when per-job retry granularity becomes important (e.g., a single Batch API timeout shouldn't require re-running all users).
+
+---
+
+## Features deferred until more users
+
+These features require a meaningful user base to be worth building.
+
+### Exploration slot — forced adjacency paper (#17)
+Reserve 1 slot per digest for the highest-scored paper outside the user's core areas (tagged "adjacent interest" or "new direction" by scoring, but wouldn't normally rank in top 10). Label it clearly. No new data source, no extra API call.
+
+**When to do it:** When users start asking for serendipitous discovery. Easy to implement — pure `run_pipeline.py` / `build_digest_pdf.py` change.
+
+### Cross-user field favorites (#18)
+Track papers that multiple users in the same field independently rated excellent. Surface as a "popular in your field this week" section even for users whose personal score was moderate. Privacy-preserving (aggregate counts only, no user identity).
+
+**When to do it:** At 5+ active users per field with consistent ratings. Requires a shared field-level ratings aggregator written post-archive.
