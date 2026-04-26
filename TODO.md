@@ -145,6 +145,38 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 
 ---
 
+## Monitoring — how to check the logs
+
+**Daily pipeline:**
+```bash
+scp root@116.203.255.222:/var/log/arxiv-grader/daily.log ./debugging/daily_log_MMDD.txt
+```
+Look for per-user `OK` / `FAILED` lines near the end, and `[TRIAGE]` / `[SCORE]` lines for rate-limit hits.
+
+**Refiner (runs 2nd + 16th + new-user Saturday):**
+```bash
+scp root@116.203.255.222:/var/log/arxiv-grader/refiner.log ./debugging/refiner_log.txt
+```
+Key lines to check:
+- `discrepancies: N total (overconfident-high=X, missed-excellent=Y, ...)` — one per user
+- `Applying grade changes: ...` — what was actually changed
+- `Pre-run grade-7 items` / `Removing grade-7` — keywords being pruned
+- `Area management` lines — area grade changes from the Haiku step
+- `Weekly-only delivery mode detected` — suppressed buckets for weekly-only users
+- Any `ERROR` or `WARNING` lines indicate failures
+
+**Weekly digest:**
+```bash
+scp root@116.203.255.222:/var/log/arxiv-grader/weekly.log ./debugging/weekly_log.txt
+```
+
+**Server (Flask/Gunicorn):**
+```bash
+scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log.txt
+```
+
+---
+
 ## Known rough edges (monitor, no action needed now)
 
 - Cron changed to Mon–Fri 05:30 UTC (was Tue–Sat) — Friday arXiv data now delivered Monday
@@ -163,6 +195,8 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 - [x] **systems-biology field + Yael onboarding** — scrapers and fields.json complete, deployed to server 2026-04-11. `ANTHROPIC_API_KEY_SYSTEMS_BIOLOGY` added to server root `.env`. Yael onboarded via `create_profile.py`. New scrapers: `cell.py`, `plos.py`, `pnas.py`. Extended `science.py` (Science Immunology + Science Advances). 18 journals. arXiv: `q-bio` + `physics.bio-ph`.
   - [x] **tag_filter tuning** — PNAS uses 4 topic-specific RSS feeds (biophys/immun/cell-bio/microbio); Science Advances uses its dedicated eTOC feed. Both are pre-filtered at the RSS level; `tag_filter: null` is correct.
 - [x] **quantum-sensing field** — deployed and first user onboarded ✓
+
+- [x] **HEP field** — `hep` field added to `fields.json` with arXiv categories `["hep-ph", "hep-th", "hep-ex", "hep-lat"]` and 12 journals: PRL (elementary particles + gravitation sections), PRD, PLB, NPB, EPJC, JCAP, SciPost (3 discipline feeds), Nature (tag_filter), Science. New scrapers: `scrapers/elsevier.py` (PLB/NPB — CrossRef PII→INSPIRE-HEP→OpenAlex), `scrapers/scipost.py` (OpenAlex). `scrapers/edp.py` extended with OpenAlex fallback for EPJC. Needs `ANTHROPIC_API_KEY_HEP` in server root `.env` when first user is onboarded.
 
 - [x] **Multi-chunk prompt caching for large triage calls** — replaces the Monday batch-fallback for oversized arXiv feeds. `split_papers_block()` splits the formatted paper list at paper boundaries into up to 3 cache-control breakpoints (system prompt uses the 4th). For the first user, `n-1` lightweight warming calls (max_tokens=1) establish intermediate cache entries before the actual triage call; the orchestrator spaces them via the token bucket. Subsequent users pay only cache-read cost (free ITPM). Batch fallback now only triggers if a single pool exceeds 135k tokens (essentially impossible). Log shows `cached(2-chunk)` etc.
 
@@ -194,12 +228,12 @@ Full investigation log in `docs/aps_cloudflare_proxy.md` (branch `APS_Scraping`)
 - [x] **Negative examples in scoring prompt** (#34) — `_sample_irrelevant_papers()` added to `run_pipeline.py`; samples up to 3 most recent irrelevant-rated papers from archive and includes them in the scoring message. Scoring prompt updated to instruct Sonnet to score similar patterns lower.
 
 ### Cost at scale
-- [ ] **Dormant user handling** (#36) — Users who haven't rated anything in 30+ days provide no feedback signal. Consider: (a) Haiku scoring instead of Sonnet for dormant users (revert when they rate something), (b) operator alert after N days of no ratings, (c) automatic "are you still interested?" email. Decide on the right intervention before implementing.
+- [x] **Dormant user handling** (#36) — Weekly engagement report email sent every Friday alongside the run summary. Shows each user's rating count (7d + 30d) and delivery frequency (daily/weekly/off). Users with 0 ratings in 30 days are flagged `← no ratings`. Implemented in `run_all_users.py` (`_send_engagement_report()`). No automated intervention — operator decides case by case.
 
 ### Journal sources (backlog)
-- [ ] **Science Advances — add to other fields** — currently only in `systems-biology`. Consider adding to `cond-mat`, `cond-mat-optics`, `quantum-sensing`, and `optics` with appropriate `tag_filter`.
-- [ ] **PR Materials — add to cond-mat** — APS journal, RSS at `http://feeds.aps.org/rss/recent/prmaterials.xml`, publisher `aps`, no tag filter needed.
-- [ ] **ACS Nano — add to cond-mat** — already in `quantum-sensing`; add to `cond-mat` with same config. Abstract via Europe PMC (~93% hit rate).
+- [x] **Science Advances — add to other fields** — already present in cond-mat, cond-mat-optics, quantum-sensing, optics, soft-matter, systems-biology.
+- [x] **PR Materials — add to cond-mat** — already present.
+- [x] **ACS Nano — add to cond-mat** — already present in cond-mat and cond-mat-optics.
 
 - [x] **Website mobile responsiveness** — done.
 

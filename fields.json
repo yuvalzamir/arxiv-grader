@@ -618,6 +618,95 @@
       }
     ]
   },
+  "hep": {
+    "arxiv_categories": ["hep-ph", "hep-th", "hep-ex", "hep-lat"],
+    "description": "High-energy physics — particle physics, quantum field theory, and collider physics",
+    "journals": [
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-ElementaryParticlesandFields.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRL",
+        "url": "http://feeds.aps.org/rss/tocsec/PRL-GravitationandAstrophysics.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRD",
+        "url": "http://feeds.aps.org/rss/recent/prd.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PLB",
+        "url": "https://rss.sciencedirect.com/publication/science/03702693",
+        "publisher": "elsevier",
+        "tag_filter": null
+      },
+      {
+        "name": "NPB",
+        "url": "https://rss.sciencedirect.com/publication/science/05503213",
+        "publisher": "elsevier",
+        "tag_filter": null
+      },
+      {
+        "name": "EPJC",
+        "url": "https://feeds.feedburner.com/edp_epjc?format=xml",
+        "publisher": "edp",
+        "tag_filter": null
+      },
+      {
+        "name": "JCAP",
+        "url": "https://iopscience.iop.org/journal/rss/1475-7516",
+        "publisher": "iop",
+        "tag_filter": null
+      },
+      {
+        "name": "SciPost",
+        "url": "https://scipost.org/rss/publications/phys-hp",
+        "publisher": "scipost",
+        "tag_filter": null
+      },
+      {
+        "name": "SciPost",
+        "url": "https://scipost.org/rss/publications/phys-ht",
+        "publisher": "scipost",
+        "tag_filter": null
+      },
+      {
+        "name": "SciPost",
+        "url": "https://scipost.org/rss/publications/phys-he",
+        "publisher": "scipost",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "particle physics",
+          "high-energy physics",
+          "quantum field theory",
+          "string theory",
+          "supersymmetry",
+          "dark matter",
+          "electroweak",
+          "nuclear physics",
+          "neutrino",
+          "collider physics"
+        ]
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      }
+    ]
+  },
   "systems-biology": {
     "arxiv_categories": ["q-bio", "physics.bio-ph"],
     "description": "Systems biology, computational biology, immunology, and cell biology",

@@ -478,6 +478,45 @@ def _send_batch_fallback_alert(
         log.error("Failed to send batch fallback alert: %s", e)
 
 
+def _journal_coverage_lines(date_str: str) -> list[str]:
+    """Read scraped_journals.json and return per-journal abstract-coverage stats."""
+    path = BASE_DIR / "data" / date_str / "scraped_journals.json"
+    if not path.exists():
+        return []
+    try:
+        papers = json.loads(path.read_text())
+    except Exception:
+        return []
+    if not papers:
+        return []
+
+    # Group by source, preserving first-seen order
+    from collections import defaultdict
+    buckets: dict[str, list] = defaultdict(list)
+    for p in papers:
+        buckets[p.get("source", "unknown")].append(p.get("abstract_quality", "missing"))
+
+    def pct(n, total):
+        return f"{n*100//total:>3}%" if total else "  --"
+
+    lines = ["", "── Journal abstract coverage ──────────────────────"]
+    lines.append(f"  {'Journal':<20} {'N':>4}   Full  Trunc   Miss")
+    lines.append("  " + "-" * 48)
+    total_n = total_full = total_trunc = total_miss = 0
+    for source, qualities in sorted(buckets.items()):
+        n     = len(qualities)
+        full  = qualities.count("full")
+        trunc = qualities.count("truncated")
+        miss  = qualities.count("missing")
+        total_n += n; total_full += full; total_trunc += trunc; total_miss += miss
+        lines.append(f"  {source:<20} {n:>4}   {pct(full,n)}  {pct(trunc,n)}   {pct(miss,n)}")
+    lines.append("  " + "-" * 48)
+    if total_n:
+        lines.append(f"  {'TOTAL':<20} {total_n:>4}   {pct(total_full,total_n)}  {pct(total_trunc,total_n)}   {pct(total_miss,total_n)}")
+    lines.append("")
+    return lines
+
+
 def _send_run_summary(results: dict[str, bool], date_str: str) -> None:
     """Email the run summary table to the operator after every full pipeline run."""
     smtp_host = os.environ.get("EMAIL_SMTP_HOST", "smtp.gmail.com")
@@ -501,6 +540,7 @@ def _send_run_summary(results: dict[str, bool], date_str: str) -> None:
         "",
         "Full logs: /var/log/arxiv-grader/daily.log",
     ]
+    lines += _journal_coverage_lines(date_str)
     body = "\n".join(lines)
 
     all_ok = not failed_users
@@ -525,6 +565,77 @@ def _send_run_summary(results: dict[str, bool], date_str: str) -> None:
         log.info("Run summary emailed to %s", to_addr)
     except Exception as e:
         log.error("Failed to send run summary: %s", e)
+
+
+def _send_engagement_report(users: list[Path], date_str: str) -> None:
+    """Email a weekly engagement report (ratings per user, last 7 and 30 days).
+    Called automatically when the daily run falls on a Friday.
+    """
+    today = date.fromisoformat(date_str)
+    cutoff_7  = today - timedelta(days=7)
+    cutoff_30 = today - timedelta(days=30)
+
+    rows = []
+    for user_dir in sorted(users, key=lambda p: p.name):
+        # Delivery frequency
+        profile_path = user_dir / "taste_profile.json"
+        try:
+            profile = json.loads(profile_path.read_text(encoding="utf-8"))
+        except Exception:
+            profile = {}
+        daily   = profile.get("daily_digest", True)
+        weekly  = profile.get("weekly_digest", False)
+        if daily:
+            freq = "daily"
+        elif weekly:
+            freq = "weekly"
+        else:
+            freq = "off"
+
+        # Count ratings from archive
+        archive_path = user_dir / "archive.json"
+        try:
+            archive = json.loads(archive_path.read_text(encoding="utf-8"))
+        except Exception:
+            archive = []
+        count_7  = sum(1 for e in archive if e.get("date", "") > cutoff_7.isoformat())
+        count_30 = sum(1 for e in archive if e.get("date", "") > cutoff_30.isoformat())
+
+        rows.append((user_dir.name, freq, count_7, count_30))
+
+    lines = [
+        f"Week ending: {date_str}",
+        "",
+        f"  {'User':<28} {'Freq':<8} {'7d':>4}  {'30d':>4}",
+        "  " + "-" * 50,
+    ]
+    for name, freq, c7, c30 in rows:
+        dormant = "  ← no ratings" if c30 == 0 and freq != "off" else ""
+        lines.append(f"  {name:<28} {freq:<8} {c7:>4}  {c30:>4}{dormant}")
+    lines += ["", f"Total users: {len(rows)}"]
+
+    body = "\n".join(lines)
+
+    smtp_host = os.environ.get("EMAIL_SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("EMAIL_SMTP_PORT", "587"))
+    smtp_user = os.environ.get("EMAIL_SMTP_USER", "")
+    smtp_pass = os.environ.get("EMAIL_SMTP_PASSWORD", "")
+    from_addr = os.environ.get("EMAIL_FROM", smtp_user)
+    to_addr   = "yuval.zamir@icfo.eu"
+
+    msg = MIMEText(body)
+    msg["Subject"] = f"[Incoming Science] Weekly engagement — {date_str}"
+    msg["From"]    = from_addr
+    msg["To"]      = to_addr
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
+            server.ehlo(); server.starttls(); server.ehlo()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(from_addr, [to_addr], msg.as_string())
+        log.info("Engagement report emailed to %s", to_addr)
+    except Exception as e:
+        log.error("Failed to send engagement report: %s", e)
 
 
 def main():
@@ -864,7 +975,11 @@ def main():
     # Send run summary email (full runs only — skip single-user and --no-email runs).
     # Sent after the weekly phase so weekly delivery results are included.
     if not args.refine and not args.user and not args.no_email:
-        _send_run_summary(results, args.date or date.today().isoformat())
+        _date_str = args.date or date.today().isoformat()
+        _send_run_summary(results, _date_str)
+        # Weekly engagement report — every Friday
+        if date.fromisoformat(_date_str).weekday() == 4:
+            _send_engagement_report(users, _date_str)
 
     # Check for batch API fallback reports and send alert if any.
     if not args.refine:

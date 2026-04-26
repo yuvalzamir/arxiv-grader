@@ -28,7 +28,7 @@ ANALYSIS — reason through all inputs before writing any JSON
    - Grade 4–5: "want to be familiar with", "getting into", "peripheral interest"
 
 2. Paper abstracts. Topics recurring across multiple abstracts warrant lower grade numbers (more important).
-   Look for methodological clusters (e.g. multiple STM papers → STM is grade 1–2).
+   Look for methodological clusters (e.g. multiple papers using the same technique → that technique is grade 1–2).
 
 3. Cross-input alignment. Where does free-text align with papers? Both are valid signal.
    Agreement between free-text and papers → push toward grade 1–2.
