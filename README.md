@@ -27,7 +27,7 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 
 Each scraped paper is tagged with `feed_url` (the RSS URL it came from). `filter_for_field` uses this URL — not the display name — to decide whether a paper belongs to a field. This means the same journal can appear in multiple fields with different RSS subfeeds (e.g. a photonics subfeed for optics, a physics subfeed for cond-mat) and papers will be routed correctly. The `source` field (journal display name) is unaffected and used only for display in the PDF. `feed_url` is never passed to triage or scoring prompts.
 
-**Abstract availability by publisher:** Nature scrapes article pages for full abstracts + subject tags. Science uses Semantic Scholar (~50% hit rate). APS uses the truncated RSS abstract (article pages Cloudflare-blocked, no API source). ACS uses the Europe PMC API (DOI lookup) — ~93–95% hit rate for NanoLett, ACSNano, ACSSensors; ACSPhotonics is not indexed by Europe PMC and falls back to empty abstract. Wiley extracts full abstracts directly from the RSS feed, no page fetches needed. Optica uses the RSS feed for metadata and OpenAlex API for full abstract reconstruction (high hit rate, no page fetches needed).
+**Abstract availability by publisher:** Nature scrapes article pages for full abstracts + subject tags. Science uses Semantic Scholar (~50% hit rate). APS uses the truncated RSS abstract (article pages Cloudflare-blocked, no API source). ACS uses the Europe PMC API (DOI lookup) — ~93–95% hit rate for NanoLett, ACSNano, ACSSensors; ACSPhotonics is not indexed by Europe PMC and falls back to empty abstract. Wiley extracts full abstracts directly from the RSS feed, no page fetches needed. Optica uses the RSS feed for metadata and OpenAlex API for full abstract reconstruction (high hit rate, no page fetches needed). Cambridge University Press, Royal Society Publishing, and AIP Publishing all include full abstracts directly in their RSS feeds, no page fetches needed.
 
 **Holiday handling:** arXiv papers are fetched before journals. If all fields return empty arXiv feeds (holiday or off-day), the pipeline exits before the journal scraper runs — watermarks are not advanced and journal papers are preserved for the next day.
 
@@ -36,6 +36,7 @@ Each scraped paper is tagged with `feed_url` (the RSS URL it came from). `filter
 - **cond-mat-optics:** same as cond-mat (AMO/optics tag filters)
 - **quantum-sensing:** ACS Nano, ACS Photonics, ACS Sensors, Nano Letters, Small, Nanophotonics, Nature, Nature Photonics, Nature Nanotechnology, Nature Materials, Nature Communications, PNAS (physics), Science
 - **optics:** PRL (AMO section), PRA (quantum optics, quantum information, fundamental concepts sections), Nature, Nature Physics, Nature Photonics, Nature Communications (physics + optics-and-photonics feeds), PNAS (physics), Science, Optica, Optics Letters, Optics Express, ACS Photonics
+- **fluid-dynamics:** PRL (Nonlinear Dynamics/Fluid Dynamics section), PRE, PRX, Physical Review Fluids, Nature, Nature Physics, Nature Communications (fluid-dynamics feed), Science, Science Advances, Journal of Fluid Mechanics, Philosophical Transactions A, Physics of Fluids
 - **systems-biology:** Cell, PLOS Biology, PNAS (biophysics/immunology/cell-biology/microbiology feeds), Science, Science Immunology, Science Advances, Nature, Nature Communications, eLife
 
 **Output schema per paper:**
@@ -287,6 +288,9 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 | `scrapers/acs.py` | ACS publisher scraper — no abstract available; title + authors only |
 | `scrapers/wiley.py` | Wiley publisher scraper — full abstract from RSS feed, no page fetches |
 | `scrapers/optica.py` | Optica Publishing Group scraper — RSS metadata + full abstract via OpenAlex API |
+| `scrapers/cambridge.py` | Cambridge University Press scraper — full abstract from RSS feed, no page fetches |
+| `scrapers/royalsociety.py` | Royal Society Publishing scraper — full abstract from RSS feed, no page fetches |
+| `scrapers/aip.py` | AIP Publishing scraper — full abstract from RSS feed, no page fetches |
 | `scrapers/scholar.py` | Google Scholar profile scraper — resolves papers to abstracts for onboarding |
 | `scrapers/cell.py` | Cell Press scraper |
 | `scrapers/plos.py` | PLOS scraper |

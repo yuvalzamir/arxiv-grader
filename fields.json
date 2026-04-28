@@ -707,6 +707,92 @@
       }
     ]
   },
+  "fluid-dynamics": {
+    "arxiv_categories": ["physics.flu-dyn", "nlin.CD", "nlin.PS", "cond-mat.soft", "cond-mat.stat-mech"],
+    "description": "Fluid dynamics, turbulence, nonlinear dynamics, and pattern formation",
+    "journals": [
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-NonlinearDynamicsFluidDynamicsClassicalOpticsetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRE",
+        "url": "http://feeds.aps.org/rss/recent/pre.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRX",
+        "url": "http://feeds.aps.org/rss/recent/prx.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRFluids",
+        "url": "https://feeds.aps.org/rss/recent/prfluids.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "fluid dynamics",
+          "turbulence",
+          "nonlinear dynamics",
+          "pattern formation",
+          "complex fluids",
+          "geophysical and environmental physics",
+          "statistical physics"
+        ]
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/fluid-dynamics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "ScienceAdvances",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "JFM",
+        "url": "https://www.cambridge.org/core/rss/product/id/1F51BCFAA50101CAF5CB9A20F8DEA3E4",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "PhilTransA",
+        "url": "https://royalsocietypublishing.org/rss/site_1000005/1000005.xml",
+        "publisher": "royalsociety",
+        "tag_filter": null
+      },
+      {
+        "name": "PhysicsFluids",
+        "url": "https://pubs.aip.org/rss/site_1000037/LatestOpenIssueArticles_1000021.xml",
+        "publisher": "aip",
+        "tag_filter": null
+      }
+    ]
+  },
   "systems-biology": {
     "arxiv_categories": ["q-bio", "physics.bio-ph"],
     "description": "Systems biology, computational biology, immunology, and cell biology",

@@ -2,7 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-@README.md
 @TODO.md
 
 ## Project Overview
@@ -90,7 +89,7 @@ users/<name>/
 
 ### Journal Scrapers (`fetch_journals.py`)
 
-Per-publisher scraper classes under `scrapers/`: `aps.py`, `nature.py`, `science.py`. Field configuration (which journals, categories, tag filters) lives in `fields.json`. Watermarks in `journal_watermarks.json` prevent re-fetching duplicates.
+Per-publisher scraper classes under `scrapers/`: `aps.py`, `nature.py`, `science.py`, `acs.py`, `wiley.py`, `optica.py`, `cambridge.py`, `royalsociety.py`, `aip.py`, `cell.py`, `plos.py`, `pnas.py`, `iop.py`, `oup.py`, `edp.py`, `elsevier.py`, `scipost.py`. Field configuration (which journals, categories, tag filters) lives in `fields.json`. Watermarks in `journal_watermarks.json` prevent re-fetching duplicates.
 
 ### Rating Endpoint (`server.py`)
 

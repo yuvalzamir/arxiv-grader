@@ -7,7 +7,9 @@ To add a new publisher family:
 """
 
 from .acs import ACSScraper
+from .aip import AIPScraper
 from .aps import APSScraper
+from .cambridge import CambridgeScraper
 from .cell import CellScraper
 from .edp import EDPScraper
 from .elsevier import ElsevierScraper
@@ -17,23 +19,27 @@ from .optica import OpticaScraper
 from .oup import OUPScraper
 from .plos import PlosScraper
 from .pnas import PnasScraper
+from .royalsociety import RoyalSocietyScraper
 from .science import ScienceScraper
 from .scipost import SciPostScraper
 from .wiley import WileyScraper
 
 SCRAPERS: dict = {
-    "acs":      ACSScraper,
-    "aps":      APSScraper,
-    "cell":     CellScraper,
-    "edp":      EDPScraper,
-    "elsevier": ElsevierScraper,
-    "iop":      IOPScraper,
-    "nature":   NatureScraper,
-    "optica":   OpticaScraper,
-    "oup":      OUPScraper,
-    "plos":     PlosScraper,
-    "pnas":     PnasScraper,
-    "science":  ScienceScraper,
-    "scipost":  SciPostScraper,
-    "wiley":    WileyScraper,
+    "acs":          ACSScraper,
+    "aip":          AIPScraper,
+    "aps":          APSScraper,
+    "cambridge":    CambridgeScraper,
+    "cell":         CellScraper,
+    "edp":          EDPScraper,
+    "elsevier":     ElsevierScraper,
+    "iop":          IOPScraper,
+    "nature":       NatureScraper,
+    "optica":       OpticaScraper,
+    "oup":          OUPScraper,
+    "plos":         PlosScraper,
+    "pnas":         PnasScraper,
+    "royalsociety": RoyalSocietyScraper,
+    "science":      ScienceScraper,
+    "scipost":      SciPostScraper,
+    "wiley":        WileyScraper,
 }
