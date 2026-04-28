@@ -3,7 +3,6 @@
 ## Pending
 
 - [ ] **APS full abstracts** — check if ICFO has institutional APS access (IP whitelist or API token).
-  - [x] **`create_profile.py` APS fetcher** — `fetch_journal_paper()` now falls back to OpenAlex → CrossRef by DOI when HTML scraping fails (Cloudflare block, network error, or missing meta tags). Title, abstract, and authors are recovered for any URL containing a DOI.
 
 ---
 
