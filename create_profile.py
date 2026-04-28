@@ -27,6 +27,7 @@ import openpyxl
 import requests
 from anthropic import Anthropic, AuthenticationError
 from dotenv import load_dotenv
+from scrapers.base import BaseScraper
 
 load_dotenv()  # loads credentials from .env if present
 
@@ -478,6 +479,13 @@ def collect_inputs() -> dict:
 HEADERS = {"User-Agent": "arxiv-grader-profile-builder/1.0"}
 HTML_CAP = 50_000  # bytes — enough to find meta tags on any publisher page
 
+_DOI_RE_PROFILE = re.compile(r'10\.\d{4,}/[^\s?#]+')
+
+
+def _doi_from_url(url: str) -> str:
+    m = _DOI_RE_PROFILE.search(url)
+    return m.group(0).rstrip('.,') if m else ""
+
 
 def fetch_arxiv_batch(urls: list[str]) -> list[dict]:
     """Fetch metadata for a list of arXiv URLs using the batch API."""
@@ -567,6 +575,26 @@ def fetch_journal_paper(url: str) -> dict:
     if not abstract:
         m = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\'](.*?)["\']', html, re.IGNORECASE)
         abstract = m.group(1).strip() if m else ""
+
+    # API fallback: if title or abstract still missing, try DOI-based lookup
+    if not title or not abstract:
+        doi = _doi_from_url(url)
+        if doi:
+            oa = BaseScraper._fetch_metadata_openalex(doi)
+            if not title:
+                title = oa.get("title", "")
+            if not abstract:
+                abstract = oa.get("abstract", "")
+            if not authors:
+                authors = oa.get("authors", [])
+            # CrossRef for title only if OpenAlex also missed it
+            if not title:
+                cr = BaseScraper._fetch_metadata_crossref(doi)
+                title = cr.get("title", "")
+                if not authors:
+                    authors = cr.get("authors", [])
+            if title:
+                log.info("  [DOI fallback] %s — %s", doi, title[:60])
 
     log.info("  [journal] %s — %s", url[:50], title[:60])
     return {

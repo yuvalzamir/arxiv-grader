@@ -20,6 +20,7 @@ SLEEP_BETWEEN_REQUESTS = 1.5
 
 _OPENALEX_API_URL = "https://api.openalex.org/works/doi:{doi}"
 _EUROPEPMC_API_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+_CR_API_URL = "https://api.crossref.org/works/{doi}"
 _API_HEADERS = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
 
 
@@ -49,23 +50,60 @@ class BaseScraper(ABC):
                 tokens[pos] = word
         return " ".join(tokens[i] for i in sorted(tokens))
 
-    def _fetch_abstract_openalex(self, doi: str) -> str:
-        """Fetch abstract from OpenAlex by DOI. Returns "" on miss or error."""
+    @staticmethod
+    def _fetch_metadata_openalex(doi: str) -> dict:
+        """Return {title, abstract, authors} from OpenAlex. Missing fields are '' / []."""
         try:
             r = requests.get(
                 _OPENALEX_API_URL.format(doi=doi),
                 headers=_API_HEADERS,
                 timeout=15,
             )
-            if r.status_code == 200:
-                inverted = r.json().get("abstract_inverted_index")
-                if inverted:
-                    return self._reconstruct_openalex_abstract(inverted)
-            else:
+            if r.status_code != 200:
                 log.debug("OpenAlex returned %d for DOI %s", r.status_code, doi)
-        except Exception as e:
-            log.warning("OpenAlex request failed for DOI %s: %s", doi, e)
-        return ""
+                return {}
+            data = r.json()
+            title = data.get("title") or ""
+            abstract = ""
+            inv = data.get("abstract_inverted_index")
+            if inv:
+                abstract = BaseScraper._reconstruct_openalex_abstract(inv)
+            authors = [
+                a["author"]["display_name"]
+                for a in data.get("authorships", [])
+                if a.get("author", {}).get("display_name")
+            ]
+            return {"title": title, "abstract": abstract, "authors": authors}
+        except Exception as exc:
+            log.warning("OpenAlex request failed for DOI %s: %s", doi, exc)
+            return {}
+
+    def _fetch_abstract_openalex(self, doi: str) -> str:
+        """Fetch abstract from OpenAlex by DOI. Returns "" on miss or error."""
+        return self._fetch_metadata_openalex(doi).get("abstract", "")
+
+    @staticmethod
+    def _fetch_metadata_crossref(doi: str) -> dict:
+        """Return {title, authors} from CrossRef. Used as title/author fallback."""
+        try:
+            r = requests.get(
+                _CR_API_URL.format(doi=doi),
+                headers=_API_HEADERS,
+                timeout=15,
+            )
+            if r.status_code != 200:
+                return {}
+            msg = r.json().get("message", {})
+            titles = msg.get("title", [])
+            title = titles[0] if titles else ""
+            authors = [
+                " ".join(filter(None, [a.get("given", ""), a.get("family", "")]))
+                for a in msg.get("author", [])
+            ]
+            return {"title": title, "authors": [a for a in authors if a]}
+        except Exception as exc:
+            log.debug("CrossRef metadata fetch failed for DOI %s: %s", doi, exc)
+            return {}
 
     def _fetch_abstract_europepmc(self, doi: str) -> str:
         """Fetch abstract from Europe PMC by DOI. Returns "" on miss or error."""
