@@ -33,9 +33,12 @@ from email.mime.text import MIMEText
 from pathlib import Path
 
 from dotenv import load_dotenv
+from retry_abstracts import add_to_bank, load_bank, retry_bank, save_bank
 
 BASE_DIR  = Path(__file__).parent
 USERS_DIR = BASE_DIR / "users"
+
+ABSTRACT_RETRY_TTL_DAYS = 7
 
 load_dotenv(BASE_DIR / ".env")
 
@@ -796,6 +799,35 @@ def main():
                     with open(field_path, "w") as f:
                         json.dump(filtered, f, indent=2)
                     log.info("Field '%s': %d journal papers after filtering.", field, len(filtered))
+
+                # Step A: bank today's missing-abstract papers (per field)
+                bank = load_bank()
+                for field in fields_with_papers:
+                    journals_path = shared_data_dir / f"{field}_journals.json"
+                    if not journals_path.exists():
+                        continue
+                    field_journals = json.loads(journals_path.read_text())
+                    added = add_to_bank(field_journals, field, bank)
+                    if added:
+                        log.info("[BANK] %s: +%d missing-abstract papers banked", field, added)
+                save_bank(bank)
+
+                # Step B: retry banked papers and inject enriched ones into journal lists
+                bank, enriched_by_field = retry_bank(bank, ttl_days=ABSTRACT_RETRY_TTL_DAYS)
+                save_bank(bank)
+                for field, enriched in enriched_by_field.items():
+                    if not enriched:
+                        continue
+                    journals_path = shared_data_dir / f"{field}_journals.json"
+                    existing = json.loads(journals_path.read_text()) if journals_path.exists() else []
+                    existing_ids = {p["arxiv_id"] for p in existing}
+                    new_papers = [p for p in enriched if p["arxiv_id"] not in existing_ids]
+                    if new_papers:
+                        existing.extend(new_papers)
+                        journals_path.write_text(
+                            json.dumps(existing, indent=2, ensure_ascii=False)
+                        )
+                        log.info("[BANK] %s: injected %d retried papers", field, len(new_papers))
 
         # Step 3: Merge arXiv + journals per field, then run triage for all fields
         # in parallel. All cached API calls across all fields share one orchestrator

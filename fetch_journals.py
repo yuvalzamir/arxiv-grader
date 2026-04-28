@@ -176,7 +176,7 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
             if result is None:
                 continue
 
-            doi = _extract_doi(entry)
+            doi = result.get("doi") or _extract_doi(entry)
             arxiv_id = doi if doi else url
 
             abstract = result["abstract"]

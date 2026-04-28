@@ -30,13 +30,10 @@ Subject tags: not available → always []
 
 import logging
 
-import requests
-
 from .base import BaseScraper
 
 log = logging.getLogger(__name__)
 
-_EUROPE_PMC_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 _SKIP_SECTIONS = {"correction", "erratum", "retraction", "expression of concern"}
 
 
@@ -51,26 +48,10 @@ class CellScraper(BaseScraper):
     def scrape_article(self, url: str, entry=None) -> dict:
         doi = (getattr(entry, "dc_identifier", "") or "") if entry is not None else ""
         if doi:
-            abstract = self._fetch_abstract_europe_pmc(doi)
+            abstract = self._fetch_abstract_europepmc(doi)
             if abstract:
                 return {"abstract": abstract, "subject_tags": []}
         # No abstract found — return empty so the caller falls back to the RSS
         # summary, which contains a useful teaser (200–600c) for all Cell Press feeds.
         return {"abstract": "", "subject_tags": []}
 
-    def _fetch_abstract_europe_pmc(self, doi: str) -> str:
-        try:
-            r = requests.get(
-                _EUROPE_PMC_URL,
-                params={"query": f"DOI:{doi}", "resultType": "core", "format": "json"},
-                timeout=15,
-                headers={"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"},
-            )
-            if r.status_code == 200:
-                results = r.json().get("resultList", {}).get("result", [])
-                if results:
-                    return results[0].get("abstractText", "") or ""
-            log.debug("Europe PMC returned %d for DOI %s", r.status_code, doi)
-        except Exception as e:
-            log.warning("Europe PMC request failed for DOI %s: %s", doi, e)
-        return ""

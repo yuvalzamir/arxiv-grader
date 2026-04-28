@@ -23,8 +23,6 @@ Subject tags: not available → always []
 import logging
 import re
 
-import requests
-
 from .base import BaseScraper
 
 log = logging.getLogger(__name__)
@@ -39,19 +37,6 @@ _DOI_RE = re.compile(r"(10\.1021/[^\s?#]+)")
 
 # ACS journal DOI prefixes not indexed by Europe PMC — skip to avoid wasted calls
 _EUROPEPMC_SKIP_PREFIXES = ("10.1021/acsphotonics.",)
-
-_EUROPEPMC_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
-_OPENALEX_URL = "https://api.openalex.org/works/doi:{doi}"
-_HEADERS = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
-
-
-def _reconstruct_openalex_abstract(inverted_index: dict) -> str:
-    """Reconstruct plain-text abstract from OpenAlex abstract_inverted_index."""
-    tokens: dict[int, str] = {}
-    for word, positions in inverted_index.items():
-        for pos in positions:
-            tokens[pos] = word
-    return " ".join(tokens[i] for i in sorted(tokens))
 
 
 class ACSScraper(BaseScraper):
@@ -69,10 +54,10 @@ class ACSScraper(BaseScraper):
         doi = self._doi_from_url(url)
         if doi:
             if not any(doi.startswith(p) for p in _EUROPEPMC_SKIP_PREFIXES):
-                abstract = self._fetch_europepmc(doi)
+                abstract = self._fetch_abstract_europepmc(doi)
                 if abstract:
                     return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True}
-            abstract = self._fetch_openalex(doi)
+            abstract = self._fetch_abstract_openalex(doi)
             if abstract:
                 return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True}
         return {"abstract": "", "subject_tags": [], "skip_rss_fallback": True}
@@ -85,37 +70,3 @@ class ACSScraper(BaseScraper):
         m = _DOI_RE.search(url)
         return m.group(1) if m else ""
 
-    def _fetch_europepmc(self, doi: str) -> str:
-        try:
-            r = requests.get(
-                _EUROPEPMC_URL,
-                params={"query": f"DOI:{doi}", "format": "json", "resultType": "core"},
-                headers=_HEADERS,
-                timeout=15,
-            )
-            if r.status_code == 200:
-                results = r.json().get("resultList", {}).get("result", [])
-                if results:
-                    return results[0].get("abstractText", "")
-            else:
-                log.debug("Europe PMC returned %d for DOI %s", r.status_code, doi)
-        except Exception as exc:
-            log.warning("Europe PMC request failed for DOI %s: %s", doi, exc)
-        return ""
-
-    def _fetch_openalex(self, doi: str) -> str:
-        try:
-            r = requests.get(
-                _OPENALEX_URL.format(doi=doi),
-                headers=_HEADERS,
-                timeout=15,
-            )
-            if r.status_code == 200:
-                inverted = r.json().get("abstract_inverted_index")
-                if inverted:
-                    return _reconstruct_openalex_abstract(inverted)
-            else:
-                log.debug("OpenAlex returned %d for DOI %s", r.status_code, doi)
-        except Exception as exc:
-            log.warning("OpenAlex request failed for DOI %s: %s", doi, exc)
-        return ""

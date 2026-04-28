@@ -26,7 +26,6 @@ Subject tags: not available → always []
 import logging
 import re
 
-import requests
 from bs4 import BeautifulSoup
 
 from .base import BaseScraper
@@ -37,16 +36,6 @@ _ERRATA_TITLES = ("erratum", "corrigendum", "correction", "comment on", "reply t
 _DOI_RE = re.compile(r"10\.\d{4}/")
 _DOI_EXTRACT_RE = re.compile(r"(10\.\d{4}/[^\s?#]+)")
 _LABEL_RE = re.compile(r"^(Abstract[:\s]*|ABSTRACT[:\s]*)", re.IGNORECASE)
-_OPENALEX_URL = "https://api.openalex.org/works/doi:{doi}"
-_HEADERS = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
-
-
-def _reconstruct_openalex_abstract(inverted_index: dict) -> str:
-    tokens: dict[int, str] = {}
-    for word, positions in inverted_index.items():
-        for pos in positions:
-            tokens[pos] = word
-    return " ".join(tokens[i] for i in sorted(tokens))
 
 
 class EDPScraper(BaseScraper):
@@ -86,7 +75,7 @@ class EDPScraper(BaseScraper):
         # (covers EPJC and any other EDP journal with unexpected HTML structure).
         doi = self._doi_from_url(url)
         if doi:
-            abstract = self._fetch_openalex(doi)
+            abstract = self._fetch_abstract_openalex(doi)
             if abstract:
                 return {"abstract": abstract, "subject_tags": []}
 
@@ -96,19 +85,3 @@ class EDPScraper(BaseScraper):
         m = _DOI_EXTRACT_RE.search(url)
         return m.group(1) if m else ""
 
-    def _fetch_openalex(self, doi: str) -> str:
-        try:
-            r = requests.get(
-                _OPENALEX_URL.format(doi=doi),
-                headers=_HEADERS,
-                timeout=15,
-            )
-            if r.status_code == 200:
-                inverted = r.json().get("abstract_inverted_index")
-                if inverted:
-                    return _reconstruct_openalex_abstract(inverted)
-            else:
-                log.debug("OpenAlex returned %d for DOI %s", r.status_code, doi)
-        except Exception as e:
-            log.warning("OpenAlex request failed for DOI %s: %s", doi, e)
-        return ""

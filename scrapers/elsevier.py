@@ -38,18 +38,9 @@ log = logging.getLogger(__name__)
 _HEADERS = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
 _CROSSREF_URL = "https://api.crossref.org/works"
 _INSPIREHEP_URL = "https://inspirehep.net/api/literature"
-_OPENALEX_URL = "https://api.openalex.org/works/doi:{doi}"
 _PII_RE = re.compile(r"/pii/([A-Z0-9]+)", re.IGNORECASE)
 _DOI_RE = re.compile(r"(10\.\d{4}/[^\s?#]+)")
 _ERRATA_TITLES = ("erratum", "corrigendum", "correction", "retraction", "addendum")
-
-
-def _reconstruct_openalex_abstract(inverted_index: dict) -> str:
-    tokens: dict[int, str] = {}
-    for word, positions in inverted_index.items():
-        for pos in positions:
-            tokens[pos] = word
-    return " ".join(tokens[i] for i in sorted(tokens))
 
 
 def _clean_title(raw: str) -> str:
@@ -73,11 +64,13 @@ class ElsevierScraper(BaseScraper):
             # Step 2: INSPIRE-HEP by DOI
             abstract = self._fetch_inspirehep(f"doi {doi}")
             if abstract:
-                return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True}
+                return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True, "doi": doi}
             # Step 3: OpenAlex by DOI
-            abstract = self._fetch_openalex(doi)
+            abstract = self._fetch_abstract_openalex(doi)
             if abstract:
-                return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True}
+                return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True, "doi": doi}
+            # No abstract found yet but DOI is resolved — return it so the bank can retry later
+            return {"abstract": "", "subject_tags": [], "skip_rss_fallback": True, "doi": doi}
 
         # Step 4: INSPIRE-HEP title search (last resort; works for PLB)
         if entry is not None:
@@ -155,19 +148,3 @@ class ElsevierScraper(BaseScraper):
             log.warning("INSPIRE-HEP request failed for query '%s': %s", query[:60], e)
         return ""
 
-    def _fetch_openalex(self, doi: str) -> str:
-        try:
-            r = requests.get(
-                _OPENALEX_URL.format(doi=doi),
-                headers=_HEADERS,
-                timeout=15,
-            )
-            if r.status_code == 200:
-                inverted = r.json().get("abstract_inverted_index")
-                if inverted:
-                    return _reconstruct_openalex_abstract(inverted)
-            else:
-                log.debug("OpenAlex returned %d for DOI %s", r.status_code, doi)
-        except Exception as e:
-            log.warning("OpenAlex request failed for DOI %s: %s", doi, e)
-        return ""

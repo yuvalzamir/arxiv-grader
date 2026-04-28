@@ -18,27 +18,12 @@ Subject tags: not available → always []
 import logging
 import re
 
-import requests
-
 from .base import BaseScraper
 
 log = logging.getLogger(__name__)
 
 _ERRATA_TITLES = ("erratum", "corrigendum", "correction", "retraction")
 _DOI_RE = re.compile(r"10\.\d{4}/")
-_OPENALEX_URL = "https://api.openalex.org/works/doi:{doi}"
-_OPENALEX_HEADERS = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
-
-
-def _reconstruct_abstract(inverted_index: dict) -> str:
-    """Reconstruct plain-text abstract from OpenAlex abstract_inverted_index."""
-    if not inverted_index:
-        return ""
-    tokens: dict[int, str] = {}
-    for word, positions in inverted_index.items():
-        for pos in positions:
-            tokens[pos] = word
-    return " ".join(tokens[i] for i in sorted(tokens))
 
 
 class OUPScraper(BaseScraper):
@@ -63,19 +48,3 @@ class OUPScraper(BaseScraper):
         m = re.search(r"(10\.\d{4}/[^\s?#]+)", url)
         return m.group(1) if m else ""
 
-    def _fetch_abstract_openalex(self, doi: str) -> str:
-        try:
-            r = requests.get(
-                _OPENALEX_URL.format(doi=doi),
-                timeout=15,
-                headers=_OPENALEX_HEADERS,
-            )
-            if r.status_code == 200:
-                inverted = r.json().get("abstract_inverted_index")
-                if inverted:
-                    return _reconstruct_abstract(inverted)
-            else:
-                log.debug("OpenAlex returned %d for DOI %s", r.status_code, doi)
-        except Exception as e:
-            log.warning("OpenAlex request failed for DOI %s: %s", doi, e)
-        return ""
