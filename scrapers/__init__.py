@@ -12,7 +12,8 @@ from .aps import APSScraper
 from .cambridge import CambridgeScraper
 from .cell import CellScraper
 from .edp import EDPScraper
-from .elsevier import ElsevierScraper
+from .elsevier import ElsevierGeneralScraper, ElsevierScraper
+from .ieee import IEEEScraper
 from .iop import IOPScraper
 from .nature import NatureScraper
 from .optica import OpticaScraper
@@ -22,6 +23,7 @@ from .pnas import PnasScraper
 from .royalsociety import RoyalSocietyScraper
 from .science import ScienceScraper
 from .scipost import SciPostScraper
+from .springer import SpringerScraper
 from .wiley import WileyScraper
 
 SCRAPERS: dict = {
@@ -31,7 +33,9 @@ SCRAPERS: dict = {
     "cambridge":    CambridgeScraper,
     "cell":         CellScraper,
     "edp":          EDPScraper,
-    "elsevier":     ElsevierScraper,
+    "elsevier":         ElsevierScraper,
+    "elsevier_general": ElsevierGeneralScraper,
+    "ieee":         IEEEScraper,
     "iop":          IOPScraper,
     "nature":       NatureScraper,
     "optica":       OpticaScraper,
@@ -41,5 +45,6 @@ SCRAPERS: dict = {
     "royalsociety": RoyalSocietyScraper,
     "science":      ScienceScraper,
     "scipost":      SciPostScraper,
+    "springer":     SpringerScraper,
     "wiley":        WileyScraper,
 }

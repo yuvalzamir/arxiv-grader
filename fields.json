@@ -793,6 +793,53 @@
       }
     ]
   },
+  "ai-vision": {
+    "arxiv_categories": ["cs.CV", "cs.LG", "eess.IV"],
+    "description": "AI and computer vision — deep learning, image processing, generative models, representation learning",
+    "journals": [
+      {
+        "name": "IEEE TPAMI",
+        "url": "https://csdl-api.computer.org/api/rss/periodicals/trans/tp/rss.xml",
+        "publisher": "ieee",
+        "tag_filter": null
+      },
+      {
+        "name": "IEEE TIP",
+        "url": "https://ieeexplore.ieee.org/rss/TOC83.XML",
+        "publisher": "ieee",
+        "tag_filter": null
+      },
+      {
+        "name": "IJCV",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=11263&channel_name=International%20Journal%20of%20Computer%20Vision",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": [
+          "machine learning",
+          "computer vision",
+          "artificial intelligence",
+          "computer science",
+          "deep learning",
+          "image processing",
+          "neural networks",
+          "natural language processing",
+          "robotics",
+          "pattern recognition"
+        ]
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      }
+    ]
+  },
   "systems-biology": {
     "arxiv_categories": ["q-bio", "physics.bio-ph"],
     "description": "Systems biology, computational biology, immunology, and cell biology",

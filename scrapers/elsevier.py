@@ -1,27 +1,32 @@
 """
 scrapers/elsevier.py — Scraper for Elsevier/ScienceDirect journals.
 
-Covers: Physics Letters B, Nuclear Physics B, and any future SCOAP3
-Elsevier journal added to fields.json with publisher="elsevier".
+Two scraper classes:
+  - ElsevierScraper       (publisher="elsevier")       — HEP journals (PLB, NPB).
+                                                          Uses INSPIRE-HEP + OpenAlex.
+  - ElsevierGeneralScraper (publisher="elsevier_general") — General Elsevier journals
+                                                          (Pattern Recognition, Neural
+                                                          Networks, CVIU, etc.).
+                                                          Uses OpenAlex only (no INSPIRE).
 
-RSS: ScienceDirect feeds (rss.sciencedirect.com) — give paper list only;
-descriptions contain publication metadata but no abstracts. Links are
-PII-based ScienceDirect URLs (no DOIs in the feed).
+RSS: ScienceDirect feeds (rss.sciencedirect.com) — give paper list only.
+  - <description> contains: publication date, source (volume/part), author list.
+  - No abstract in the feed.
+  - Authors extracted from "Author(s): Name1, Name2, ..." in the description HTML.
+  - Links are PII-based ScienceDirect URLs (no DOIs in the feed).
 
-Abstract coverage: GOOD (~75–90%) — pipeline:
-  1. CrossRef PII→DOI lookup: extracts PII from the ScienceDirect URL and
-     resolves it to a DOI via the CrossRef alternative-id filter.
-  2. INSPIRE-HEP by DOI: primary abstract source for PLB. Returns full
-     abstracts for most indexed HEP papers.
-  3. OpenAlex by DOI: fallback after INSPIRE-HEP. Covers papers not yet
-     indexed in INSPIRE-HEP and non-HEP NPB content.
-  4. INSPIRE-HEP title search: last resort when CrossRef resolution fails.
-     Works for PLB; less reliable for NPB (broader scope, special chars).
-  - Article pages: Cloudflare-blocked from server IPs.
-  - RSS fallback: suppressed — ScienceDirect descriptions contain only
-    volume/date/author metadata, not scientific content.
+Abstract coverage — ElsevierScraper (HEP, ~75–90%):
+  1. CrossRef PII→DOI lookup
+  2. INSPIRE-HEP by DOI (primary for PLB)
+  3. OpenAlex by DOI (fallback)
+  4. INSPIRE-HEP title search (last resort)
 
-Corrections/errata detected by title keywords and skipped.
+Abstract coverage — ElsevierGeneralScraper (non-HEP, ~80–90%):
+  1. CrossRef PII→DOI lookup
+  2. OpenAlex by DOI
+
+Article pages: Cloudflare-blocked from server IPs.
+RSS fallback: suppressed — descriptions contain no abstract content.
 Subject tags: not available → always []
 """
 
@@ -49,6 +54,10 @@ def _clean_title(raw: str) -> str:
 
 
 class ElsevierScraper(BaseScraper):
+    # Specifies an additional domain-specific DB to query before OpenAlex.
+    # Set to None in subclasses to use OpenAlex only.
+    # Supported values: "inspire" | None
+    SPECIFIC_DB: str | None = "inspire"
 
     def editorial_filter(self, entry) -> bool:
         title = getattr(entry, "title", "").lower()
@@ -57,30 +66,34 @@ class ElsevierScraper(BaseScraper):
         return True
 
     def scrape_article(self, url: str, entry=None) -> dict:
+        authors = self._extract_authors_from_description(entry)
+
         # Step 1: resolve PII → DOI via CrossRef
         doi = self._doi_from_pii(url) or self._doi_from_entry(entry)
 
         if doi:
-            # Step 2: INSPIRE-HEP by DOI
-            abstract = self._fetch_inspirehep(f"doi {doi}")
-            if abstract:
-                return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True, "doi": doi}
+            if self.SPECIFIC_DB == "inspire":
+                # Step 2: INSPIRE-HEP by DOI (HEP journals only)
+                abstract = self._fetch_inspirehep(f"doi {doi}")
+                if abstract:
+                    return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True, "doi": doi, "authors": authors}
             # Step 3: OpenAlex by DOI
             abstract = self._fetch_abstract_openalex(doi)
             if abstract:
-                return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True, "doi": doi}
+                return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True, "doi": doi, "authors": authors}
             # No abstract found yet but DOI is resolved — return it so the bank can retry later
-            return {"abstract": "", "subject_tags": [], "skip_rss_fallback": True, "doi": doi}
+            return {"abstract": "", "subject_tags": [], "skip_rss_fallback": True, "doi": doi, "authors": authors}
 
-        # Step 4: INSPIRE-HEP title search (last resort; works for PLB)
-        if entry is not None:
-            title = _clean_title(getattr(entry, "title", ""))
-            if title:
-                abstract = self._fetch_inspirehep(f't "{title}"')
-                if abstract:
-                    return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True}
+        if self.SPECIFIC_DB == "inspire":
+            # Step 4: INSPIRE-HEP title search (last resort; works for PLB)
+            if entry is not None:
+                title = _clean_title(getattr(entry, "title", ""))
+                if title:
+                    abstract = self._fetch_inspirehep(f't "{title}"')
+                    if abstract:
+                        return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True, "authors": authors}
 
-        return {"abstract": "", "subject_tags": [], "skip_rss_fallback": True}
+        return {"abstract": "", "subject_tags": [], "skip_rss_fallback": True, "authors": authors}
 
     # ------------------------------------------------------------------
     # DOI resolution helpers
@@ -128,6 +141,21 @@ class ElsevierScraper(BaseScraper):
     # Abstract fetch helpers
     # ------------------------------------------------------------------
 
+    def _extract_authors_from_description(self, entry) -> list[str]:
+        """Parse 'Author(s): Name1, Name2, ...' from the ScienceDirect RSS description HTML."""
+        if entry is None:
+            return []
+        raw = getattr(entry, "summary", "") or getattr(entry, "description", "")
+        if not raw:
+            return []
+        soup = BeautifulSoup(raw, "lxml")
+        for p in soup.find_all("p"):
+            text = p.get_text(strip=True)
+            if text.startswith("Author(s):"):
+                names = text[len("Author(s):"):].strip()
+                return [n.strip() for n in names.split(",") if n.strip()]
+        return []
+
     def _fetch_inspirehep(self, query: str) -> str:
         try:
             r = requests.get(
@@ -148,3 +176,11 @@ class ElsevierScraper(BaseScraper):
             log.warning("INSPIRE-HEP request failed for query '%s': %s", query[:60], e)
         return ""
 
+
+class ElsevierGeneralScraper(ElsevierScraper):
+    """ElsevierScraper for general (non-HEP) Elsevier journals.
+
+    Use publisher="elsevier_general" in fields.json.
+    Abstract pipeline: CrossRef PII→DOI → OpenAlex (no domain-specific DB).
+    """
+    SPECIFIC_DB = None
