@@ -1,6 +1,8 @@
 {
   "cond-mat": {
-    "arxiv_categories": ["cond-mat"],
+    "arxiv_categories": [
+      "cond-mat"
+    ],
     "description": "Condensed matter physics",
     "journals": [
       {
@@ -110,10 +112,19 @@
         "publisher": "science",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Condensed Matter",
+      "Condensed Matter"
     ]
   },
   "cond-mat-optics": {
-    "arxiv_categories": ["cond-mat", "physics.optics"],
+    "arxiv_categories": [
+      "cond-mat",
+      "physics.optics"
+    ],
     "description": "Condensed matter physics and optics",
     "journals": [
       {
@@ -217,10 +228,21 @@
         "publisher": "science",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Condensed Matter",
+      "Condensed Matter & Optics"
     ]
   },
   "quantum-sensing": {
-    "arxiv_categories": ["cond-mat", "physics.app-ph", "physics.optics", "physics.chem-ph"],
+    "arxiv_categories": [
+      "cond-mat",
+      "physics.app-ph",
+      "physics.optics",
+      "physics.chem-ph"
+    ],
     "description": "Quantum sensing and related photonics, nanoscience, and materials",
     "journals": [
       {
@@ -307,10 +329,18 @@
         "publisher": "science",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Condensed Matter",
+      "Quantum Sensing"
     ]
   },
   "optics": {
-    "arxiv_categories": ["physics.optics"],
+    "arxiv_categories": [
+      "physics.optics"
+    ],
     "description": "Optics, photonics, and quantum optics",
     "journals": [
       {
@@ -419,11 +449,20 @@
         "publisher": "science",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Optics & Photonics",
+      "Optics"
     ]
   },
   "soft-matter": {
-    "arxiv_categories": ["cond-mat.soft", "physics.bio-ph"],
-    "description": "Soft matter physics — polymers, colloids, active matter, and biological physics",
+    "arxiv_categories": [
+      "cond-mat.soft",
+      "physics.bio-ph"
+    ],
+    "description": "Soft matter physics \u00e2\u20ac\u201d polymers, colloids, active matter, and biological physics",
     "journals": [
       {
         "name": "PRL",
@@ -526,10 +565,19 @@
         "publisher": "science",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Condensed Matter",
+      "Soft Matter"
     ]
   },
   "astrophysics": {
-    "arxiv_categories": ["astro-ph", "gr-qc"],
+    "arxiv_categories": [
+      "astro-ph",
+      "gr-qc"
+    ],
     "description": "Astrophysics, cosmology, and gravitational physics",
     "journals": [
       {
@@ -616,11 +664,22 @@
         "publisher": "science",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Astrophysics & Cosmology",
+      "Astrophysics"
     ]
   },
   "hep": {
-    "arxiv_categories": ["hep-ph", "hep-th", "hep-ex", "hep-lat"],
-    "description": "High-energy physics — particle physics, quantum field theory, and collider physics",
+    "arxiv_categories": [
+      "hep-ph",
+      "hep-th",
+      "hep-ex",
+      "hep-lat"
+    ],
+    "description": "High-energy physics \u00e2\u20ac\u201d particle physics, quantum field theory, and collider physics",
     "journals": [
       {
         "name": "PRL",
@@ -705,10 +764,22 @@
         "publisher": "science",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "High Energy Physics",
+      "High Energy Physics"
     ]
   },
   "fluid-dynamics": {
-    "arxiv_categories": ["physics.flu-dyn", "nlin.CD", "nlin.PS", "cond-mat.soft", "cond-mat.stat-mech"],
+    "arxiv_categories": [
+      "physics.flu-dyn",
+      "nlin.CD",
+      "nlin.PS",
+      "cond-mat.soft",
+      "cond-mat.stat-mech"
+    ],
     "description": "Fluid dynamics, turbulence, nonlinear dynamics, and pattern formation",
     "journals": [
       {
@@ -791,11 +862,21 @@
         "publisher": "aip",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Classical Physics",
+      "Fluid Dynamics"
     ]
   },
   "ai-vision": {
-    "arxiv_categories": ["cs.CV", "cs.LG", "eess.IV"],
-    "description": "AI and computer vision — deep learning, image processing, generative models, representation learning",
+    "arxiv_categories": [
+      "cs.CV",
+      "cs.LG",
+      "eess.IV"
+    ],
+    "description": "AI and computer vision \u00e2\u20ac\u201d deep learning, image processing, generative models, representation learning",
     "journals": [
       {
         "name": "IEEE TPAMI",
@@ -838,10 +919,19 @@
         "publisher": "science",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Computer Science",
+      "AI",
+      "Vision"
     ]
   },
   "systems-biology": {
-    "arxiv_categories": ["q-bio", "physics.bio-ph"],
+    "arxiv_categories": [
+      "q-bio",
+      "physics.bio-ph"
+    ],
     "description": "Systems biology, computational biology, immunology, and cell biology",
     "journals": [
       {
@@ -964,6 +1054,12 @@
         "publisher": "science",
         "tag_filter": null
       }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Biology",
+      "Computational Biology",
+      "Systems Biology"
     ]
   }
 }
