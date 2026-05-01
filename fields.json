@@ -927,6 +927,62 @@
       "Vision"
     ]
   },
+  "nlp": {
+    "arxiv_categories": [
+      "cs.CL"
+    ],
+    "description": "Natural language processing, computational linguistics, and language models",
+    "journals": [
+      {
+        "name": "CL",
+        "url": "https://direct.mit.edu/rss/site_1000003/advanceAccess_1000004.xml",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "TACL",
+        "publisher": "openalex",
+        "openalex_issn": "2307-387X",
+        "tag_filter": null
+      },
+      {
+        "name": "NLP",
+        "url": "https://www.cambridge.org/core/rss/product/id/6EF4F7A2CDB4AE9BC9DD279CA0D11FD7",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "JAIR",
+        "url": "https://www.jair.org/index.php/jair/gateway/plugin/WebFeedGatewayPlugin/rss2",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "NLPJournal",
+        "url": "https://rss.sciencedirect.com/publication/science/29497191",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "LRE",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10579&channel_name=Language+Resources+and+Evaluation",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "ACM TIST",
+        "url": "https://dl.acm.org/action/showFeed?type=etoc&feed=rss&jc=tist",
+        "publisher": "acm",
+        "tag_filter": null
+      }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Computer Science",
+      "AI",
+      "Natural Language Processing"
+    ]
+  },
   "systems-biology": {
     "arxiv_categories": [
       "q-bio",

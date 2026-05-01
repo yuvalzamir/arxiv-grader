@@ -6,6 +6,7 @@ To add a new publisher family:
   2. Add it to SCRAPERS below with the publisher key matching fields.json
 """
 
+from .acm import ACMScraper
 from .acs import ACSScraper
 from .aip import AIPScraper
 from .aps import APSScraper
@@ -27,6 +28,7 @@ from .springer import SpringerScraper
 from .wiley import WileyScraper
 
 SCRAPERS: dict = {
+    "acm":          ACMScraper,
     "acs":          ACSScraper,
     "aip":          AIPScraper,
     "aps":          APSScraper,

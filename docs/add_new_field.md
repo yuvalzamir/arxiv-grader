@@ -39,6 +39,28 @@ Open `fields.json` and add a new top-level entry:
 }
 ```
 
+**Required: `tree_path`**
+
+Every field entry must include a `tree_path` array — a 4-level hierarchy used by the website's field selector tree browser. Without it, the field will be silently skipped in the UI.
+
+```json
+"tree_path": ["Natural Sciences", "Physics", "Condensed Matter", "Quantum Sensing"]
+```
+
+Level structure: `[domain, discipline, subfield_group, field_display_name]`
+
+Existing tree paths for reference:
+- `["Natural Sciences", "Physics", "Condensed Matter", "Condensed Matter"]`
+- `["Natural Sciences", "Physics", "Condensed Matter", "Condensed Matter & Optics"]`
+- `["Natural Sciences", "Physics", "Condensed Matter", "Quantum Sensing"]`
+- `["Natural Sciences", "Physics", "Condensed Matter", "Soft Matter"]`
+- `["Natural Sciences", "Physics", "Optics & Photonics", "Optics"]`
+- `["Natural Sciences", "Physics", "Astrophysics & Cosmology", "Astrophysics"]`
+- `["Natural Sciences", "Physics", "High Energy Physics", "High Energy Physics"]`
+- `["Natural Sciences", "Physics", "Classical Physics", "Fluid Dynamics"]`
+- `["Natural Sciences", "Biology", "Computational Biology", "Systems Biology"]`
+- `["Natural Sciences", "Computer Science", "AI", "Vision"]`
+
 **Key decisions:**
 
 - `arxiv_categories`: list of arXiv category strings (e.g. `["quant-ph"]`, `["cond-mat", "physics.optics"]`). Papers are fetched for each category separately and deduplicated by `arxiv_id` before triage.

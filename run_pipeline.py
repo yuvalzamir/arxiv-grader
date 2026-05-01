@@ -573,6 +573,9 @@ def run_triage(
     arxiv_ranked:  list[tuple[dict, str]] = []
     journal_ranked: list[tuple[dict, str]] = []
 
+    if not journal_papers:
+        log.info("Triage-journals: no journal papers — skipped.")
+
     # Always run the cached call before the batch call so the cache is still
     # warm (warmed by the previous user in the field) when it fires. Batch calls
     # are not subject to the 50k token/minute cached-API limit and can run after.

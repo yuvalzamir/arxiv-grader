@@ -323,6 +323,7 @@ def run_centralized_triage(
     # which effectively disables chunking for current paper volumes.
     CACHED_BUDGET_PER_CHUNK = int(0.9 * orchestrator.CAPACITY) if orchestrator else 45_000
     MAX_CACHE_CHUNKS        = 3       # system prompt uses the 4th breakpoint
+    MIN_CACHE_TOKENS        = 1024    # Anthropic minimum for a cache breakpoint to be created
 
     arxiv_papers   = [p for p in papers if not p.get("source")]
     journal_papers = [p for p in papers if p.get("source")]
@@ -335,6 +336,9 @@ def run_centralized_triage(
     def _triage_mode(tokens: int) -> tuple[bool, int]:
         """Return (use_batch, n_chunks) for a given token estimate."""
         if base_batch:
+            return True, 1
+        if tokens < MIN_CACHE_TOKENS:
+            # Too small for Anthropic to create a cache entry; use Batch API instead.
             return True, 1
         n = max(1, math.ceil(tokens / CACHED_BUDGET_PER_CHUNK))
         if n > MAX_CACHE_CHUNKS:

@@ -26,14 +26,23 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
+import requests
 import feedparser
 from bs4 import BeautifulSoup
 
 from scrapers import SCRAPERS
+from scrapers.base import HEADERS
 
 log = logging.getLogger(__name__)
 
 WATERMARKS_FILE = Path(__file__).parent / "journal_watermarks.json"
+_OPENALEX_WORKS_URL = "https://api.openalex.org/works"
+_OPENALEX_HEADERS = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
+
+
+def _journal_key(journal: dict) -> str:
+    """Return the dedup/watermark key for a journal (URL or 'openalex:<issn>')."""
+    return journal.get("url") or f"openalex:{journal['openalex_issn']}"
 
 
 def _configure_logging():
@@ -62,16 +71,17 @@ def _save_watermarks(watermarks: dict):
 
 
 def _collect_journals(fields_data: dict, active_fields: list[str]) -> list[dict]:
-    """Union all journals across active fields, deduplicated by URL."""
-    seen_urls = set()
+    """Union all journals across active fields, deduplicated by URL or OpenAlex ISSN."""
+    seen_keys = set()
     journals = []
     for field in active_fields:
         if field not in fields_data:
             log.warning("Field '%s' not found in fields.json — skipping.", field)
             continue
         for journal in fields_data[field]["journals"]:
-            if journal["url"] not in seen_urls:
-                seen_urls.add(journal["url"])
+            key = _journal_key(journal)
+            if key not in seen_keys:
+                seen_keys.add(key)
                 journals.append(journal)
     return journals
 
@@ -119,6 +129,7 @@ def _entry_date(entry) -> date | None:
     and a prism:coverDate (official issue date). The cover date is always the
     later of the two for batch-released journals, so we take the maximum to
     ensure the watermark advances to the issue date on first scrape.
+
     """
     parsed = getattr(entry, "published_parsed", None) or getattr(entry, "updated_parsed", None)
     pub_date = date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday) if parsed else None
@@ -150,7 +161,7 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
 
     scraper = SCRAPERS[publisher]()
     log.info("Fetching RSS: %s (%s)", journal["name"], journal["url"])
-    feed = feedparser.parse(journal["url"])
+    feed = feedparser.parse(journal["url"], agent=HEADERS["User-Agent"])
 
     if feed.bozo and not feed.entries:
         log.warning("%s: feed parse error — %s", journal["name"], feed.bozo_exception)
@@ -218,6 +229,97 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
     return papers, max_date
 
 
+def _reconstruct_abstract(inverted_index: dict) -> str:
+    """Reconstruct plain-text abstract from OpenAlex abstract_inverted_index."""
+    tokens: dict[int, str] = {}
+    for word, positions in inverted_index.items():
+        for pos in positions:
+            tokens[pos] = word
+    return " ".join(tokens[i] for i in sorted(tokens))
+
+
+def scrape_journal_openalex(journal: dict, since: date) -> tuple[list[dict], date | None]:
+    """
+    Fetch recent papers from OpenAlex by journal ISSN.
+    Used for journals with no RSS feed (e.g. TACL).
+    Queries all works from `since + 1 day` onward.
+    """
+    issn = journal["openalex_issn"]
+    fetch_from = (since + timedelta(days=1)).isoformat()
+    params = {
+        "filter": f"primary_location.source.issn:{issn},from_publication_date:{fetch_from}",
+        "sort": "publication_date:desc",
+        "per-page": "50",
+        "select": "id,doi,title,abstract_inverted_index,authorships,publication_date,topics",
+        "mailto": "contact@incomingscience.xyz",
+    }
+    log.info("Fetching OpenAlex: %s (ISSN %s, since %s)", journal["name"], issn, since)
+
+    try:
+        r = requests.get(_OPENALEX_WORKS_URL, params=params, headers=_OPENALEX_HEADERS, timeout=20)
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:
+        log.warning("%s: OpenAlex fetch failed — %s", journal["name"], e)
+        return [], None
+
+    tag_filter = journal.get("tag_filter")
+    papers = []
+    max_date = None
+
+    for work in data.get("results", []):
+        try:
+            pub_date_str = work.get("publication_date", "")
+            if not pub_date_str:
+                continue
+            pub_date = date.fromisoformat(pub_date_str[:10])
+
+            title = (work.get("title") or "").strip()
+            if not title:
+                continue
+
+            doi_url = work.get("doi") or ""
+            doi = doi_url.replace("https://doi.org/", "").replace("http://doi.org/", "")
+
+            abstract = _reconstruct_abstract(work.get("abstract_inverted_index") or {})
+
+            authors = [
+                a["author"]["display_name"]
+                for a in work.get("authorships", [])
+                if a.get("author", {}).get("display_name")
+            ]
+
+            subject_tags = [t["display_name"] for t in work.get("topics", [])]
+
+            if tag_filter:
+                combined = [title.lower()] + [t.lower() for t in subject_tags]
+                if not any(f.lower() in text for f in tag_filter for text in combined):
+                    continue
+
+            abstract_quality = "missing" if not abstract else ("truncated" if len(abstract) < 400 else "full")
+
+            papers.append({
+                "arxiv_id":         doi or work.get("id", ""),
+                "title":            title,
+                "abstract":         abstract,
+                "abstract_quality": abstract_quality,
+                "authors":          authors,
+                "subcategories":    [],
+                "source":           journal["name"],
+                "feed_url":         f"openalex:{issn}",
+                "subject_tags":     subject_tags,
+            })
+
+            if max_date is None or pub_date > max_date:
+                max_date = pub_date
+
+        except Exception as e:
+            log.warning("%s: skipping work — %s", journal["name"], e)
+
+    log.info("%s: %d articles from OpenAlex.", journal["name"], len(papers))
+    return papers, max_date
+
+
 def main():
     _configure_logging()
 
@@ -242,7 +344,7 @@ def main():
 
     all_papers = []
     for journal in journals:
-        url_key = journal["url"]
+        url_key = _journal_key(journal)
 
         if args.since:
             since = date.fromisoformat(args.since)
@@ -252,7 +354,10 @@ def main():
         log.info("%s: watermark is %s", journal["name"], since)
 
         try:
-            papers, max_date = scrape_journal(journal, since)
+            if "url" in journal:
+                papers, max_date = scrape_journal(journal, since)
+            else:
+                papers, max_date = scrape_journal_openalex(journal, since)
             all_papers.extend(papers)
 
             if max_date is not None:

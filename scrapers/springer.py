@@ -41,21 +41,29 @@ class SpringerScraper(BaseScraper):
         title = getattr(entry, "title", "").lower()
         return not any(t in title for t in _ERRATA_TITLES)
 
+    def _fetch_by_doi(self, doi: str) -> dict:
+        """Fetch abstract + authors from OpenAlex by DOI. Shared with subclasses."""
+        meta = self._fetch_metadata_openalex(doi)
+        abstract = meta.get("abstract", "")
+        authors = meta.get("authors", [])
+        if abstract:
+            return {"abstract": abstract, "subject_tags": [], "doi": doi,
+                    "authors": authors, "skip_rss_fallback": True}
+        return {"abstract": "", "subject_tags": [], "doi": doi, "authors": authors}
+
     def scrape_article(self, url: str, entry=None) -> dict:
         doi = self._doi_from_entry(entry) or self._doi_from_url(url)
 
         # Step 1: OpenAlex by DOI — provides both abstract and authors in one call.
         # Springer has good OpenAlex coverage and the RSS carries no author data.
         if doi:
-            meta = self._fetch_metadata_openalex(doi)
-            abstract = meta.get("abstract", "")
-            authors = meta.get("authors", [])
-            if abstract:
-                return {"abstract": abstract, "subject_tags": [], "doi": doi,
-                        "authors": authors, "skip_rss_fallback": True}
+            result = self._fetch_by_doi(doi)
+            if result.get("abstract"):
+                return result
             # No OpenAlex abstract yet (very recent paper) — fall through to RSS.
             # Do NOT set skip_rss_fallback so the caller can use entry.summary.
-            return {"abstract": "", "subject_tags": [], "doi": doi, "authors": authors}
+            return {"abstract": "", "subject_tags": [], "doi": doi,
+                    "authors": result.get("authors", [])}
 
         # Step 2: RSS <description> — used only when DOI is unavailable.
         if entry is not None:
