@@ -203,6 +203,14 @@ def scrape_journal(journal: dict, since: date) -> tuple[list[dict], date | None]
             else:
                 abstract_quality = "full"
 
+            tag_filter = journal.get("tag_filter")
+            if tag_filter:
+                title_lower = getattr(entry, "title", "").lower()
+                tags_lower  = [t.lower() for t in result["subject_tags"]]
+                combined    = [title_lower] + tags_lower
+                if not any(f.lower() in text for f in tag_filter for text in combined):
+                    continue
+
             papers.append({
                 "arxiv_id":        arxiv_id,
                 "title":           getattr(entry, "title", "").strip(),

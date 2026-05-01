@@ -927,6 +927,41 @@
       "Vision"
     ]
   },
+  "ai-speech": {
+    "arxiv_categories": ["cs.SD", "eess.AS"],
+    "description": "Speech processing, audio signal processing, speech recognition, synthesis, and speaker technologies",
+    "journals": [
+      {
+        "name": "EURASIP JASMP",
+        "url": "https://link.springer.com/search.rss?query=*&content-type=Article&sortBy=relevance&search-within=Journal&facet-journal-id=13636",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "IEEE SPL",
+        "url": "https://ieeexplore.ieee.org/rss/TOC97.XML",
+        "publisher": "ieee",
+        "tag_filter": [
+          "speech",
+          "audio",
+          "voice",
+          "speaker",
+          "acoustic",
+          "language model",
+          "prosody",
+          "singing",
+          "sound event",
+          "noise"
+        ]
+      }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Computer Science",
+      "AI",
+      "Speech & Audio"
+    ]
+  },
   "nlp": {
     "arxiv_categories": [
       "cs.CL"
