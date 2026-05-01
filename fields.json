@@ -39,18 +39,7 @@
         "name": "Nature",
         "url": "https://www.nature.com/nature.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "condensed-matter physics",
-          "electronic properties",
-          "magnetic properties",
-          "superconducting",
-          "topological matter",
-          "spintronics",
-          "two-dimensional materials",
-          "quantum hall",
-          "nanoscale materials",
-          "nanoscience and technology"
-        ]
+        "tag_filter": null
       },
       {
         "name": "NatPhys",
@@ -161,18 +150,7 @@
         "name": "Nature",
         "url": "https://www.nature.com/nature.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "condensed-matter physics",
-          "electronic properties",
-          "magnetic properties",
-          "superconducting",
-          "topological matter",
-          "spintronics",
-          "two-dimensional materials",
-          "quantum hall",
-          "nanoscale materials",
-          "nanoscience and technology"
-        ]
+        "tag_filter": null
       },
       {
         "name": "NatPhys",
@@ -333,7 +311,7 @@
     "tree_path": [
       "Natural Sciences",
       "Physics",
-      "Condensed Matter",
+      "Quantum Technology",
       "Quantum Sensing"
     ]
   },
@@ -371,17 +349,7 @@
         "name": "Nature",
         "url": "https://www.nature.com/nature.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "photonics",
-          "optical physics",
-          "nonlinear optics",
-          "quantum optics",
-          "laser",
-          "nanophotonics",
-          "fibre optics",
-          "optical spectroscopy",
-          "optical manipulation"
-        ]
+        "tag_filter": null
       },
       {
         "name": "NatPhys",
@@ -540,18 +508,7 @@
         "name": "Nature",
         "url": "https://www.nature.com/nature.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "soft matter",
-          "colloids",
-          "polymers",
-          "self-assembly",
-          "liquid crystals",
-          "active matter",
-          "biological physics",
-          "biophysics",
-          "gels and hydrogels",
-          "membranes"
-        ]
+        "tag_filter": null
       },
       {
         "name": "Science",
@@ -745,18 +702,7 @@
         "name": "Nature",
         "url": "https://www.nature.com/nature.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "particle physics",
-          "high-energy physics",
-          "quantum field theory",
-          "string theory",
-          "supersymmetry",
-          "dark matter",
-          "electroweak",
-          "nuclear physics",
-          "neutrino",
-          "collider physics"
-        ]
+        "tag_filter": null
       },
       {
         "name": "Science",
@@ -810,15 +756,7 @@
         "name": "Nature",
         "url": "https://www.nature.com/nature.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "fluid dynamics",
-          "turbulence",
-          "nonlinear dynamics",
-          "pattern formation",
-          "complex fluids",
-          "geophysical and environmental physics",
-          "statistical physics"
-        ]
+        "tag_filter": null
       },
       {
         "name": "NatPhys",
@@ -900,18 +838,7 @@
         "name": "Nature",
         "url": "https://www.nature.com/nature.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "machine learning",
-          "computer vision",
-          "artificial intelligence",
-          "computer science",
-          "deep learning",
-          "image processing",
-          "neural networks",
-          "natural language processing",
-          "robotics",
-          "pattern recognition"
-        ]
+        "tag_filter": null
       },
       {
         "name": "Science",
@@ -928,7 +855,10 @@
     ]
   },
   "ai-speech": {
-    "arxiv_categories": ["cs.SD", "eess.AS"],
+    "arxiv_categories": [
+      "cs.SD",
+      "eess.AS"
+    ],
     "description": "Speech processing, audio signal processing, speech recognition, synthesis, and speaker technologies",
     "journals": [
       {
@@ -960,6 +890,104 @@
       "Computer Science",
       "AI",
       "Speech & Audio"
+    ]
+  },
+  "quantum-info": {
+    "arxiv_categories": [
+      "quant-ph"
+    ],
+    "description": "Quantum information, quantum computing, quantum communication, quantum error correction, and quantum hardware",
+    "journals": [
+      {
+        "name": "PRXQuantum",
+        "url": "http://feeds.aps.org/rss/recent/prxquantum.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "npjQI",
+        "url": "https://www.nature.com/npjqi.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Quantum",
+        "url": "https://quantum-journal.org/feed/",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "QST",
+        "url": "https://iopscience.iop.org/journal/rss/2058-9565",
+        "publisher": "iop",
+        "tag_filter": null
+      },
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRA-QI",
+        "url": "https://feeds.aps.org/rss/tocsec/PRA-Quantuminformation.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "ScienceAdvances",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/physics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/nanoscience-and-technology/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/optics-and-photonics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/mathematics-and-computing/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Quantum Technology",
+      "Quantum Information"
     ]
   },
   "nlp": {
@@ -1125,19 +1153,7 @@
         "name": "Nature",
         "url": "https://www.nature.com/nature.rss",
         "publisher": "nature",
-        "tag_filter": [
-          "cell biology",
-          "systems biology",
-          "computational biology",
-          "immunology",
-          "genomics",
-          "proteomics",
-          "molecular biology",
-          "genetics",
-          "biochemistry",
-          "cancer",
-          "microbiology"
-        ]
+        "tag_filter": null
       },
       {
         "name": "Science",
