@@ -424,6 +424,14 @@ def robots():
     return send_from_directory(BASE_DIR / "website", "robots.txt", mimetype="text/plain")
 
 
+@app.route("/legal")
+def legal():
+    return send_from_directory(
+        BASE_DIR / "website" / "stitch_platform_user_expansion" / "legal_final",
+        "code.html",
+    )
+
+
 @app.route("/sitemap.xml")
 def sitemap():
     return send_from_directory(BASE_DIR / "website", "sitemap.xml", mimetype="application/xml")
