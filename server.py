@@ -419,6 +419,16 @@ def fields_json():
     return send_from_directory(BASE_DIR, "fields.json", mimetype="application/json")
 
 
+@app.route("/robots.txt")
+def robots():
+    return send_from_directory(BASE_DIR / "website", "robots.txt", mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap():
+    return send_from_directory(BASE_DIR / "website", "sitemap.xml", mimetype="application/xml")
+
+
 @app.route("/health")
 def health():
     """Liveness check — confirm the server is running."""
