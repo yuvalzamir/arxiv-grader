@@ -21,6 +21,7 @@ SLEEP_BETWEEN_REQUESTS = 1.5
 _OPENALEX_API_URL = "https://api.openalex.org/works/doi:{doi}"
 _EUROPEPMC_API_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 _CR_API_URL = "https://api.crossref.org/works/{doi}"
+_S2_SEARCH_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 _API_HEADERS = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
 
 
@@ -104,6 +105,27 @@ class BaseScraper(ABC):
         except Exception as exc:
             log.debug("CrossRef metadata fetch failed for DOI %s: %s", doi, exc)
             return {}
+
+    def _fetch_abstract_semanticscholar(self, title: str) -> str:
+        """Fetch abstract from Semantic Scholar by title search. Returns "" on miss or error."""
+        if not title:
+            return ""
+        try:
+            r = requests.get(
+                _S2_SEARCH_URL,
+                params={"query": title, "fields": "abstract", "limit": 1},
+                headers=_API_HEADERS,
+                timeout=15,
+            )
+            if r.status_code == 200:
+                data = r.json().get("data", [])
+                if data:
+                    return data[0].get("abstract", "") or ""
+            else:
+                log.debug("Semantic Scholar returned %d for title '%s'", r.status_code, title[:60])
+        except Exception as exc:
+            log.warning("Semantic Scholar request failed for title '%s': %s", title[:60], exc)
+        return ""
 
     def _fetch_abstract_europepmc(self, doi: str) -> str:
         """Fetch abstract from Europe PMC by DOI. Returns "" on miss or error."""

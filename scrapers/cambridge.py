@@ -34,6 +34,14 @@ class CambridgeScraper(BaseScraper):
         return bool(_CAMBRIDGE_DOI_RE.search(str(doi)))
 
     def scrape_article(self, url: str, entry=None) -> dict:
+        # Try OpenAlex first using the DOI from RSS metadata fields.
+        if entry is not None:
+            doi = getattr(entry, "prism_doi", "") or getattr(entry, "dc_identifier", "")
+            if doi:
+                abstract = self._fetch_abstract_openalex(doi)
+                if abstract:
+                    return {"abstract": abstract, "subject_tags": []}
+        # Fall back to RSS <summary> (Cambridge includes full abstract as HTML CDATA).
         if entry is not None:
             raw = getattr(entry, "summary", "") or getattr(entry, "description", "")
             if raw:

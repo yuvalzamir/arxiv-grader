@@ -44,7 +44,7 @@ from dotenv import load_dotenv
 load_dotenv()  # root .env first; user .env loaded after arg parsing
 
 BASE_DIR  = Path(__file__).parent
-KEEP_DAYS = 14
+KEEP_DAYS = 21
 
 # Shared sending account — loaded from root .env, not user-configurable.
 _SMTP_HOST     = os.environ.get("EMAIL_SMTP_HOST", "smtp.gmail.com")

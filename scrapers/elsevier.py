@@ -181,6 +181,18 @@ class ElsevierGeneralScraper(ElsevierScraper):
     """ElsevierScraper for general (non-HEP) Elsevier journals.
 
     Use publisher="elsevier_general" in fields.json.
-    Abstract pipeline: CrossRef PII→DOI → OpenAlex (no domain-specific DB).
+    Abstract pipeline: CrossRef PII→DOI → OpenAlex → Semantic Scholar title search.
     """
     SPECIFIC_DB = None
+
+    def scrape_article(self, url: str, entry=None) -> dict:
+        result = super().scrape_article(url, entry=entry)
+        if result.get("abstract"):
+            return result
+        # Semantic Scholar title-search fallback — indexes faster than OpenAlex
+        # for Elsevier journals and covers the 2–4 week gap window.
+        title = _clean_title(getattr(entry, "title", "")) if entry is not None else ""
+        abstract = self._fetch_abstract_semanticscholar(title)
+        if abstract:
+            result["abstract"] = abstract
+        return result
