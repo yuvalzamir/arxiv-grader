@@ -8,9 +8,8 @@
 
 ## Upcoming
 
-- [ ] **Refiner v2 — May check** — Verify refiner v2 runs correctly on real data after May 2nd cron. Check area management recommendations make sense given a full month of ratings.
-- [ ] **Refiner — check 2026-05-03 (Sunday)** — Pull `refiner.log` and verify: new-user Saturday refiner ran with correct python, `last_refined_at` is being stamped, no JSON parse errors, no `python: not found`.
 - [ ] **Refiner — check 2026-05-10 (Sunday)** — Second check: confirm accumulated ratings since last run are picked up correctly via `last_refined_at`, min-rating threshold working as expected.
+- [ ] **Abstract bank — monitor** — Check `[BANK] Retrying N banked papers` in daily.log after next run to confirm bank has entries and retry is firing. Then check for `[BANK] injected` lines appearing within 7 days as OpenAlex/Europe PMC catch up.
 - [ ] **APS full abstracts (deeper investigation)** — Best option found was SS DOI→arXiv ID + batched arXiv fetch: 48% hit rate, ~2min overhead. Not worth it given truncated RSS abstracts are sufficient for triage. Only remaining option: ICFO institutional APS access (IP whitelist or API token).
 
 ---

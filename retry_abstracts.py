@@ -127,6 +127,8 @@ def retry_bank(bank: dict, ttl_days: int = 7) -> tuple[dict, dict]:
     today = date.today()
     cutoff = (today - timedelta(days=ttl_days)).isoformat()
 
+    log.info("[BANK] Retrying %d banked papers (TTL=%dd, cutoff=%s)", len(bank), ttl_days, cutoff)
+
     enriched_by_field: dict[str, list] = {}
     to_delete: list[str] = []
 
