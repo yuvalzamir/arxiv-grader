@@ -1066,6 +1066,31 @@
     ],
     "tree_path": ["Social Sciences", "Economics", "Applied Microeconomics", "Political & Media Economics"]
   },
+  "quantum-computing": {
+    "arxiv_categories": ["quant-ph", "cond-mat.supr-con", "physics.atom-ph"],
+    "description": "Quantum computing hardware — superconducting qubits, optical tweezers, cold atoms, and photonic qubits",
+    "journals": [
+      { "name": "PRXQuantum",  "url": "http://feeds.aps.org/rss/recent/prxquantum.xml",                                                                              "publisher": "aps",     "tag_filter": null },
+      { "name": "npjQI",       "url": "https://www.nature.com/npjqi.rss",                                                                                             "publisher": "nature",  "tag_filter": null },
+      { "name": "Quantum",     "url": "https://quantum-journal.org/feed/",                                                                                            "publisher": "plos",    "tag_filter": null },
+      { "name": "QST",         "url": "https://iopscience.iop.org/journal/rss/2058-9565",                                                                             "publisher": "iop",     "tag_filter": null },
+      { "name": "PRB",         "url": "http://feeds.aps.org/rss/recent/prb.xml",                                                                                      "publisher": "aps",     "tag_filter": null },
+      { "name": "PRL",         "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",                   "publisher": "aps",     "tag_filter": null },
+      { "name": "PRL",         "url": "https://feeds.aps.org/rss/tocsec/PRL-CondensedMatterStructureetc.xml",                                                         "publisher": "aps",     "tag_filter": null },
+      { "name": "PRL",         "url": "https://feeds.aps.org/rss/tocsec/PRL-AtomicMolecularandOpticalPhysics.xml",                                                    "publisher": "aps",     "tag_filter": null },
+      { "name": "PRA-QI",      "url": "https://feeds.aps.org/rss/tocsec/PRA-Quantuminformation.xml",                                                                  "publisher": "aps",     "tag_filter": null },
+      { "name": "PRA-AMO",     "url": "https://feeds.aps.org/rss/tocsec/PRA-Atomicandmolecularprocessesinexternalfields.xml",                                        "publisher": "aps",     "tag_filter": null },
+      { "name": "PRA-Optics",  "url": "https://feeds.aps.org/rss/tocsec/PRA-Quantumopticsphysicsoflasersnonlinearopticsclassicaloptics.xml",                          "publisher": "aps",     "tag_filter": null },
+      { "name": "NatPhoton",   "url": "https://www.nature.com/nphoton.rss",                                                                                           "publisher": "nature",  "tag_filter": null },
+      { "name": "Nature",      "url": "https://www.nature.com/nature.rss",                                                                                            "publisher": "nature",  "tag_filter": null },
+      { "name": "NatPhys",     "url": "https://www.nature.com/nphys.rss",                                                                                             "publisher": "nature",  "tag_filter": null },
+      { "name": "Science",     "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",                                                        "publisher": "science", "tag_filter": null },
+      { "name": "NatComms",    "url": "https://www.nature.com/subjects/physics/ncomms.rss",                                                                           "publisher": "nature",  "tag_filter": null },
+      { "name": "NatComms",    "url": "https://www.nature.com/subjects/optics-and-photonics/ncomms.rss",                                                              "publisher": "nature",  "tag_filter": null },
+      { "name": "NatComms",    "url": "https://www.nature.com/subjects/nanoscience-and-technology/ncomms.rss",                                                        "publisher": "nature",  "tag_filter": null }
+    ],
+    "tree_path": ["Natural Sciences", "Physics", "Quantum Technology", "Quantum Computing Hardware"]
+  },
   "systems-biology": {
     "arxiv_categories": [
       "q-bio",

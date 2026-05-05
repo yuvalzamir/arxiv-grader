@@ -8,6 +8,7 @@
 
 ## Upcoming
 
+- [ ] **QST RSS inaccessible** — `https://iopscience.iop.org/journal/rss/2058-9565` returned no papers for the `quantum-computing` field. Check if the IOP feed is down or blocked; verify with a manual fetch and consider an alternative source if needed.
 - [ ] **Refiner — check 2026-05-10 (Sunday)** — Second check: confirm accumulated ratings since last run are picked up correctly via `last_refined_at`, min-rating threshold working as expected.
 - [ ] **Abstract bank — monitor** — Check `[BANK] Retrying N banked papers` in daily.log after next run to confirm bank has entries and retry is firing. Then check for `[BANK] injected` lines appearing within 7 days as OpenAlex/Europe PMC catch up.
 - [ ] **APS full abstracts (deeper investigation)** — Best option found was SS DOI→arXiv ID + batched arXiv fetch: 48% hit rate, ~2min overhead. Not worth it given truncated RSS abstracts are sufficient for triage. Only remaining option: ICFO institutional APS access (IP whitelist or API token).
