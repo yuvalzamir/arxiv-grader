@@ -220,6 +220,27 @@ def cleanup_old_shared_folders(keep_days: int = 3) -> None:
             log.info("Removed old shared data folder: %s", folder)
 
 
+def run_preprint_scrape(date_str: str, active_fields: list[str], shared_data_dir: Path, fields_data: dict, no_advance_watermark: bool = False) -> None:
+    """
+    Run fetch_preprints.py for all active fields that have a 'preprints' config.
+    Writes {field}_preprints.json into shared_data_dir.
+    """
+    fields_with_preprints = [f for f in active_fields if fields_data.get(f, {}).get("preprints")]
+    if not fields_with_preprints:
+        return
+    cmd = [
+        sys.executable, str(BASE_DIR / "fetch_preprints.py"),
+        "--fields", *fields_with_preprints,
+        "--output-dir", str(shared_data_dir),
+    ]
+    if no_advance_watermark:
+        cmd.append("--no-advance-watermark")
+    log.info("Running preprint scrape for fields: %s", fields_with_preprints)
+    result = subprocess.run(cmd, cwd=str(BASE_DIR))
+    if result.returncode != 0:
+        log.warning("fetch_preprints.py failed — fields will get no preprints today.")
+
+
 def run_journal_scrape(date_str: str, active_fields: list[str], shared_data_dir: Path, no_advance_watermark: bool = False) -> Path | None:
     """
     Run fetch_journals.py once for all active fields.
@@ -788,6 +809,11 @@ def main():
             log.info("No arXiv papers in any field today — holiday or off-day. Skipping pipeline.")
             sys.exit(0)
 
+        # Step 1b: Preprint scraping (NBER, CEPR, etc.) — runs after arXiv so that an
+        # empty arXiv feed (holiday) prevents preprint watermarks from advancing too.
+        if not args.no_journals:
+            run_preprint_scrape(date_str, fields_with_papers, shared_data_dir, fields_data, no_advance_watermark=args.no_advance_watermark)
+
         # Step 2: Journal scraping — only for fields that have arXiv papers.
         if not args.no_journals:
             scraped_path = run_journal_scrape(date_str, fields_with_papers, shared_data_dir, no_advance_watermark=args.no_advance_watermark)
@@ -856,12 +882,17 @@ def main():
             if journals_path.exists():
                 journal_papers = json.loads(journals_path.read_text())
 
-            merged_papers = arxiv_papers + journal_papers  # arXiv first
+            preprint_papers: list[dict] = []
+            preprints_path = shared_data_dir / f"{field}_preprints.json"
+            if preprints_path.exists():
+                preprint_papers = json.loads(preprints_path.read_text())
+
+            merged_papers = arxiv_papers + preprint_papers + journal_papers
             merged_path = shared_data_dir / f"{field}_today_papers.json"
             merged_path.write_text(json.dumps(merged_papers, indent=2, ensure_ascii=False))
             log.info(
-                "Field '%s': %d arXiv + %d journal = %d total papers.",
-                field, len(arxiv_papers), len(journal_papers), len(merged_papers),
+                "Field '%s': %d arXiv + %d preprints + %d journal = %d total papers.",
+                field, len(arxiv_papers), len(preprint_papers), len(journal_papers), len(merged_papers),
             )
 
             field_user_papers = {u.name: merged_path for u in field_users}

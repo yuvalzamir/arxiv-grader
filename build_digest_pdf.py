@@ -315,9 +315,12 @@ def author_table(paper: dict, styles: dict) -> Table:
     authors_text = safe(", ".join(paper.get("authors", [])) or "Unknown authors")
 
     source = paper.get("source", "")
+    preprint_source = paper.get("preprint_source", "")
     subcats = paper.get("subcategories", [])
     if source:
         label = f'  <font size="8">[{safe(source)}]</font>'
+    elif preprint_source:
+        label = f'  <font size="8">[{safe(preprint_source)}]</font>'
     elif subcats:
         label = f'  <font size="8">[{safe(subcats[0])}]</font>'
     else:

@@ -1062,9 +1062,11 @@
       { "name": "AJPS",            "url": "https://onlinelibrary.wiley.com/feed/15405907/most-recent",                                      "publisher": "wiley",           "tag_filter": null },
       { "name": "APSR",            "url": "https://www.cambridge.org/core/rss/product/id/833A7242AC7B607BA7F6168DA072DB3B",                 "publisher": "cambridge",       "tag_filter": null },
       { "name": "JoP",             "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jop",                    "publisher": "plos",            "tag_filter": null },
-      { "name": "PoliticalComm",   "url": "https://www.tandfonline.com/feed/rss/upcp20",                                                    "publisher": "tandfonline",     "tag_filter": null },
-      { "name": "NBER",            "url": "https://back.nber.org/rss/new.xml",                                                                   "publisher": "plos",            "tag_filter": null },
-      { "name": "CEPR",            "url": "https://cepr.org/rss/discussion-paper",                                                               "publisher": "plos",            "tag_filter": null }
+      { "name": "PoliticalComm",   "url": "https://www.tandfonline.com/feed/rss/upcp20",                                                    "publisher": "tandfonline",     "tag_filter": null }
+    ],
+    "preprints": [
+      { "name": "NBER", "url": "https://back.nber.org/rss/new.xml",        "id_pattern": "w(\\d+)",  "tag_filter": null },
+      { "name": "CEPR", "url": "https://cepr.org/rss/discussion-paper",    "id_pattern": "dp(\\d+)", "tag_filter": null }
     ],
     "tree_path": ["Social Sciences", "Economics", "Applied Microeconomics", "Political & Media Economics"]
   },
