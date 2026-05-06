@@ -182,7 +182,15 @@ def filter_for_field(scraped_papers: list[dict], field_config: dict) -> list[dic
     tag_filter: [...]  → general journal, keep only papers whose subject_tags
                          contain at least one case-insensitive substring match.
     """
-    url_tag_filters = {j["url"]: j["tag_filter"] for j in field_config["journals"]}
+    url_tag_filters = {}
+    for j in field_config["journals"]:
+        if "url" in j:
+            key = j["url"]
+        elif "crossref_issn" in j:
+            key = f"crossref:{j['crossref_issn']}"
+        else:
+            key = f"openalex:{j['openalex_issn']}"
+        url_tag_filters[key] = j["tag_filter"]
     result = []
     for paper in scraped_papers:
         feed_url = paper.get("feed_url", "")
@@ -694,6 +702,7 @@ def main():
     parser.add_argument("--triage-only",  action="store_true", help="Stop after centralized triage — skip scoring, PDF, and email (useful for testing triage/caching).")
     parser.add_argument("--no-batch",     action="store_true", help="Use synchronous API for scoring instead of Batch API.")
     parser.add_argument("--score-only",   action="store_true", help="Skip fetch, triage, dedup, and archive — run scoring/PDF/email only. Requires filtered_papers.json to already exist for the user+date.")
+    parser.add_argument("--pdf-only",     action="store_true", help="Skip fetch, triage, scoring, dedup, and archive — build PDF and send email only. Requires scored_papers.json to already exist for the user+date.")
     # Refiner flags (passed through to run_profile_refiner.py)
     parser.add_argument("--dry-run", action="store_true", help="(refine only) Don't write profile.")
     parser.add_argument("--days",    type=int, default=None, help="(refine only) Days of history to use.")
@@ -760,7 +769,7 @@ def main():
         date_str = args.date or date.today().isoformat()
         shared_data_dir = BASE_DIR / "data" / date_str
 
-    if not args.refine and not args.score_only:
+    if not args.refine and not args.score_only and not args.pdf_only:
         shared_data_dir.mkdir(parents=True, exist_ok=True)
 
         # Snapshot watermarks at the start of the run — useful for manual recovery
@@ -824,7 +833,11 @@ def main():
                     if field not in fields_data:
                         log.warning("Field '%s' not in fields.json — skipping filter.", field)
                         continue
-                    filtered = filter_for_field(scraped_papers, fields_data[field])
+                    try:
+                        filtered = filter_for_field(scraped_papers, fields_data[field])
+                    except Exception as e:
+                        log.error("Field '%s': filter_for_field failed (%s) — skipping journals for this field.", field, e)
+                        continue
                     field_path = shared_data_dir / f"{field}_journals.json"
                     with open(field_path, "w") as f:
                         json.dump(filtered, f, indent=2)
@@ -948,6 +961,8 @@ def main():
             base_extra_args.append("--no-batch")
         if args.score_only:
             base_extra_args += ["--skip-dedup", "--skip-archive"]
+        if args.pdf_only:
+            base_extra_args.append("--pdf-only")
 
     # For the biweekly refiner, skip new users — they are on the weekly track
     # (run_all_users.py --new-user-refine, Saturday cron) for their first 8 weeks.

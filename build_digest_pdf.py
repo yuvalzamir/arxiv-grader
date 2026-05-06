@@ -312,7 +312,11 @@ def title_table(paper: dict, styles: dict, scored: bool) -> Table:
 
 def author_table(paper: dict, styles: dict) -> Table:
     """Lighter beige author band with source label (journal name or arXiv subcategory)."""
-    authors_text = safe(", ".join(paper.get("authors", [])) or "Unknown authors")
+    authors = paper.get("authors", [])
+    if len(authors) > 8:
+        authors_text = safe(", ".join(authors[:8]) + " et al.")
+    else:
+        authors_text = safe(", ".join(authors) or "Unknown authors")
 
     source = paper.get("source", "")
     preprint_source = paper.get("preprint_source", "")

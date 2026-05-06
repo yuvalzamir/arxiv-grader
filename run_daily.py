@@ -229,6 +229,11 @@ def main():
         "--no-batch", action="store_true",
         help="Use synchronous API for scoring instead of Batch API (faster, no queue, 2x cost).",
     )
+    parser.add_argument(
+        "--pdf-only", action="store_true",
+        help="Skip dedup, archive, and scoring — build PDF and send email only. "
+             "Requires scored_papers.json to already exist for the user+date.",
+    )
     args = parser.parse_args()
 
     user_dir = Path(args.user_dir)
@@ -260,58 +265,66 @@ def main():
 
     log.info("=== arXiv daily grader — %s [user: %s] ===", today_str, username)
 
-    # ------------------------------------------------------------------
-    # Step 1: Deduplicate yesterday's ratings
-    # ------------------------------------------------------------------
-    if not args.skip_dedup:
-        run(
-            [sys.executable, "deduplicate_ratings.py",
-             "--date", yesterday_str, "--user-dir", str(user_dir)],
-            step="dedup",
-        )
+    if args.pdf_only:
+        log.info("[dedup] Skipped (--pdf-only).")
+        log.info("[archive] Skipped (--pdf-only).")
+        log.info("[grade] Skipped (--pdf-only) — using existing scored_papers.json.")
+        if not scored_path.exists():
+            log.error("--pdf-only set but scored_papers.json not found: %s", scored_path)
+            sys.exit(1)
     else:
-        log.info("[dedup] Skipped.")
+        # ------------------------------------------------------------------
+        # Step 1: Deduplicate yesterday's ratings
+        # ------------------------------------------------------------------
+        if not args.skip_dedup:
+            run(
+                [sys.executable, "deduplicate_ratings.py",
+                 "--date", yesterday_str, "--user-dir", str(user_dir)],
+                step="dedup",
+            )
+        else:
+            log.info("[dedup] Skipped.")
 
-    # ------------------------------------------------------------------
-    # Step 2: Archive yesterday's ratings
-    # ------------------------------------------------------------------
-    if not args.skip_archive:
-        run(
-            [sys.executable, "archive.py",
-             "--date", yesterday_str, "--user-dir", str(user_dir)],
-            step="archive",
-        )
-    else:
-        log.info("[archive] Skipped.")
+        # ------------------------------------------------------------------
+        # Step 2: Archive yesterday's ratings
+        # ------------------------------------------------------------------
+        if not args.skip_archive:
+            run(
+                [sys.executable, "archive.py",
+                 "--date", yesterday_str, "--user-dir", str(user_dir)],
+                step="archive",
+            )
+        else:
+            log.info("[archive] Skipped.")
 
-    # ------------------------------------------------------------------
-    # Step 3: Run scoring pipeline (triage already done by run_all_users.py)
-    # ------------------------------------------------------------------
-    archive_path = user_dir / "archive.json"
-    grade_cmd = [
-        sys.executable, "run_pipeline.py",
-        "--papers",      str(papers_path),
-        "--profile",     str(profile),
-        "--filtered",    str(filtered_path),
-        "--scored",      str(scored_path),
-        "--archive",     str(archive_path),
-        "--skip-triage",
-    ]
-    if args.no_batch:
-        grade_cmd.append("--no-batch")
-    run(grade_cmd, step="grade")
+        # ------------------------------------------------------------------
+        # Step 3: Run scoring pipeline (triage already done by run_all_users.py)
+        # ------------------------------------------------------------------
+        archive_path = user_dir / "archive.json"
+        grade_cmd = [
+            sys.executable, "run_pipeline.py",
+            "--papers",      str(papers_path),
+            "--profile",     str(profile),
+            "--filtered",    str(filtered_path),
+            "--scored",      str(scored_path),
+            "--archive",     str(archive_path),
+            "--skip-triage",
+        ]
+        if args.no_batch:
+            grade_cmd.append("--no-batch")
+        run(grade_cmd, step="grade")
 
-    # If nothing passed triage, scored_papers.json is not written. Send a
-    # notification and skip the PDF/email steps.
-    if not scored_path.exists():
-        log.info("[grade] No papers passed triage — skipping PDF build.")
-        profile_data = json.loads(profile.read_text(encoding="utf-8"))
-        send_daily = profile_data.get("daily_digest", True)
-        if not args.no_email and send_daily:
-            send_no_papers_email(today_str, username, list_env_var="EMAIL_TO_DAILY")
-        cleanup_old_folders(data_dir, args.keep_days)
-        log.info("=== Daily run complete for %s [user: %s] ===", today_str, username)
-        return
+        # If nothing passed triage, scored_papers.json is not written. Send a
+        # notification and skip the PDF/email steps.
+        if not scored_path.exists():
+            log.info("[grade] No papers passed triage — skipping PDF build.")
+            profile_data = json.loads(profile.read_text(encoding="utf-8"))
+            send_daily = profile_data.get("daily_digest", True)
+            if not args.no_email and send_daily:
+                send_no_papers_email(today_str, username, list_env_var="EMAIL_TO_DAILY")
+            cleanup_old_folders(data_dir, args.keep_days)
+            log.info("=== Daily run complete for %s [user: %s] ===", today_str, username)
+            return
 
     # ------------------------------------------------------------------
     # Step 4: Build PDF digest
