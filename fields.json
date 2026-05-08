@@ -1095,6 +1095,23 @@
     ],
     "tree_path": ["Natural Sciences", "Physics", "Quantum Technology", "Quantum Computing Hardware"]
   },
+  "computational-neuroscience": {
+    "arxiv_categories": ["q-bio.NC", "q-bio.QM"],
+    "description": "Computational neuroscience — neural circuits, brain-computer interfaces, MEA/ECoG recording, functional connectivity, and quantitative brain modeling",
+    "journals": [
+      { "name": "JNeuralEng",   "url": "https://iopscience.iop.org/journal/rss/1741-2552",                     "publisher": "iop",             "tag_filter": null },
+      { "name": "Neuron",       "url": "https://www.cell.com/neuron/inpress.rss",                              "publisher": "cell",            "tag_filter": null },
+      { "name": "NatNeurosci",  "url": "https://www.nature.com/neuro.rss",                                     "publisher": "nature",          "tag_filter": null },
+      { "name": "NatMethods",   "url": "https://www.nature.com/nmeth.rss",                                     "publisher": "nature",          "tag_filter": null },
+      { "name": "PLOSCompBio",  "url": "http://feeds.plos.org/ploscompbiol/NewArticles",                       "publisher": "plos",            "tag_filter": null },
+      { "name": "NatComms",     "url": "https://www.nature.com/subjects/neuroscience/ncomms.rss",              "publisher": "nature",          "tag_filter": null },
+      { "name": "NeuroImage",   "url": "https://rss.sciencedirect.com/publication/science/10538119",           "publisher": "elsevier_general","tag_filter": null },
+      { "name": "JCompNeurosci","url": "https://link.springer.com/search.rss?facet-journal-id=10827",          "publisher": "springer",        "tag_filter": null },
+      { "name": "NetNeuro",     "openalex_issn": "2472-1751",                                                  "publisher": "openalex",        "tag_filter": null },
+      { "name": "JNeurosci",    "openalex_issn": "1529-2401",                                                  "publisher": "openalex",        "tag_filter": null }
+    ],
+    "tree_path": ["Natural Sciences", "Biology", "Neuroscience", "Computational Neuroscience"]
+  },
   "systems-biology": {
     "arxiv_categories": [
       "q-bio",
