@@ -1125,6 +1125,19 @@
     ],
     "tree_path": ["Humanities & Arts", "Music", "Music Theory", "Music Theory & Musicology"]
   },
+  "comparative-literature": {
+    "arxiv_categories": [],
+    "description": "Comparative literature, literary theory, and world literature — cross-cultural literary analysis, narratology, literary history, and the theory and history of criticism",
+    "journals": [
+      { "name": "ComparativeLiterature",       "openalex_issn": "1945-8517", "publisher": "openalex", "tag_filter": null },
+      { "name": "NewLiteraryHistory",           "openalex_issn": "1080-661X", "publisher": "openalex", "tag_filter": null },
+      { "name": "PMLA",                         "openalex_issn": "1938-1530", "publisher": "openalex", "tag_filter": null },
+      { "name": "PoeticsToday",                 "openalex_issn": "1527-5507", "publisher": "openalex", "tag_filter": null },
+      { "name": "ComparativeLiteratureStudies", "openalex_issn": "1528-4212", "publisher": "openalex", "tag_filter": null },
+      { "name": "ModernLanguageReview",         "openalex_issn": "2222-4319", "publisher": "openalex", "tag_filter": null }
+    ],
+    "tree_path": ["Humanities & Arts", "Literature", "Comparative Literature", "Comparative Literature"]
+  },
   "systems-biology": {
     "arxiv_categories": [
       "q-bio",
