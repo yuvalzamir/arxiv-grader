@@ -38,7 +38,7 @@ from retry_abstracts import add_to_bank, load_bank, retry_bank, save_bank
 BASE_DIR  = Path(__file__).parent
 USERS_DIR = BASE_DIR / "users"
 
-ABSTRACT_RETRY_TTL_DAYS = 7
+ABSTRACT_RETRY_TTL_DAYS = 21
 
 load_dotenv(BASE_DIR / ".env")
 
@@ -279,7 +279,12 @@ def run_arxiv_fetch(field: str, field_config: dict, date_str: str, shared_data_d
     Returns path to {field}_arxiv_papers.json on success, None on failure.
     """
     # Normalize to list — support both old string and new list form.
-    raw = field_config.get("arxiv_categories") or field_config.get("arxiv_category") or field
+    raw = field_config.get("arxiv_categories")
+    if raw is None:
+        raw = field_config.get("arxiv_category")
+    if not raw:
+        output_path.write_text("[]")
+        return output_path
     categories = [raw] if isinstance(raw, str) else list(raw)
 
     output_path = shared_data_dir / f"{field}_arxiv_papers.json"
@@ -803,8 +808,11 @@ def main():
                     triage_failed.update(u.name for u in field_users)
                     continue
 
+            field_cfg = fields_data.get(field, {})
+            has_arxiv = bool(field_cfg.get("arxiv_categories") or field_cfg.get("arxiv_category"))
+
             papers = json.loads(arxiv_path.read_text())
-            if not papers:
+            if has_arxiv and not papers:
                 log.info("Field '%s': no arXiv papers today — skipping field.", field)
                 triage_failed.update(u.name for u in field_users)
                 continue
@@ -907,6 +915,10 @@ def main():
                 "Field '%s': %d arXiv + %d preprints + %d journal = %d total papers.",
                 field, len(arxiv_papers), len(preprint_papers), len(journal_papers), len(merged_papers),
             )
+
+            if not merged_papers:
+                log.warning("Field '%s': no papers from any source today — skipping %d user(s).", field, len(field_users))
+                return {u.name: None for u in field_users}, {u.name: False for u in field_users}
 
             field_user_papers = {u.name: merged_path for u in field_users}
             triage_results = run_centralized_triage(
