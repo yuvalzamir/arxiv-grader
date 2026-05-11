@@ -1138,6 +1138,25 @@
     ],
     "tree_path": ["Humanities & Arts", "Literature", "Comparative Literature", "Comparative Literature"]
   },
+  "gender-studies": {
+    "arxiv_categories": [],
+    "description": "Gender studies, feminist theory, and women's studies — intersectionality, feminist philosophy, queer theory, and the sociology of gender across cultural, political, and social contexts",
+    "journals": [
+      { "name": "GenderSociety",         "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=gasa", "publisher": "sage",             "tag_filter": null },
+      { "name": "Signs",                 "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=signs",                           "publisher": "oup",              "tag_filter": null },
+      { "name": "WomensStudiesIntForum", "url": "https://rss.sciencedirect.com/publication/science/02775395",                                               "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "Hypatia",               "openalex_issn": "1527-2001",                                                                                       "publisher": "openalex",         "tag_filter": null },
+      { "name": "GenderPlaceCulture",    "url": "https://www.tandfonline.com/feed/rss/cgpc20",                                                              "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "FeministTheory",        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=ftya",   "publisher": "sage",             "tag_filter": null },
+      { "name": "FeministStudies",       "openalex_issn": "2153-3873",                                                                                       "publisher": "openalex",         "tag_filter": null },
+      { "name": "FeministFormations",    "openalex_issn": "1527-1889",                                                                                       "publisher": "openalex",         "tag_filter": null },
+      { "name": "GLQ",                   "openalex_issn": "1527-9375",                                                                                       "publisher": "openalex",         "tag_filter": null },
+      { "name": "AmericanSocReview",     "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=asra",   "publisher": "sage",             "tag_filter": null },
+      { "name": "AmericanJSociology",    "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=ajs",                              "publisher": "oup",              "tag_filter": null },
+      { "name": "SocialForces",          "openalex_issn": "1534-7605",                                                                                       "publisher": "openalex",         "tag_filter": null }
+    ],
+    "tree_path": ["Social Sciences", "Gender & Feminist Studies", "Gender Studies", "Gender Studies"]
+  },
   "systems-biology": {
     "arxiv_categories": [
       "q-bio",

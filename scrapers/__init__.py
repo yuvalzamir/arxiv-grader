@@ -25,6 +25,7 @@ from .royalsociety import RoyalSocietyScraper
 from .science import ScienceScraper
 from .scipost import SciPostScraper
 from .springer import SpringerScraper
+from .sage import SageScraper
 from .tandfonline import TandfonlineScraper
 from .wiley import WileyScraper
 
@@ -49,6 +50,7 @@ SCRAPERS: dict = {
     "science":      ScienceScraper,
     "scipost":      SciPostScraper,
     "springer":     SpringerScraper,
+    "sage":         SageScraper,
     "tandfonline":  TandfonlineScraper,
     "wiley":        WileyScraper,
 }
