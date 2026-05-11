@@ -1112,6 +1112,19 @@
     ],
     "tree_path": ["Natural Sciences", "Biology", "Neuroscience", "Computational Neuroscience"]
   },
+  "music-theory": {
+    "arxiv_categories": [],
+    "description": "Music theory, computational musicology, and music cognition — harmonic analysis, music perception, empirical musicology, and quantitative approaches to musical structure",
+    "journals": [
+      { "name": "MusicPerception",     "openalex_issn": "1533-8312", "publisher": "openalex", "tag_filter": null },
+      { "name": "PsychologyOfMusic",   "openalex_issn": "1741-3087", "publisher": "openalex", "tag_filter": null },
+      { "name": "MusicTheoryOnline",   "openalex_issn": "1067-3040", "publisher": "openalex", "tag_filter": null },
+      { "name": "EmpiricalMusicology", "openalex_issn": "1559-5749", "publisher": "openalex", "tag_filter": null },
+      { "name": "MusicTheorySpectrum", "openalex_issn": "1533-8339", "publisher": "openalex", "tag_filter": null },
+      { "name": "JournalOfMusicTheory","openalex_issn": "1941-7497", "publisher": "openalex", "tag_filter": null }
+    ],
+    "tree_path": ["Humanities & Arts", "Music", "Music Theory", "Music Theory & Musicology"]
+  },
   "systems-biology": {
     "arxiv_categories": [
       "q-bio",
