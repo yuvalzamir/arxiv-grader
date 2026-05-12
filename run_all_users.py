@@ -282,12 +282,12 @@ def run_arxiv_fetch(field: str, field_config: dict, date_str: str, shared_data_d
     raw = field_config.get("arxiv_categories")
     if raw is None:
         raw = field_config.get("arxiv_category")
+    output_path = shared_data_dir / f"{field}_arxiv_papers.json"
+
     if not raw:
         output_path.write_text("[]")
         return output_path
     categories = [raw] if isinstance(raw, str) else list(raw)
-
-    output_path = shared_data_dir / f"{field}_arxiv_papers.json"
     all_papers: list[dict] = []
     seen_ids: set[str] = set()
 
