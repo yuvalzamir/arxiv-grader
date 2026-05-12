@@ -140,6 +140,6 @@ scp <file1> <file2> root@116.203.255.222:/opt/arxiv-grader/
 
 ## Known Constraints
 
-- APS abstracts are truncated (RSS fallback only) — Hetzner IP is blocked by Cloudflare on APS full-text pages
+- APS abstracts are full — fetched via `harvest.aps.org` Harvest API (no auth required; confirmed working for PRL, PRB, PRX, PRXQuantum, PRMaterials)
 - Monday arXiv feed has 120–165 papers (weekend accumulation) — triage caps handle this
 - Science eTOC gives all papers from the last issue sharing the same date; watermark prevents duplicates on repeated runs

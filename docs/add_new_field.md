@@ -78,7 +78,7 @@ Existing tree paths for reference:
 - Wiley journals: `https://advanced.onlinelibrary.wiley.com/feed/<issn>/most-recent` or `https://onlinelibrary.wiley.com/feed/<issn>/most-recent` (use the journal's electronic ISSN, digits only).
 
 **Publisher notes:**
-- `aps`: truncated abstract from RSS (APS pages Cloudflare-blocked; Semantic Scholar has no APS abstracts).
+- `aps`: full abstract via `harvest.aps.org` Harvest API (open-access journals: PRX, PRX Quantum, PRX Energy). Subscription journals (PRL, PRB, etc.) may require `APS_API_KEY` env var — scraper gracefully falls back to truncated RSS abstract on 401/403.
 - `nature`: full abstract scraped from article page + subject tags for `tag_filter`.
 - `science`: full abstract from Semantic Scholar API (~50% hit rate); falls back to RSS summary.
 - `acs`: no abstract available (ACS pages Cloudflare-blocked; no free API has ACS abstracts). Triage uses title + authors only.

@@ -1,36 +1,44 @@
 """
-scrapers/aps.py — Scraper for APS journals (journals.aps.org).
+scrapers/aps.py — Scraper for APS journals via harvest.aps.org Harvest API.
 
 Covers: PRL, PRB, PRX, PRX Quantum, and any future APS journal
 added to fields.json with publisher="aps".
 
-Abstract coverage: PARTIAL — truncated RSS abstract only (~2-3 sentences).
-  - Article pages: Cloudflare-blocked (403) from server IPs (IP-based block,
-    not TLS fingerprint — curl-cffi Chrome impersonation confirmed ineffective).
-  - Semantic Scholar: no APS abstracts (APS licensing restriction).
-  - CrossRef / OpenAlex: no abstracts deposited by APS.
-  - Unpaywall/arXiv preprint: ~4% hit rate on real pipeline data (PRB-heavy).
-  - RSS fallback: ~2-3 sentence truncation, sufficient for triage.
-  Possible future improvement: ICFO institutional APS access (IP whitelist
-  or API token) — check with library.
+Abstract coverage: FULL for open-access journals (PRX, PRX Quantum, PRX Energy).
+  Subscription journals (PRL, PRB, etc.) may require an API key — the scraper
+  degrades gracefully to the truncated RSS abstract on 401/403.
+  Set APS_API_KEY env var once APS provides a key or grants IP whitelisting.
 
-Subject tags: not available → always []
+Subject tags: parsed from classificationSchemes.subjectAreas in Harvest API response.
 """
 
 import logging
+import os
 import re
+
+from bs4 import BeautifulSoup
 
 from .base import BaseScraper
 
 log = logging.getLogger(__name__)
 
+_HARVEST_API = "http://harvest.aps.org/v2/journals/articles/{doi}"
+APS_API_KEY = os.environ.get("APS_API_KEY", "")
+
 # APS uses two URL formats:
 #   legacy:  http://journals.aps.org/prl/abstract/10.1103/PhysRevLett.XXX.XXXXXX
 #   current: http://link.aps.org/doi/10.1103/fgh1-gq8p
+_DOI_RE = re.compile(r"10\.\d{4}/\S+")
+_ERRATA_TITLES = ("erratum", "publisher's note")
 _ABSTRACT_URL_RE = re.compile(
     r"(journals\.aps\.org/.*/abstract/10\.\d{4}/|link\.aps\.org/doi/10\.\d{4}/)"
 )
-_ERRATA_TITLES = ("erratum", "publisher's note")
+
+
+def _doi_from_url(url: str) -> str:
+    """Extract DOI (10.XXXX/...) from an APS article URL. Returns '' if not found."""
+    m = _DOI_RE.search(url)
+    return m.group(0) if m else ""
 
 
 class APSScraper(BaseScraper):
@@ -45,7 +53,44 @@ class APSScraper(BaseScraper):
         return True
 
     def scrape_article(self, url: str, entry=None) -> dict:
-        # APS pages are Cloudflare-blocked (403) from datacenter IPs — IP-based,
-        # not TLS fingerprint. Returning empty lets fetch_journals.py fall back
-        # to the truncated abstract in the RSS <description>.
-        return {"abstract": "", "subject_tags": []}
+        doi = _doi_from_url(url)
+        if not doi:
+            return {"abstract": "", "subject_tags": []}
+
+        headers = {
+            "Accept": "application/vnd.tesseract.article+json",
+            "User-Agent": (
+                "IncomingScience-Bot/1.0 (automated academic digest; "
+                "https://incomingscience.xyz; not-for-profit; contact@incomingscience.xyz)"
+            ),
+        }
+        if APS_API_KEY:
+            headers["Authorization"] = f"Bearer {APS_API_KEY}"
+
+        try:
+            resp = self._session.get(
+                _HARVEST_API.format(doi=doi),
+                headers=headers,
+                timeout=15,
+            )
+        except Exception as exc:
+            log.warning("Harvest API request failed for DOI %s: %s", doi, exc)
+            return {"abstract": "", "subject_tags": []}
+
+        if resp.status_code != 200:
+            log.debug("Harvest API returned %d for DOI %s", resp.status_code, doi)
+            return {"abstract": "", "subject_tags": []}
+
+        try:
+            data = resp.json().get("data", {})
+            raw_abstract = data.get("abstract", {}).get("value", "") or ""
+            abstract = BeautifulSoup(raw_abstract, "lxml").get_text() if raw_abstract else ""
+            subject_areas = (
+                data.get("classificationSchemes", {}).get("subjectAreas", []) or []
+            )
+            subject_tags = [item["label"] for item in subject_areas if item.get("label")]
+        except Exception as exc:
+            log.warning("Harvest API parse error for DOI %s: %s", doi, exc)
+            return {"abstract": "", "subject_tags": []}
+
+        return {"abstract": abstract, "subject_tags": subject_tags}
