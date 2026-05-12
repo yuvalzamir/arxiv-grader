@@ -2,6 +2,7 @@
 
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
+    <link rel="icon" type="image/png" href="/assets/favicon.png" />
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Incoming Science | Research Focus Onboarding</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -145,71 +146,55 @@
 </div>
 </header>
 <!-- Content Area -->
-<section class="flex-1 px-8 md:px-12 pb-16 max-w-5xl w-full">
-<!-- Hero Title -->
-<div class="mb-16">
+<section class="flex-1 px-8 md:px-12 pb-16 w-full">
+<!-- Hero Title + Info Panel -->
+<div class="flex flex-col md:flex-row md:items-start md:gap-12 mb-10">
+<div class="flex-1 min-w-0">
 <h1 class="text-3xl md:text-[3.5rem] leading-[1.1] font-headline text-primary -tracking-[0.02em] mb-6">
                 Your <span class="italic">field.</span>
 </h1>
-<p class="text-lg text-on-surface-variant font-body leading-relaxed max-w-2xl opacity-80">
+<p class="text-lg text-on-surface-variant font-body leading-relaxed opacity-80">
                 To curate your scientific feed, we need to know where to look. Choose the field that matches your interest best from this list.
             </p>
 <p class="mt-3 text-sm text-on-surface-variant font-body opacity-60">
                 Can't find your research field? <a href="mailto:incomingscience@gmail.com" class="underline hover:opacity-100 transition-opacity">Contact us</a> and we'll add it.
             </p>
 </div>
-<div class="grid grid-cols-12 gap-8 items-start">
-<!-- Left Column: Primary Selection -->
-<div class="col-span-12 lg:col-span-7 space-y-8">
-<div class="bg-surface-container-lowest rounded-lg p-8 shadow-[0_32px_48px_rgba(27,28,29,0.04)] border border-outline-variant/15 min-h-[400px] flex flex-col">
-<div class="mb-6">
-<label class="block text-[10px] font-label font-bold uppercase tracking-[0.1em] text-on-surface-variant mb-4" for="research-field">Primary Research Field</label>
-<div class="relative group">
-<select class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary rounded-lg text-lg font-body py-4 px-4 transition-all appearance-none cursor-pointer" id="research-field" onchange="updateFieldCoverage(this.value)">
-<option disabled="" selected="" value="">Select your domain...</option>
-</select>
-<div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-outline">
-<span class="material-symbols-outlined" data-icon="expand_more">expand_more</span>
+<div class="hidden md:block w-72 flex-shrink-0 mt-2">
+<div class="bg-surface-container-low rounded-lg p-6">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container text-base" style="font-variation-settings: 'FILL' 1;">info</span>
 </div>
+<h4 class="font-headline text-lg text-primary">Why this matters?</h4>
+</div>
+<p class="text-sm font-body text-on-surface-variant leading-relaxed opacity-80">
+                    Different communities have different journals and arXiv pages of interest. This section tells us from what pool to draw the papers.
+                </p>
+</div>
+</div>
+</div>
+<!-- Tree Selection Card -->
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-[0_32px_48px_rgba(27,28,29,0.04)] border border-outline-variant/15">
+<label class="block text-[10px] font-label font-bold uppercase tracking-[0.1em] text-on-surface-variant mb-4">Primary Research Field</label>
+<div id="mobile-tree" class="md:hidden rounded-lg border border-outline-variant/15 overflow-hidden"></div>
+<div id="tree-browser" class="hidden md:block rounded-lg border border-outline-variant/15 overflow-hidden">
+<div class="flex">
+<div id="tree-col-0" class="w-48 flex-shrink-0 border-r border-outline-variant/15 overflow-y-auto max-h-64 bg-surface-container-high"></div>
+<div id="tree-col-1" class="w-48 flex-shrink-0 border-r border-outline-variant/15 overflow-y-auto max-h-64 bg-surface-container"></div>
+<div id="tree-col-2" class="flex-1 min-w-0 border-r border-outline-variant/15 overflow-y-auto max-h-64 bg-surface-container-low"></div>
+<div id="tree-col-3" class="flex-1 min-w-0 overflow-y-auto max-h-64 bg-surface-container-low/40"></div>
 </div>
 </div>
 <!-- Dynamic Field Coverage Section -->
-<div class="hidden flex-1 space-y-8 pt-8 border-t border-outline-variant/10" id="field-coverage">
+<div class="hidden space-y-6 pt-6 mt-6 border-t border-outline-variant/10" id="field-coverage">
 <div>
 <h4 class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-4">Included arXiv Categories</h4>
 <div class="flex flex-wrap gap-2" id="category-chips"></div>
 </div>
 <div>
 <h4 class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-4">Tracked Journals</h4>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm font-body text-on-surface" id="journal-list"></div>
-</div>
-</div>
-</div>
-</div>
-<!-- Right Column: Sidebar Info -->
-<div class="col-span-12 lg:col-span-5 space-y-6">
-<div class="bg-surface-container-low rounded-lg p-6 relative overflow-hidden">
-<div class="relative z-10">
-<div class="flex items-center gap-3 mb-4">
-<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
-<span class="material-symbols-outlined text-on-secondary-container text-base" style="font-variation-settings: 'FILL' 1;">info</span>
-</div>
-<h4 class="font-headline text-lg text-primary">Why this matters?</h4>
-</div>
-<p class="text-sm font-body text-on-surface-variant leading-relaxed opacity-80">
-                            Different communities have different journals and arXiv pages of interest. This section tells us from what pool to draw the papers.
-                        </p>
-</div>
-</div>
-<div class="relative rounded-lg overflow-hidden aspect-[4/5] shadow-lg group">
-<img alt="Scientific observation" class="absolute inset-0 w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105" src="/assets/research_photo.jpg" loading="eager"/>
-<div class="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent"></div>
-<div class="absolute bottom-0 left-0 p-8">
-<span class="text-[9px] font-bold tracking-[0.2em] text-tertiary-fixed-dim uppercase mb-3 block">Specimen Alpha-4</span>
-<p class="text-white font-headline text-xl leading-snug italic">"Truth is sought for its own sake. And those who are engaged in the quest for anything for its own sake are not interested in other things."</p>
-<div class="w-8 h-[1px] bg-white/30 my-4"></div>
-<span class="text-[10px] uppercase tracking-widest text-on-primary-container block">— Ibn al-Haytham</span>
-</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm font-body text-on-surface" id="journal-list"></div>
 </div>
 </div>
 </div>
@@ -242,37 +227,189 @@
 <!-- Mobile Nav -->
 <script>
     let fieldData = {};
-    const select = document.getElementById('research-field');
+    let treeRoot = {};
+    let selectedField = null;
     const state = JSON.parse(localStorage.getItem('is_onboarding') || '{}');
+    const selections = [];
+    let mobilePath = [];
 
-    fetch('/fields.json')
-        .then(r => r.json())
-        .then(data => {
-            fieldData = data;
-            // Populate select
-            Object.entries(fieldData).forEach(([key, val]) => {
-                const opt = document.createElement('option');
-                opt.value = key;
-                opt.textContent = key + ' — ' + val.description;
-                select.appendChild(opt);
-            });
-            // Restore from localStorage
-            if (state.field && fieldData[state.field]) {
-                select.value = state.field;
-                updateFieldCoverage(state.field);
+    function buildTree(fields) {
+        const root = {};
+        for (const [key, val] of Object.entries(fields)) {
+            if (!val.tree_path || !val.tree_path.length) continue;
+            const path = val.tree_path;
+            let node = root;
+            for (let i = 0; i < path.length - 1; i++) {
+                if (!node[path[i]]) node[path[i]] = { _children: {} };
+                node = node[path[i]]._children;
             }
-        })
-        .catch(() => {
-            // Fallback: show a message if fields can't be loaded
-            const opt = document.createElement('option');
-            opt.disabled = true;
-            opt.textContent = 'Could not load fields — please refresh.';
-            select.appendChild(opt);
-        });
+            node[path[path.length - 1]] = { _leaf: true, _fieldKey: key };
+        }
+        return root;
+    }
+
+    function renderColumn(level, items) {
+        const col = document.getElementById('tree-col-' + level);
+        if (!col) return;
+        col.innerHTML = '';
+
+        for (const [label, node] of Object.entries(items)) {
+            const isLeaf = !!node._leaf;
+            const isSelected = selections[level] === label;
+
+            const row = document.createElement('div');
+            let rowClass = 'flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-body transition-colors border-b border-outline-variant/10 last:border-0';
+            if (isLeaf && isSelected) {
+                rowClass += ' bg-primary text-on-primary';
+            } else if (!isLeaf && isSelected) {
+                rowClass += ' bg-secondary-container text-on-surface font-bold';
+            } else {
+                rowClass += ' text-on-surface hover:bg-surface-container';
+            }
+            row.className = rowClass;
+
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = label;
+            row.appendChild(labelSpan);
+
+            if (!isLeaf) {
+                const chevron = document.createElement('span');
+                chevron.className = 'material-symbols-outlined text-[18px] flex-shrink-0 ml-2 opacity-50';
+                chevron.textContent = 'chevron_right';
+                row.appendChild(chevron);
+            }
+
+            row.addEventListener('click', () => handleTreeClick(level, label, node));
+            col.appendChild(row);
+        }
+    }
+
+    function hideColumn(level) {
+        const col = document.getElementById('tree-col-' + level);
+        if (col) { col.innerHTML = ''; }
+    }
+
+    function getItemsAtLevel(level) {
+        if (level === 0) return treeRoot;
+        let node = treeRoot;
+        for (let i = 0; i < level; i++) {
+            const label = selections[i];
+            if (!label || !node[label] || !node[label]._children) return null;
+            node = node[label]._children;
+        }
+        return node;
+    }
+
+    function handleTreeClick(level, label, node) {
+        selections.splice(level);
+        selections[level] = label;
+        for (let i = level + 1; i < 4; i++) hideColumn(i);
+        const parentItems = getItemsAtLevel(level);
+        if (parentItems) renderColumn(level, parentItems);
+
+        if (node._leaf) {
+            selectedField = node._fieldKey;
+            updateFieldCoverage(selectedField);
+            updateNextButton();
+        } else {
+            selectedField = null;
+            renderColumn(level + 1, node._children);
+            updateFieldCoverage(null);
+            updateNextButton();
+        }
+    }
+
+    function renderMobileTree() {
+        const container = document.getElementById('mobile-tree');
+        if (!container) return;
+        container.innerHTML = '';
+        renderMobileLevel(container, treeRoot, 0);
+    }
+
+    function renderMobileLevel(container, items, depth) {
+        const depthBg = ['bg-surface-container-high', 'bg-surface-container', 'bg-surface-container-low', 'bg-surface-container-low/40'];
+        for (const [label, node] of Object.entries(items)) {
+            const isLeaf = !!node._leaf;
+            const isExpanded = !isLeaf && mobilePath[depth] === label;
+            const isSelectedLeaf = isLeaf && selectedField === node._fieldKey;
+
+            const row = document.createElement('div');
+            row.style.marginLeft = (depth * 20) + 'px';
+
+            let rowClass = 'flex items-center gap-2 py-3 px-4 cursor-pointer text-sm font-body transition-colors border-b border-outline-variant/10 last:border-0 ';
+            if (isSelectedLeaf) {
+                rowClass += 'bg-primary text-on-primary';
+            } else {
+                rowClass += depthBg[Math.min(depth, 3)] + ' text-on-surface' + (isExpanded ? ' font-bold' : '');
+            }
+            row.className = rowClass;
+
+            const icon = document.createElement('span');
+            if (isLeaf) {
+                icon.className = 'w-1 h-1 rounded-full flex-shrink-0 ' + (isSelectedLeaf ? 'bg-on-primary' : 'bg-on-surface opacity-30');
+            } else {
+                icon.className = 'material-symbols-outlined text-[18px] flex-shrink-0 opacity-50';
+                icon.textContent = isExpanded ? 'expand_more' : 'chevron_right';
+            }
+            row.appendChild(icon);
+
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = label;
+            row.appendChild(labelSpan);
+
+            row.addEventListener('click', () => {
+                if (isLeaf) {
+                    selectedField = node._fieldKey;
+                    updateFieldCoverage(selectedField);
+                    updateNextButton();
+                    renderMobileTree();
+                } else {
+                    if (mobilePath[depth] === label) {
+                        mobilePath.splice(depth);
+                    } else {
+                        mobilePath = mobilePath.slice(0, depth);
+                        mobilePath[depth] = label;
+                    }
+                    selectedField = null;
+                    updateFieldCoverage(null);
+                    updateNextButton();
+                    renderMobileTree();
+                }
+            });
+
+            container.appendChild(row);
+
+            if (isExpanded && node._children) {
+                renderMobileLevel(container, node._children, depth + 1);
+            }
+        }
+    }
+
+    function restoreState(fieldKey) {
+        if (!fieldKey || !fieldData[fieldKey]) return;
+        const path = fieldData[fieldKey].tree_path;
+        if (!path) return;
+        let node = treeRoot;
+        for (let i = 0; i < path.length - 1; i++) {
+            const label = path[i];
+            if (!node[label]) return;
+            selections[i] = label;
+            renderColumn(i, node);
+            node = node[label]._children;
+        }
+        const leafLabel = path[path.length - 1];
+        selections[path.length - 1] = leafLabel;
+        renderColumn(path.length - 1, node);
+        mobilePath = path.slice(0, -1);
+        renderMobileTree();
+        selectedField = fieldKey;
+        updateFieldCoverage(fieldKey);
+        updateNextButton();
+    }
 
     function updateNextButton() {
         const btn = document.getElementById('next-btn');
-        if (select.value) {
+        if (selectedField) {
             btn.className = 'bg-primary text-on-primary px-10 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer';
         } else {
             btn.className = 'bg-outline-variant text-on-surface-variant px-10 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold transition-all opacity-40 cursor-not-allowed pointer-events-none';
@@ -280,7 +417,7 @@
     }
 
     function saveAndNext() {
-        state.field = select.value;
+        state.field = selectedField;
         localStorage.setItem('is_onboarding', JSON.stringify(state));
         window.location.href = '/signup/interests';
     }
@@ -292,18 +429,15 @@
 
         if (!fieldKey || !fieldData[fieldKey]) {
             container.classList.add('hidden');
-            updateNextButton();
             return;
         }
 
         const data = fieldData[fieldKey];
 
-        // Categories
         categoryChips.innerHTML = data.arxiv_categories.map(cat =>
             `<span class="px-4 py-1.5 bg-tertiary-fixed text-on-tertiary-fixed rounded-full text-[10px] font-bold tracking-wider uppercase">${cat}</span>`
         ).join('');
 
-        // Journals — deduplicate by name
         const uniqueNames = [...new Set(data.journals.map(j => j.name))];
         journalList.innerHTML = uniqueNames.map(name =>
             `<div class="flex items-center gap-3 py-1">
@@ -313,7 +447,21 @@
         ).join('');
 
         container.classList.remove('hidden');
-        updateNextButton();
     }
+
+    fetch('/fields.json')
+        .then(r => r.json())
+        .then(data => {
+            fieldData = data;
+            treeRoot = buildTree(data);
+            renderColumn(0, treeRoot);
+            renderMobileTree();
+            if (state.field) restoreState(state.field);
+        })
+        .catch(() => {
+            const col0 = document.getElementById('tree-col-0');
+            col0.textContent = 'Could not load fields — please refresh.';
+            col0.classList.remove('hidden');
+        });
 </script>
 </body></html>
