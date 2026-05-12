@@ -4,10 +4,9 @@ scrapers/aps.py — Scraper for APS journals via harvest.aps.org Harvest API.
 Covers: PRL, PRB, PRX, PRX Quantum, and any future APS journal
 added to fields.json with publisher="aps".
 
-Abstract coverage: FULL for open-access journals (PRX, PRX Quantum, PRX Energy).
-  Subscription journals (PRL, PRB, etc.) may require an API key — the scraper
-  degrades gracefully to the truncated RSS abstract on 401/403.
-  Set APS_API_KEY env var once APS provides a key or grants IP whitelisting.
+Abstract coverage: FULL for all APS journals without authentication — confirmed
+  for PRL, PRB, PRX, PRX Quantum, PRMaterials via unauthenticated Harvest API.
+  APS_API_KEY env var is supported for future use but not currently required.
 
 Subject tags: parsed from classificationSchemes.subjectAreas in Harvest API response.
 """
@@ -28,7 +27,7 @@ APS_API_KEY = os.environ.get("APS_API_KEY", "")
 # APS uses two URL formats:
 #   legacy:  http://journals.aps.org/prl/abstract/10.1103/PhysRevLett.XXX.XXXXXX
 #   current: http://link.aps.org/doi/10.1103/fgh1-gq8p
-_DOI_RE = re.compile(r"10\.\d{4}/\S+")
+_DOI_RE = re.compile(r"10\.\d{4}/[^\s?#]+")
 _ERRATA_TITLES = ("erratum", "publisher's note")
 _ABSTRACT_URL_RE = re.compile(
     r"(journals\.aps\.org/.*/abstract/10\.\d{4}/|link\.aps\.org/doi/10\.\d{4}/)"
@@ -84,7 +83,7 @@ class APSScraper(BaseScraper):
         try:
             data = resp.json().get("data", {})
             raw_abstract = data.get("abstract", {}).get("value", "") or ""
-            abstract = BeautifulSoup(raw_abstract, "lxml").get_text() if raw_abstract else ""
+            abstract = BeautifulSoup(raw_abstract, "lxml").get_text(separator=" ", strip=True) if raw_abstract else ""
             subject_areas = (
                 data.get("classificationSchemes", {}).get("subjectAreas", []) or []
             )
