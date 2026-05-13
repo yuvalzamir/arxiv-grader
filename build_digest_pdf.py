@@ -60,6 +60,7 @@ C = {
     "score_mid":     HexColor("#B5963E"),   # muted amber       — score 5–7
     "score_low":     HexColor("#B07060"),   # muted terracotta  — score 1–4
     "tag_bg":        HexColor("#E0D8CC"),   # tag pill / section divider
+    "insights_bg":   HexColor("#EDEAE3"),   # insights box background
     "divider":       HexColor("#C0B8AD"),   # horizontal rule colour
     "text_dark":     HexColor("#2C2826"),   # primary text
     "text_mid":      HexColor("#5C5550"),   # secondary / muted text
@@ -249,6 +250,11 @@ def make_styles() -> dict:
             fontName="DejaVuSans", fontSize=9, leading=13,
             textColor=C["text_mid"], spaceBefore=4,
         ),
+        "insights": ParagraphStyle(
+            "insights",
+            fontName="DejaVuSans-Oblique", fontSize=9, leading=12,
+            textColor=C["text_dark"],
+        ),
         "score_badge": ParagraphStyle(
             "score_badge",
             fontName="DejaVuSans-Bold", fontSize=17, leading=22,
@@ -393,12 +399,32 @@ def scored_block(paper: dict, date_str: str, styles: dict) -> KeepTogether:
         author_table(paper, styles),
     ]
 
-    tags = paper.get("tags", [])
-    if tags:
-        els.append(Paragraph("  ".join(f"[{t}]" for t in tags), styles["tags"]))
-
-    if paper.get("justification"):
-        els.append(Paragraph(safe(paper["justification"]), styles["justification"]))
+    insights = paper.get("insights")
+    if insights:
+        rows = []
+        for label, key in (("CLAIM", "claim"), ("NOVELTY", "novelty"), ("RELEVANCE", "relevance")):
+            value = insights.get(key.lower(), "").strip()
+            rows.append([[
+                Paragraph(f'<font name="DejaVuSans-Bold" size="7" color="#5C5550">{label}</font>', styles["insights"]),
+                Paragraph(f'<font name="DejaVuSans-Oblique" size="9">{safe(value) if value else ""}</font>', styles["insights"]),
+            ]])
+        box = Table(rows, colWidths=[COL_W])
+        box.setStyle(TableStyle([
+            ("BACKGROUND",    (0, 0), (-1, -1), C["insights_bg"]),
+            ("TOPPADDING",    (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 8),
+            ("LINEBELOW",     (0, 0), (-1, 1), 0.5, C["divider"]),
+        ]))
+        els.append(Spacer(1, 3))
+        els.append(box)
+    else:
+        tags = paper.get("tags", [])
+        if tags:
+            els.append(Paragraph("  ".join(f"[{t}]" for t in tags), styles["tags"]))
+        if paper.get("justification"):
+            els.append(Paragraph(safe(paper["justification"]), styles["justification"]))
 
     abstract = paper.get("abstract", "").strip()
     if abstract:

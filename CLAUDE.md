@@ -70,6 +70,8 @@ Two-stage design using Anthropic Batch API (50% cost discount, async):
 - **Triage** (Claude Haiku, `prompts/triage.txt`): Receives lean profile (keywords, areas, authors) + all ~80 papers. Classifies high/medium/low. Hard caps: max 15 arXiv + 15 journal papers forwarded.
 - **Scoring** (Claude Sonnet, `prompts/scoring.txt`): Receives full profile + triage survivors. Outputs score 1–10 + one-line justification + tags.
 
+**Paper Insights (opt-in):** Users with `"paper_insights": true` in `taste_profile.json` use `prompts/scoring_insights.txt` instead, which adds an `insights` object (`claim`, `novelty`, `relevance`) to each scored paper. The PDF renders these as a three-row box below the author band, replacing the justification and tags. Papers with truncated/missing abstracts are excluded from insights in Python (not just by prompt instruction). Enable per user by setting the flag manually in their server-side `taste_profile.json`.
+
 On 20-minute batch timeout, auto-falls back to direct API and sends an alert email. Flag file `batch_fallback.json` is written when fallback occurs; `run_all_users.py` scans for these post-pipeline.
 
 ### User Data Layout

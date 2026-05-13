@@ -24,7 +24,7 @@ from pathlib import Path
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # root .env
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 TRIAGE_MODEL  = "claude-haiku-4-5-20251001"
@@ -689,12 +689,17 @@ def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, 
     scored = []
     for paper in filtered_papers:
         s = score_map.get(paper["arxiv_id"], {})
-        scored.append({
+        entry = {
             **paper,
             "score": s.get("score", 0),
             "justification": s.get("justification", ""),
             "tags": s.get("tags", []),
-        })
+        }
+        abstract = paper.get("abstract", "")
+        abstract_quality = paper.get("abstract_quality", "")
+        if "insights" in s and abstract_quality not in ("truncated", "missing") and len(abstract) >= 100:
+            entry["insights"] = s["insights"]
+        scored.append(entry)
 
     # Sort highest score first.
     scored.sort(key=lambda x: x["score"], reverse=True)
@@ -743,25 +748,33 @@ def main():
     )
     args = parser.parse_args()
 
+    # Load per-user .env if present alongside the profile file.
+    user_env = Path(args.profile).parent / ".env"
+    if user_env.exists():
+        load_dotenv(user_env, override=True)
+
     # Load inputs.
-    papers  = load_json(args.papers)
     profile = load_json(args.profile)
     archive = load_json(args.archive) if args.archive and Path(args.archive).exists() else []
-    log.info("Loaded %d arXiv papers from %s", len(papers), args.papers)
 
-    if args.journals:
-        journal_papers = load_json(args.journals)
-        log.info("Loaded %d journal papers from %s", len(journal_papers), args.journals)
-        papers = papers + journal_papers  # arXiv first
-
-    if not papers:
-        log.warning("No papers found in %s. Exiting.", args.papers)
-        sys.exit(0)
+    papers = []
+    if not args.skip_triage:
+        papers = load_json(args.papers)
+        log.info("Loaded %d arXiv papers from %s", len(papers), args.papers)
+        if args.journals:
+            journal_papers = load_json(args.journals)
+            log.info("Loaded %d journal papers from %s", len(journal_papers), args.journals)
+            papers = papers + journal_papers  # arXiv first
+        if not papers:
+            log.warning("No papers found in %s. Exiting.", args.papers)
+            sys.exit(0)
 
     # Load prompts.
     triage_prompt         = load_prompt("triage.txt")
     triage_journal_prompt = load_prompt("triage_journals.txt")
-    scoring_prompt        = load_prompt("scoring.txt")
+    generate_insights = profile.get("paper_insights", False)
+    scoring_prompt_file = "scoring_insights.txt" if generate_insights else "scoring.txt"
+    scoring_prompt        = load_prompt(scoring_prompt_file)
 
     # --- Stage 1: triage ---
     debug_dir = Path(args.filtered).parent
