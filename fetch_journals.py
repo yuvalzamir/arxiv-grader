@@ -30,7 +30,8 @@ from scrapers.sources import fetch_journal, journal_key
 
 log = logging.getLogger(__name__)
 
-WATERMARKS_FILE = Path(__file__).parent / "journal_watermarks.json"
+WATERMARKS_FILE          = Path(__file__).parent / "journal_watermarks.json"
+PREPRINT_WATERMARKS_FILE = Path(__file__).parent / "preprint_watermarks.json"
 
 
 def _configure_logging():
@@ -55,6 +56,18 @@ def _load_watermarks() -> dict:
 
 def _save_watermarks(watermarks: dict):
     with open(WATERMARKS_FILE, "w") as f:
+        json.dump(watermarks, f, indent=2)
+
+
+def _load_preprint_watermarks() -> dict:
+    if PREPRINT_WATERMARKS_FILE.exists():
+        with open(PREPRINT_WATERMARKS_FILE) as f:
+            return json.load(f)
+    return {}
+
+
+def _save_preprint_watermarks(watermarks: dict):
+    with open(PREPRINT_WATERMARKS_FILE, "w") as f:
         json.dump(watermarks, f, indent=2)
 
 
@@ -87,6 +100,7 @@ def main():
 
     yesterday = date.today() - timedelta(days=1)
     watermarks = _load_watermarks()
+    preprint_watermarks = _load_preprint_watermarks()
     fields_data = _load_fields(Path(args.fields_file))
     journals = _collect_journals(fields_data, args.fields)
 
@@ -105,13 +119,23 @@ def main():
         else:
             since = date.fromisoformat(watermarks[url_key]) if url_key in watermarks else yesterday - timedelta(days=1)
 
-        log.info("%s: watermark is %s", journal["name"], since)
+        if "id_pattern" in journal:
+            journal = dict(journal)
+            journal["since_id"] = preprint_watermarks.get(journal["name"], 0)
+            log.info("%s: watermark is %s (ID-based)", journal["name"], journal["since_id"])
+        else:
+            log.info("%s: watermark is %s", journal["name"], since)
 
         try:
-            papers, max_date = fetch_journal(journal, since, SCRAPERS)
+            papers, max_date, max_id = fetch_journal(journal, since, SCRAPERS)
             all_papers.extend(papers)
 
-            if max_date is not None:
+            if max_id is not None:
+                # ID-based watermark (e.g. Elsevier PII) — stored in preprint_watermarks
+                if not args.since and not args.no_advance_watermark:
+                    preprint_watermarks[journal["name"]] = max_id
+                    log.info("%s: ID watermark advanced to %d", journal["name"], max_id)
+            elif max_date is not None:
                 # Advance watermark to min(max_date, yesterday) — never advance
                 # to today, as papers published after this run would be missed tomorrow.
                 new_watermark = min(max_date, yesterday)
@@ -124,6 +148,7 @@ def main():
 
     if not args.since and not args.no_advance_watermark:
         _save_watermarks(watermarks)
+        _save_preprint_watermarks(preprint_watermarks)
 
     # Deduplicate by arxiv_id (DOI or URL) — a paper can appear in multiple
     # feeds (e.g. two PRL section feeds). Keep first occurrence.

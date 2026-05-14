@@ -78,7 +78,9 @@ def _split_author_string(s: str) -> list[str]:
 
 def _extract_doi(entry) -> str:
     """Best-effort DOI extraction from an RSS entry."""
-    dc_id = getattr(entry, "dc_identifier", "")
+    dc_id = getattr(entry, "dc_identifier", "") or ""
+    if not isinstance(dc_id, str):
+        dc_id = ""
     if dc_id and dc_id.startswith("10."):
         return dc_id
 
@@ -125,22 +127,39 @@ def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dic
         log.warning("%s: feed parse error — %s", journal["name"], feed.bozo_exception)
         return [], None
 
+    id_re = re.compile(journal["id_pattern"], re.IGNORECASE) if "id_pattern" in journal else None
+    since_id: int = journal.get("since_id", 0)
+
     papers = []
     max_date = None
+    max_id: int | None = None
     skipped_date = 0
     skipped_error = 0
 
     for entry in feed.entries:
         try:
-            entry_date = _entry_date(entry)
-            if entry_date is not None and entry_date <= since:
-                skipped_date += 1
-                continue
+            url = getattr(entry, "link", "")
+
+            if id_re is not None:
+                m = id_re.search(url)
+                if not m:
+                    skipped_date += 1
+                    continue
+                paper_id = int(m.group(1))
+                if paper_id <= since_id:
+                    skipped_date += 1
+                    continue
+                if max_id is None or paper_id > max_id:
+                    max_id = paper_id
+            else:
+                entry_date = _entry_date(entry)
+                if entry_date is not None and entry_date <= since:
+                    skipped_date += 1
+                    continue
 
             if not scraper.editorial_filter(entry):
                 continue
 
-            url = getattr(entry, "link", "")
             result = scraper.scrape_article(url, entry=entry)
             if result is None:
                 continue
@@ -181,7 +200,7 @@ def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dic
                 "subject_tags":     result["subject_tags"],
             })
 
-            if entry_date and (max_date is None or entry_date > max_date):
+            if id_re is None and entry_date and (max_date is None or entry_date > max_date):
                 max_date = entry_date
 
         except Exception as e:
@@ -192,7 +211,7 @@ def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dic
     log.info("%s: %d articles scraped (skipped %d at or before watermark%s).",
              journal["name"], len(papers), skipped_date,
              f", {skipped_error} errors" if skipped_error else "")
-    return papers, max_date
+    return papers, max_date, max_id
 
 
 def fetch_from_openalex(journal: dict, since: date) -> tuple[list[dict], date | None]:
@@ -348,13 +367,15 @@ def fetch_from_crossref(journal: dict, since: date) -> tuple[list[dict], date | 
 # Public entry points
 # ---------------------------------------------------------------------------
 
-def fetch_journal(journal: dict, since: date, scrapers: dict) -> tuple[list[dict], date | None]:
+def fetch_journal(journal: dict, since: date, scrapers: dict) -> tuple[list[dict], date | None, int | None]:
     """Dispatch to the correct fetch strategy based on journal config."""
     if "url" in journal:
         return fetch_from_rss(journal, since, scrapers)
     if "crossref_issn" in journal:
-        return fetch_from_crossref(journal, since)
-    return fetch_from_openalex(journal, since)
+        papers, max_date = fetch_from_crossref(journal, since)
+        return papers, max_date, None
+    papers, max_date = fetch_from_openalex(journal, since)
+    return papers, max_date, None
 
 
 def journal_key(journal: dict) -> str:

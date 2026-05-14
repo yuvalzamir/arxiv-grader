@@ -1058,7 +1058,7 @@
       { "name": "EconomicJournal", "url": "https://academic.oup.com/rss/site_6182/advanceAccess_4014.xml",                                  "publisher": "oup",             "tag_filter": null },
       { "name": "AEJ:Applied",     "crossref_issn": "1945-7782",                                                                                                                    "tag_filter": null },
       { "name": "AEJ:Policy",      "crossref_issn": "1945-774X",                                                                                                                    "tag_filter": null },
-      { "name": "JPubEcon",        "url": "https://rss.sciencedirect.com/publication/science/00472727",                                     "publisher": "elsevier_general","tag_filter": null },
+      { "name": "JPubEcon",        "url": "https://rss.sciencedirect.com/publication/science/00472727",                                     "publisher": "elsevier_general","id_pattern": "pii/S(\\d+)", "tag_filter": null },
       { "name": "AJPS",            "url": "https://onlinelibrary.wiley.com/feed/15405907/most-recent",                                      "publisher": "wiley",           "tag_filter": null },
       { "name": "APSR",            "url": "https://www.cambridge.org/core/rss/product/id/833A7242AC7B607BA7F6168DA072DB3B",                 "publisher": "cambridge",       "tag_filter": null },
       { "name": "JoP",             "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jop",                    "publisher": "plos",            "tag_filter": null },
@@ -1279,5 +1279,31 @@
       "Computational Biology",
       "Systems Biology"
     ]
+  },
+  "literature-and-culture": {
+    "arxiv_categories": [],
+    "description": "Literary and cultural history — 19th-century American literature, transcendentalism, confessional poetry, 20th-century Polish literature, interwar Polish history, narrative theory, cultural studies, secular Jewish identity",
+    "journals": [
+      { "name": "AmericanLiterature",   "openalex_issn": "0002-9831",  "publisher": "openalex",    "tag_filter": null },
+      { "name": "AmericanLitHistory",   "openalex_issn": "1468-4365",  "publisher": "openalex",    "tag_filter": null },
+      { "name": "PMLA",                 "openalex_issn": "1938-1530",  "publisher": "openalex",    "tag_filter": null },
+      { "name": "NewLitHistory",        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=144", "publisher": "muse", "tag_filter": null },
+      { "name": "Narrative",            "url": "https://muse.jhu.edu/feeds/latest_articles?jid=135", "publisher": "muse", "tag_filter": null },
+      { "name": "CriticalInquiry",      "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=ci",    "publisher": "oup", "tag_filter": null },
+      { "name": "Signs",                "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=signs", "publisher": "oup", "tag_filter": null },
+      { "name": "NineteenthCenturyLit", "openalex_issn": "0891-9356",  "publisher": "openalex",    "tag_filter": null },
+      { "name": "Representations",      "openalex_issn": "1533-855X",  "publisher": "openalex",    "tag_filter": null },
+      { "name": "CulturalCritique",     "url": "https://muse.jhu.edu/feeds/latest_articles?jid=41",  "publisher": "muse", "tag_filter": null },
+      { "name": "SlavicReview",         "url": "https://www.cambridge.org/core/rss/product/id/BE028C241144CA93B60D30FFBA435841", "publisher": "cambridge", "tag_filter": null },
+      { "name": "SlavEastEuroReview",   "openalex_issn": "2222-4327",  "publisher": "openalex",    "tag_filter": null },
+      { "name": "ModernJudaism",        "openalex_issn": "0276-1114",  "publisher": "openalex",    "tag_filter": null },
+      { "name": "JModernJewishStudies", "url": "https://www.tandfonline.com/feed/rss/cmjs20",       "publisher": "tandfonline", "tag_filter": null },
+      { "name": "JewishCultureHistory", "url": "https://www.tandfonline.com/feed/rss/rjch20",       "publisher": "tandfonline", "tag_filter": null },
+      { "name": "JewishSocialStudies",  "url": "https://muse.jhu.edu/feeds/latest_articles?jid=105","publisher": "muse", "tag_filter": null },
+      { "name": "Prooftexts",           "url": "https://muse.jhu.edu/feeds/latest_articles?jid=167","publisher": "muse", "tag_filter": null },
+      { "name": "Shofar",              "url": "https://muse.jhu.edu/feeds/latest_articles?jid=181","publisher": "muse", "tag_filter": null },
+      { "name": "Legacy",              "url": "https://muse.jhu.edu/feeds/latest_articles?jid=115","publisher": "muse", "tag_filter": null }
+    ],
+    "tree_path": ["Humanities", "Literature & Culture", "Literary & Cultural Studies", "American, European & Jewish Literature"]
   }
 }
