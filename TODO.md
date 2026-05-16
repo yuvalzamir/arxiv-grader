@@ -56,9 +56,6 @@ scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log
 ### Failure recovery
 - [ ] **Watermark auto-restore on total field failure** (#2) — If every user in a field failed triage, automatically restore `journal_watermarks.json` from the per-run snapshot. Currently requires manual `cp` command. Rare but high-stakes when it happens.
 
-### Abstract quality
-- [ ] **Semantic Scholar batch lookup across all publishers** (#24) — Semantic Scholar has a batch endpoint (up to 500 papers per call). Refactor abstract-enrichment to send all journal papers through one batch call after scraping completes. Most benefit for Science and Wiley.
-
 ### Adaptation speed
 - [ ] **Topic-aware liked-paper selection for scoring** (#32) — Make `_sample_liked_papers()` select papers most semantically similar to today's triage survivors (keyword overlap in Python, no embeddings). Scoring agent sees few-shot examples most relevant to today's batch.
 
