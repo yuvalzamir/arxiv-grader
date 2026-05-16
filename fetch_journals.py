@@ -21,11 +21,13 @@ Usage:
 import argparse
 import json
 import logging
+import os
 import sys
 from datetime import date, timedelta
 from pathlib import Path
 
 from scrapers import SCRAPERS
+from scrapers.base import BaseScraper
 from scrapers.sources import fetch_journal, journal_key
 
 log = logging.getLogger(__name__)
@@ -161,6 +163,8 @@ def main():
             deduped.append(paper)
     if len(deduped) < len(all_papers):
         log.info("Deduplication: removed %d duplicate(s).", len(all_papers) - len(deduped))
+
+    BaseScraper.enrich_missing_abstracts_s2(deduped, os.environ.get("S2_API_KEY", ""))
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
