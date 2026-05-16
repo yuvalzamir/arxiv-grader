@@ -1046,6 +1046,98 @@
       "Natural Language Processing"
     ]
   },
+  "ml": {
+    "arxiv_categories": ["cs.LG", "cs.AI", "stat.ML"],
+    "description": "Machine learning — learning theory, optimization, probabilistic models, representation learning, and generative models",
+    "journals": [
+      {
+        "name": "JMLR",
+        "publisher": "openalex",
+        "openalex_issn": "1533-7928",
+        "tag_filter": null
+      },
+      {
+        "name": "Machine Learning",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10994",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "Neural Networks",
+        "url": "https://rss.sciencedirect.com/publication/science/08936080",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "IEEE TNNLS",
+        "publisher": "ieee_rest",
+        "ieee_pub_id": "5962385",
+        "tag_filter": null
+      },
+      {
+        "name": "IEEE TPAMI",
+        "url": "https://csdl-api.computer.org/api/rss/periodicals/trans/tp/rss.xml",
+        "publisher": "ieee",
+        "tag_filter": null
+      },
+      {
+        "name": "JAIR",
+        "url": "https://www.jair.org/index.php/jair/gateway/plugin/WebFeedGatewayPlugin/rss2",
+        "publisher": "plos",
+        "tag_filter": null
+      }
+    ],
+    "tree_path": ["Natural Sciences", "Computer Science", "AI", "Machine Learning"]
+  },
+  "soft-eng": {
+    "arxiv_categories": ["cs.SE"],
+    "description": "Empirical software engineering, privacy compliance in open-source software, AI-assisted development, process mining, and software governance",
+    "journals": [
+      {
+        "name": "IEEE TSE",
+        "url": "https://csdl-api.computer.org/api/rss/periodicals/trans/ts/rss.xml",
+        "publisher": "ieee",
+        "tag_filter": null
+      },
+      {
+        "name": "ACM TOSEM",
+        "url": "https://dl.acm.org/action/showFeed?type=etoc&feed=rss&jc=tosem",
+        "publisher": "acm",
+        "tag_filter": null
+      },
+      {
+        "name": "EMSE",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10664",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "JSS",
+        "url": "https://rss.sciencedirect.com/publication/science/01641212",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "IST",
+        "url": "https://rss.sciencedirect.com/publication/science/09505849",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "JSEP",
+        "url": "https://onlinelibrary.wiley.com/action/showFeed?jc=20477481&type=etoc",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "SCP",
+        "url": "https://rss.sciencedirect.com/publication/science/01676423",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      }
+    ],
+    "tree_path": ["Natural Sciences", "Computer Science", "Software Engineering", "Empirical Software Engineering"]
+  },
   "econ-political": {
     "arxiv_categories": ["econ.GN", "econ.EM", "econ.TH"],
     "description": "Political economy, media economics, and applied microeconomics",

@@ -43,7 +43,19 @@ def _entry_date(entry) -> date | None:
     ensure the watermark advances to the issue date on first scrape.
     """
     parsed = getattr(entry, "published_parsed", None) or getattr(entry, "updated_parsed", None)
-    pub_date = date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday) if parsed else None
+    if parsed:
+        pub_date = date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday)
+    else:
+        # Fallback: dc:date (e.g. Wiley JSEP) — feedparser exposes as raw string,
+        # not parsed. Format: "2026-05-14T09:40:35-07:00" → take first 10 chars.
+        dc_date_str = getattr(entry, "dc_date", None)
+        if dc_date_str:
+            try:
+                pub_date = date.fromisoformat(dc_date_str[:10])
+            except ValueError:
+                pub_date = None
+        else:
+            pub_date = None
 
     cover_date = None
     cover_str = getattr(entry, "prism_coverdate", None)
@@ -364,6 +376,163 @@ def fetch_from_crossref(journal: dict, since: date) -> tuple[list[dict], date | 
 
 
 # ---------------------------------------------------------------------------
+# IEEE ieeexplore.ieee.org internal REST API (early access + issued articles)
+# ---------------------------------------------------------------------------
+
+_IEEE_REST_URL = "https://ieeexplore.ieee.org/rest/search"
+_IEEE_REST_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Content-Type": "application/json",
+    "Accept": "application/json, text/plain, */*",
+    "Referer": "https://ieeexplore.ieee.org/",
+}
+_IEEE_ERRATA = ("erratum", "corrigendum", "correction", "retraction",
+                "table of contents", "publication information",
+                "computational intelligence society")
+
+
+_IEEE_PUB_DATE_RE = re.compile(r"publicationDate=(\d+)\+(\w+)\+(\d{4})")
+_IEEE_MONTHS = {m: i for i, m in enumerate(
+    ["January","February","March","April","May","June",
+     "July","August","September","October","November","December"], start=1)}
+
+
+def _ieee_parse_pub_date(rights_link: str) -> date | None:
+    """Parse publicationDate=15+May+2026 from ieeexplore rightsLink."""
+    m = _IEEE_PUB_DATE_RE.search(rights_link)
+    if not m:
+        return None
+    try:
+        day, month_str, year = int(m.group(1)), m.group(2), int(m.group(3))
+        month = _IEEE_MONTHS.get(month_str)
+        if not month:
+            return None
+        return date(year, month, day)
+    except (ValueError, TypeError):
+        return None
+
+
+def fetch_from_ieee_rest(journal: dict, since_id: int, since: date | None = None) -> tuple[list[dict], None, int | None]:
+    """
+    Fetch recent articles from ieeexplore via the internal REST API.
+    Covers both early-access and issued papers (better than the TOC RSS).
+
+    Watermark: `since_id` = highest IEEE articleNumber seen on the last run.
+    Results are fetched newest-first and stopped when articleNumber <= since_id.
+    On first run (since_id=0), `since` date is used as a fallback stop condition
+    (parsed from the rightsLink publicationDate field).
+    """
+    pub_id = journal["ieee_pub_id"]
+    name = journal["name"]
+    tag_filter = journal.get("tag_filter")
+
+    papers = []
+    max_article_number: int | None = None
+    page = 1
+    rows = 25
+    done = False
+
+    log.info("Fetching IEEE REST: %s (pub %s, since_id %d)", name, pub_id, since_id)
+
+    while not done:
+        payload = {
+            "queryText": "",
+            "newsearch": True,
+            "pageNumber": page,
+            "rowsPerPage": rows,
+            "punumber": pub_id,
+            "sortType": "newest",
+        }
+        try:
+            r = requests.post(_IEEE_REST_URL, json=payload, headers=_IEEE_REST_HEADERS, timeout=20)
+            if r.status_code != 200 or not r.content:
+                log.warning("%s: IEEE REST returned %d (page %d)", name, r.status_code, page)
+                break
+            data = r.json()
+        except Exception as e:
+            log.warning("%s: IEEE REST fetch failed (page %d): %s", name, page, e)
+            break
+
+        records = data.get("records", [])
+        if not records:
+            break
+
+        total_pages = data.get("totalPages", page)
+
+        for rec in records:
+            art_num_str = rec.get("articleNumber", "")
+            if not art_num_str:
+                continue
+            try:
+                art_num = int(art_num_str)
+            except ValueError:
+                continue
+
+            # ID-based stop (normal operation after first run)
+            if since_id > 0 and art_num <= since_id:
+                done = True
+                break
+
+            # Date-based stop (first run: since_id=0, use since date from rightsLink)
+            if since_id == 0 and since is not None:
+                rights_link = rec.get("rightsLink", "")
+                pub_date = _ieee_parse_pub_date(rights_link)
+                if pub_date is not None and pub_date <= since:
+                    done = True
+                    break
+
+            if max_article_number is None or art_num > max_article_number:
+                max_article_number = art_num
+
+            title = (rec.get("articleTitle") or "").strip()
+            if not title:
+                continue
+            if any(t in title.lower() for t in _IEEE_ERRATA):
+                continue
+
+            abstract_raw = (rec.get("abstract") or "").strip()
+            # Strip trailing truncation artifact from API
+            if abstract_raw.endswith("..."):
+                abstract_raw = abstract_raw[:-3].rstrip()
+
+            doi = rec.get("doi", "")
+
+            raw_authors = rec.get("authors") or []
+            if isinstance(raw_authors, dict):
+                raw_authors = raw_authors.get("authors", [])
+            authors = [a.get("normalizedName", "") or a.get("name", "") for a in raw_authors if isinstance(a, dict)]
+            authors = [a for a in authors if a]
+
+            if tag_filter:
+                combined = [title.lower()]
+                if not any(f.lower() in text for f in tag_filter for text in combined):
+                    continue
+
+            abstract_quality = ("missing" if not abstract_raw
+                                else "truncated" if len(abstract_raw) < 400
+                                else "full")
+
+            papers.append({
+                "arxiv_id":         doi or f"ieee:{art_num_str}",
+                "title":            title,
+                "abstract":         abstract_raw,
+                "abstract_quality": abstract_quality,
+                "authors":          authors,
+                "subcategories":    [],
+                "source":           name,
+                "feed_url":         f"ieee_rest:{pub_id}",
+                "subject_tags":     [],
+            })
+
+        if done or page >= total_pages:
+            break
+        page += 1
+
+    log.info("%s: %d articles from IEEE REST.", name, len(papers))
+    return papers, None, max_article_number
+
+
+# ---------------------------------------------------------------------------
 # Public entry points
 # ---------------------------------------------------------------------------
 
@@ -371,6 +540,9 @@ def fetch_journal(journal: dict, since: date, scrapers: dict) -> tuple[list[dict
     """Dispatch to the correct fetch strategy based on journal config."""
     if "url" in journal:
         return fetch_from_rss(journal, since, scrapers)
+    if "ieee_pub_id" in journal:
+        since_id = journal.get("since_id", 0)
+        return fetch_from_ieee_rest(journal, since_id, since=since)
     if "crossref_issn" in journal:
         papers, max_date = fetch_from_crossref(journal, since)
         return papers, max_date, None
@@ -382,6 +554,8 @@ def journal_key(journal: dict) -> str:
     """Return the dedup/watermark key for a journal."""
     if "url" in journal:
         return journal["url"]
+    if "ieee_pub_id" in journal:
+        return f"ieee_rest:{journal['ieee_pub_id']}"
     if "crossref_issn" in journal:
         return f"crossref:{journal['crossref_issn']}"
     return f"openalex:{journal['openalex_issn']}"

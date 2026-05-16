@@ -119,7 +119,7 @@ def main():
         else:
             since = date.fromisoformat(watermarks[url_key]) if url_key in watermarks else yesterday - timedelta(days=1)
 
-        if "id_pattern" in journal:
+        if "id_pattern" in journal or "ieee_pub_id" in journal:
             journal = dict(journal)
             journal["since_id"] = preprint_watermarks.get(journal["name"], 0)
             log.info("%s: watermark is %s (ID-based)", journal["name"], journal["since_id"])
