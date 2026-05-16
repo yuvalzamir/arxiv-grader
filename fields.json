@@ -1145,7 +1145,7 @@
       { "name": "AER",             "crossref_issn": "1944-7981",                                                                                                                    "tag_filter": null },
       { "name": "QJE",             "url": "https://academic.oup.com/rss/site_5504/3365.xml",                                                "publisher": "oup",             "tag_filter": null },
       { "name": "JPE",             "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jpe",                    "publisher": "oup",             "tag_filter": null },
-      { "name": "REStud",          "url": "https://academic.oup.com/rss/site_5508/3369.xml",                                                "publisher": "oup",             "tag_filter": null },
+      { "name": "REStud",          "url": "https://academic.oup.com/rss/site_5508/advanceAccess_3369.xml",                                    "publisher": "oup",             "tag_filter": null },
       { "name": "Econometrica",    "url": "https://onlinelibrary.wiley.com/feed/14680262/most-recent",                                      "publisher": "wiley",           "tag_filter": null },
       { "name": "EconomicJournal", "url": "https://academic.oup.com/rss/site_6182/advanceAccess_4014.xml",                                  "publisher": "oup",             "tag_filter": null },
       { "name": "AEJ:Applied",     "crossref_issn": "1945-7782",                                                                                                                    "tag_filter": null },
@@ -1396,6 +1396,41 @@
       { "name": "Shofar",              "url": "https://muse.jhu.edu/feeds/latest_articles?jid=181","publisher": "muse", "tag_filter": null },
       { "name": "Legacy",              "url": "https://muse.jhu.edu/feeds/latest_articles?jid=115","publisher": "muse", "tag_filter": null }
     ],
-    "tree_path": ["Humanities", "Literature & Culture", "Literary & Cultural Studies", "American, European & Jewish Literature"]
+    "tree_path": ["Humanities & Arts", "Literature", "Literary & Cultural Studies", "American, European & Jewish Literature"]
+  },
+  "econ-education": {
+    "arxiv_categories": ["econ.GN", "econ.LM"],
+    "description": "Economics of education, human capital, resource allocation in schools, and labor market returns to schooling",
+    "journals": [
+      { "name": "EconEdReview",     "url": "https://rss.sciencedirect.com/publication/science/02727757",                                                                    "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "JHumanCapital",    "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jhc",                                                   "publisher": "oup",              "tag_filter": null },
+      { "name": "JOLE",             "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jole",                                                  "publisher": "oup",              "tag_filter": null },
+      { "name": "EduEconomics",     "url": "https://www.tandfonline.com/feed/rss/cede20",                                                                                   "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "JEconEducation",   "url": "https://www.tandfonline.com/feed/rss/vece20",                                                                                   "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "EduFinancePolicy", "openalex_issn": "1557-3079",                                                                                                           "publisher": "openalex",         "tag_filter": null },
+      { "name": "EduAdminQ",        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=eaqa",                        "publisher": "sage",             "tag_filter": null },
+      { "name": "JEdAdmin",         "openalex_issn": "1758-7395",                                                                                                           "publisher": "openalex",         "tag_filter": null },
+      { "name": "SchoolLeadership", "url": "https://www.tandfonline.com/feed/rss/cslm20",                                                                                   "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "ResHigherEd",      "url": "https://link.springer.com/search.rss?facet-journal-id=11162",                                                                   "publisher": "springer",         "tag_filter": null },
+      { "name": "HigherEducation",  "url": "https://link.springer.com/search.rss?facet-journal-id=10734",                                                                   "publisher": "springer",         "tag_filter": null },
+      { "name": "JPubEcon",         "url": "https://rss.sciencedirect.com/publication/science/00472727",                                                                    "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "LabourEcon",       "url": "https://rss.sciencedirect.com/publication/science/09275371",                                                                    "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "JDevEcon",         "url": "https://rss.sciencedirect.com/publication/science/03043878",                                                                    "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "JEdWork",          "url": "https://www.tandfonline.com/feed/rss/cjew20",                                                                                   "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "AEJ:Applied",      "crossref_issn": "1945-7782",                                                                                                                                            "tag_filter": null },
+      { "name": "AEJ:Policy",       "crossref_issn": "1945-774X",                                                                                                                                            "tag_filter": null },
+      { "name": "AER",              "crossref_issn": "1944-7981",                                                                                                                                            "tag_filter": null },
+      { "name": "JPE",              "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jpe",                                                   "publisher": "oup",              "tag_filter": null },
+      { "name": "QJE",              "url": "https://academic.oup.com/rss/site_5504/3365.xml",                                                                               "publisher": "oup",              "tag_filter": null },
+      { "name": "REStud",           "url": "https://academic.oup.com/rss/site_5508/advanceAccess_3369.xml",                                                                   "publisher": "oup",              "tag_filter": null },
+      { "name": "REStat",           "openalex_issn": "1530-9142",                                                                                                           "publisher": "openalex",         "tag_filter": null },
+      { "name": "Econometrica",     "url": "https://onlinelibrary.wiley.com/feed/14680262/most-recent",                                                                     "publisher": "wiley",            "tag_filter": null },
+      { "name": "EconomicJournal",  "url": "https://academic.oup.com/rss/site_6182/advanceAccess_4014.xml",                                                                 "publisher": "oup",              "tag_filter": null }
+    ],
+    "preprints": [
+      { "name": "NBER", "url": "https://back.nber.org/rss/new.xml",     "id_pattern": "w(\\d+)",  "tag_filter": null },
+      { "name": "CEPR", "url": "https://cepr.org/rss/discussion-paper", "id_pattern": "dp(\\d+)", "tag_filter": null }
+    ],
+    "tree_path": ["Social Sciences", "Economics", "Applied Microeconomics", "Educational Economics"]
   }
 }
