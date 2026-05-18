@@ -1432,5 +1432,63 @@
       { "name": "CEPR", "url": "https://cepr.org/rss/discussion-paper", "id_pattern": "dp(\\d+)", "tag_filter": null }
     ],
     "tree_path": ["Social Sciences", "Economics", "Applied Microeconomics", "Educational Economics"]
+  },
+  "edu-policy": {
+    "arxiv_categories": [],
+    "description": "Education policy, school governance, teacher workforce, equity and access, and evidence-based reform — research for national and regional policymakers",
+    "journals": [
+      { "name": "EducationalPolicy",      "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=epxa", "publisher": "sage",             "tag_filter": null },
+      { "name": "EduEvalPolicyAnalysis",  "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=epaa", "publisher": "sage",             "tag_filter": null },
+      { "name": "AmEdResJournal",         "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=aera", "publisher": "sage",             "tag_filter": null },
+      { "name": "ReviewEdResearch",       "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=rera", "publisher": "sage",             "tag_filter": null },
+      { "name": "EducationalResearcher",  "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=edra", "publisher": "sage",             "tag_filter": null },
+      { "name": "JTeacherEducation",      "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=jtea", "publisher": "sage",             "tag_filter": null },
+      { "name": "EduMgmtAdminLeadership", "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=emad", "publisher": "sage",             "tag_filter": null },
+      { "name": "JEdPolicy",              "url": "https://www.tandfonline.com/feed/rss/tedp20",                                                             "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "ComparativeEdu",         "url": "https://www.tandfonline.com/feed/rss/cced20",                                                             "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "StudiesHigherEdu",       "url": "https://www.tandfonline.com/feed/rss/cshe20",                                                             "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "OxfordReviewEdu",        "url": "https://www.tandfonline.com/feed/rss/core20",                                                             "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "AssessmentInEdu",        "url": "https://www.tandfonline.com/feed/rss/caie20",                                                             "publisher": "tandfonline",      "tag_filter": null },
+      { "name": "EconEdReview",           "url": "https://rss.sciencedirect.com/publication/science/02727757",                                              "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "TeachingTeacherEdu",     "url": "https://rss.sciencedirect.com/publication/science/0742051X",                                              "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "EarlyChildhoodResQ",     "url": "https://rss.sciencedirect.com/publication/science/08852006",                                              "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "IntJEdDevelopment",      "url": "https://rss.sciencedirect.com/publication/science/07380593",                                              "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "ComputersEdu",           "url": "https://rss.sciencedirect.com/publication/science/03601315",                                              "publisher": "elsevier_general", "tag_filter": null },
+      { "name": "BERJ",                   "url": "https://onlinelibrary.wiley.com/feed/14693518/most-recent",                                               "publisher": "wiley",            "tag_filter": null },
+      { "name": "BJET",                   "url": "https://onlinelibrary.wiley.com/feed/14678535/most-recent",                                               "publisher": "wiley",            "tag_filter": null },
+      { "name": "HigherEdPolicy",         "url": "https://link.springer.com/search.rss?query=*&content-type=Article&sortBy=relevance&search-within=Journal&facet-journal-id=41307", "publisher": "springer", "tag_filter": null },
+      { "name": "ResHigherEd",            "url": "https://link.springer.com/search.rss?facet-journal-id=11162",                                            "publisher": "springer",         "tag_filter": null },
+      { "name": "HigherEducation",        "url": "https://link.springer.com/search.rss?facet-journal-id=10734",                                            "publisher": "springer",         "tag_filter": null },
+      { "name": "JHumanCapital",          "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jhc",                             "publisher": "oup",              "tag_filter": null },
+      { "name": "JOLE",                   "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jole",                            "publisher": "oup",              "tag_filter": null },
+      { "name": "JEdAdmin",               "openalex_issn": "1758-7395",                                                                                     "publisher": "openalex",         "tag_filter": null },
+      { "name": "AEJ:Applied",            "crossref_issn": "1945-7782",                                                                                                                      "tag_filter": null },
+      { "name": "AEJ:Policy",             "crossref_issn": "1945-774X",                                                                                                                      "tag_filter": null }
+    ],
+    "preprints": [
+      { "name": "NBER", "url": "https://back.nber.org/rss/new.xml",     "id_pattern": "w(\\d+)",  "tag_filter": null },
+      { "name": "CEPR", "url": "https://cepr.org/rss/discussion-paper", "id_pattern": "dp(\\d+)", "tag_filter": null }
+    ],
+    "tree_path": ["Social Sciences", "Education", "Education Policy", "Education Policy & Reform"]
+  },
+  "demography": {
+    "arxiv_categories": ["econ.GN", "stat.AP"],
+    "description": "Empirical demography and population studies",
+    "tree_path": ["Social Sciences", "Sociology", "Demography", "Demography"],
+    "journals": [
+      { "name": "Demography",             "publisher": "openalex", "openalex_issn": "1533-7790", "tag_filter": null },
+      { "name": "PopDevReview",           "url": "https://onlinelibrary.wiley.com/feed/17284457/most-recent",                                                              "publisher": "wiley",       "tag_filter": null },
+      { "name": "PopulationStudies",      "url": "https://www.tandfonline.com/feed/rss/rpst20",                                                                            "publisher": "tandfonline", "tag_filter": null },
+      { "name": "EurJPopulation",         "url": "https://link.springer.com/search.rss?facet-journal-id=10680",                                                            "publisher": "springer",    "tag_filter": null },
+      { "name": "JPopulationEconomics",   "url": "https://link.springer.com/search.rss?facet-journal-id=148",                                                              "publisher": "springer",    "tag_filter": null },
+      { "name": "PopResPolicyReview",     "url": "https://link.springer.com/search.rss?facet-journal-id=11113",                                                            "publisher": "springer",    "tag_filter": null },
+      { "name": "AmSocReview",            "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=asra",                 "publisher": "sage",        "tag_filter": null },
+      { "name": "AmJSociology",           "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=ajs",                                            "publisher": "oup",         "tag_filter": null },
+      { "name": "PopSpacePlace",          "url": "https://onlinelibrary.wiley.com/feed/15448452/most-recent",                                                              "publisher": "wiley",       "tag_filter": null },
+      { "name": "SociologyBSA",           "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=soca",                 "publisher": "sage",        "tag_filter": null },
+      { "name": "DemographicResearch",    "url": "https://www.demographic-research.org/dr.rss",                                                                              "publisher": "springer",    "tag_filter": null },
+      { "name": "SocialForces",           "url": "https://academic.oup.com/rss/site_5513/advanceAccess_3374.xml",                                                             "publisher": "oup",         "tag_filter": null },
+      { "name": "JDemographicEconomics",  "publisher": "openalex", "openalex_issn": "2054-0906", "tag_filter": null }
+    ]
   }
 }
