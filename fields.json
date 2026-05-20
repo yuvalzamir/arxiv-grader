@@ -311,7 +311,7 @@
     "tree_path": [
       "Natural Sciences",
       "Physics",
-      "Quantum Technology",
+      "Quantum Physics",
       "Quantum Sensing"
     ]
   },
@@ -415,6 +415,18 @@
         "name": "ScienceAdvances",
         "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
         "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "NanoLett",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ACSNano",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "publisher": "acs",
         "tag_filter": null
       }
     ],
@@ -981,12 +993,24 @@
         "url": "https://www.nature.com/subjects/mathematics-and-computing/ncomms.rss",
         "publisher": "nature",
         "tag_filter": null
+      },
+      {
+        "name": "NanoLett",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ACSNano",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "publisher": "acs",
+        "tag_filter": null
       }
     ],
     "tree_path": [
       "Natural Sciences",
       "Physics",
-      "Quantum Technology",
+      "Quantum Physics",
       "Quantum Information"
     ]
   },
@@ -1183,9 +1207,11 @@
       { "name": "Science",     "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",                                                        "publisher": "science", "tag_filter": null },
       { "name": "NatComms",    "url": "https://www.nature.com/subjects/physics/ncomms.rss",                                                                           "publisher": "nature",  "tag_filter": null },
       { "name": "NatComms",    "url": "https://www.nature.com/subjects/optics-and-photonics/ncomms.rss",                                                              "publisher": "nature",  "tag_filter": null },
-      { "name": "NatComms",    "url": "https://www.nature.com/subjects/nanoscience-and-technology/ncomms.rss",                                                        "publisher": "nature",  "tag_filter": null }
+      { "name": "NatComms",    "url": "https://www.nature.com/subjects/nanoscience-and-technology/ncomms.rss",                                                        "publisher": "nature",  "tag_filter": null },
+      { "name": "NanoLett",    "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",                                                               "publisher": "acs",     "tag_filter": null },
+      { "name": "ACSNano",     "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",                                                               "publisher": "acs",     "tag_filter": null }
     ],
-    "tree_path": ["Natural Sciences", "Physics", "Quantum Technology", "Quantum Computing Hardware"]
+    "tree_path": ["Natural Sciences", "Physics", "Quantum Physics", "Quantum Computing Hardware"]
   },
   "computational-neuroscience": {
     "arxiv_categories": ["q-bio.NC", "q-bio.QM"],
@@ -1490,5 +1516,32 @@
       { "name": "SocialForces",           "url": "https://academic.oup.com/rss/site_5513/advanceAccess_3374.xml",                                                             "publisher": "oup",         "tag_filter": null },
       { "name": "JDemographicEconomics",  "publisher": "openalex", "openalex_issn": "2054-0906", "tag_filter": null }
     ]
+  },
+  "quantum-phenomena": {
+    "arxiv_categories": [
+      "cond-mat.supr-con",
+      "cond-mat.quant-gas",
+      "cond-mat.str-el",
+      "cond-mat.mes-hall"
+    ],
+    "description": "Exotic and macroscopic quantum phenomena — superconductivity, superfluidity, BEC, topological effects, quantum phase transitions, and many-body quantum effects",
+    "journals": [
+      { "name": "PRL",       "url": "https://feeds.aps.org/rss/tocsec/PRL-CondensedMatterStructureetc.xml",                                                              "publisher": "aps",     "tag_filter": null },
+      { "name": "PRL",       "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",                       "publisher": "aps",     "tag_filter": null },
+      { "name": "PRB",       "url": "http://feeds.aps.org/rss/recent/prb.xml",                                                                                           "publisher": "aps",     "tag_filter": null },
+      { "name": "PRX",       "url": "http://feeds.aps.org/rss/recent/prx.xml",                                                                                           "publisher": "aps",     "tag_filter": null },
+      { "name": "PRXQuantum","url": "http://feeds.aps.org/rss/recent/prxquantum.xml",                                                                                    "publisher": "aps",     "tag_filter": null },
+      { "name": "NatPhys",   "url": "https://www.nature.com/nphys.rss",                                                                                                  "publisher": "nature",  "tag_filter": null },
+      { "name": "NatComms",  "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",                                                                      "publisher": "nature",  "tag_filter": null },
+      { "name": "CommPhys",  "url": "https://www.nature.com/commsphys.rss",                                                                                              "publisher": "nature",  "tag_filter": null },
+      { "name": "npjQM",     "url": "https://www.nature.com/npjquantmats.rss",                                                                                           "publisher": "nature",  "tag_filter": null },
+      { "name": "NJP",       "url": "https://iopscience.iop.org/journal/rss/1367-2630",                                                                                  "publisher": "iop",     "tag_filter": null },
+      { "name": "NanoLett",  "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",                                                               "publisher": "acs",     "tag_filter": null },
+      { "name": "ACSNano",   "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",                                                               "publisher": "acs",     "tag_filter": null },
+      { "name": "Nature",    "url": "https://www.nature.com/nature.rss",                                                                                                  "publisher": "nature",  "tag_filter": null },
+      { "name": "Science",   "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",                                                             "publisher": "science", "tag_filter": null },
+      { "name": "PNAS",      "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=phys",                                             "publisher": "pnas",    "tag_filter": null }
+    ],
+    "tree_path": ["Natural Sciences", "Physics", "Quantum Physics", "Quantum Phenomena"]
   }
 }
