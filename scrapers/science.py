@@ -12,11 +12,11 @@ Editorial filter: dc:type field used to drop non-research content.
   Drops: In Depth, News, Books et al., Research Highlights, Feature,
          Working Life, Expert Voices, Editorial, Policy Article, Letter.
 
-Abstract coverage: GOOD — Semantic Scholar then OpenAlex fallback (~90%+ hit rate
+Abstract coverage: GOOD — OpenAlex fallback + S2 batch enrichment (~90%+ hit rate
 on kept entries).
   - Article pages: Cloudflare-protected (403) from server IPs.
-  - Semantic Scholar: primary source, ~85% hit rate on research articles.
-  - OpenAlex: fallback when Semantic Scholar returns nothing.
+  - OpenAlex: primary per-article source.
+  - S2 batch: fills remaining misses after all articles are scraped.
   - RSS fallback: short metadata string used when both APIs return nothing.
 
 Subject tags: not available → always []
@@ -25,29 +25,16 @@ Subject tags: not available → always []
 import logging
 import re
 
-import requests
-
 from .base import BaseScraper
 
 log = logging.getLogger(__name__)
 
 _DOI_RE = re.compile(r"10\.1126/")
-_SEMANTIC_SCHOLAR_URL = "https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}"
-_OPENALEX_URL = "https://api.openalex.org/works/doi:{doi}"
-_HEADERS = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
 
 # dc:type values worth including in a research digest.
 # Drops: In Depth, Books et al., Research Highlights, Feature, Working Life,
 #        Expert Voices, Editorial, Policy Article, Letter (no abstracts).
 _KEEP_TYPES = {"Research Article", "Review", "Perspective"}
-
-
-def _reconstruct_openalex_abstract(inverted_index: dict) -> str:
-    tokens: dict[int, str] = {}
-    for word, positions in inverted_index.items():
-        for pos in positions:
-            tokens[pos] = word
-    return " ".join(tokens[i] for i in sorted(tokens))
 
 
 class ScienceScraper(BaseScraper):
@@ -67,47 +54,11 @@ class ScienceScraper(BaseScraper):
     def scrape_article(self, url: str, entry=None) -> dict:
         doi = _extract_doi_from_url(url)
         if doi:
-            abstract = self._fetch_semantic_scholar(doi)
+            abstract = self._fetch_abstract_openalex(doi)
             if abstract:
                 return {"abstract": abstract, "subject_tags": []}
-            abstract = self._fetch_openalex(doi)
-            if abstract:
-                return {"abstract": abstract, "subject_tags": []}
-
-        # Fallback: RSS summary will be used by the caller
+        # S2 batch will fill remaining misses after the full article loop
         return {"abstract": "", "subject_tags": []}
-
-    def _fetch_semantic_scholar(self, doi: str) -> str:
-        try:
-            r = requests.get(
-                _SEMANTIC_SCHOLAR_URL.format(doi=doi),
-                params={"fields": "abstract"},
-                timeout=15,
-                headers=_HEADERS,
-            )
-            if r.status_code == 200:
-                return r.json().get("abstract") or ""
-            log.debug("Semantic Scholar returned %d for DOI %s", r.status_code, doi)
-        except Exception as e:
-            log.warning("Semantic Scholar request failed for DOI %s: %s", doi, e)
-        return ""
-
-    def _fetch_openalex(self, doi: str) -> str:
-        try:
-            r = requests.get(
-                _OPENALEX_URL.format(doi=doi),
-                timeout=15,
-                headers=_HEADERS,
-            )
-            if r.status_code == 200:
-                inverted = r.json().get("abstract_inverted_index")
-                if inverted:
-                    return _reconstruct_openalex_abstract(inverted)
-            else:
-                log.debug("OpenAlex returned %d for DOI %s", r.status_code, doi)
-        except Exception as e:
-            log.warning("OpenAlex request failed for DOI %s: %s", doi, e)
-        return ""
 
 
 def _extract_doi_from_url(url: str) -> str:

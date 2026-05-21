@@ -32,7 +32,9 @@ class WileyScraper(BaseScraper):
         if not section:
             # No section tag — include by default so we don't silently drop papers.
             return True
-        return section in _KEEP_SECTIONS
+        # Use prefix matching to handle sub-typed sections like
+        # "RESEARCH ARTICLE ‐ EMPIRICAL" or "SPECIAL ISSUE ‐ TECHNOLOGY PAPER".
+        return any(section.startswith(keep) for keep in _KEEP_SECTIONS)
 
     def scrape_article(self, url: str, entry=None) -> dict:
         if entry is not None:
@@ -48,4 +50,12 @@ class WileyScraper(BaseScraper):
                         abstract = text
                     if abstract:
                         return {"abstract": abstract, "subject_tags": []}
+            # Fallback: dc:description (feedparser stores as entry.summary).
+            # Used by JSEP and similar feeds that omit text/plain content.
+            summary = getattr(entry, "summary", None) or ""
+            if summary:
+                if "ABSTRACT" in summary:
+                    summary = summary.split("ABSTRACT", 1)[1].strip()
+                if summary:
+                    return {"abstract": summary, "subject_tags": []}
         return {"abstract": "", "subject_tags": []}

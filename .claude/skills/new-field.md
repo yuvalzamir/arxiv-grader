@@ -15,13 +15,31 @@ Read `docs/add_new_field.md` in full before doing anything else. It contains the
 
 ---
 
-### Step 2 — Identify arXiv categories
+### Step 2 — Map the field
 
-Search for the correct arXiv category codes for the field (e.g. `quant-ph`, `cond-mat.mes-hall`, `cs.CV`). List them. These go into `arxiv_categories` in fields.json.
+Before searching for any feeds or journals, build a mental model of what this field actually is.
+
+Think through:
+- **Core research questions** — what fundamental questions do researchers in this field try to answer?
+- **Key subfields and communities** — what are the main sub-areas, schools of thought, or methodological traditions?
+- **Canonical topics and methods** — what techniques, phenomena, objects of study, or theoretical frameworks define the field?
+- **Boundary cases** — what adjacent fields or interdisciplinary areas might partially overlap, and where does this field end?
+
+Start from your own knowledge, then do **1–3 focused web searches** to fill gaps or confirm scope (e.g. "X field major research topics", "X vs Y field difference"). Do not over-search — the goal is a confident map, not exhaustive coverage.
+
+Write a 3–5 sentence **field overview paragraph** that captures this mapping. This paragraph will be included verbatim in the plan presented to the user, so make it informative enough for a non-expert to understand the scope. It will directly drive Steps 3 and 4: which arXiv categories to select, which journals are in-scope, and what tag filters are appropriate.
 
 ---
 
-### Step 3 — Identify leading journals
+### Step 3 — Identify arXiv categories
+
+Using the research questions and subfields mapped in Step 2 as your guide, identify the correct arXiv category codes (e.g. `quant-ph`, `cond-mat.mes-hall`, `cs.CV`). For each category, note which research question or subfield from Step 2 it covers — this justifies its inclusion. List them. These go into `arxiv_categories` in fields.json.
+
+---
+
+### Step 4 — Identify leading journals
+
+Using the research questions and subfields from Step 2 as your selection criteria, find the journals where researchers in this field actually publish. Think about each subfield and question from Step 2 in turn — a journal is worth including if it regularly publishes work relevant to at least one of them.
 
 Perform web searches to find:
 1. **General high-impact journals** that publish in this field (Nature, Science, PNAS, etc.) — these are broad journals that need `tag_filter`.
@@ -30,10 +48,13 @@ Perform web searches to find:
 For each journal found, note:
 - Full journal name and publisher
 - Whether it is field-specific or general
+- Which research question(s) / subfield(s) from Step 2 it primarily serves
+
+**Coverage policy:** Include ALL relevant journals, even if they already appear in another field (e.g. Nature, PRL, Science are fine to add again). A journal being in another field is never a reason to omit it. Err on the side of inclusion — triage handles filtering. Only omit journals that are clearly out of scope for the field being added.
 
 ---
 
-### Step 4 — Find RSS feeds (prefer sub-feeds)
+### Step 5 — Find RSS feeds (prefer sub-feeds)
 
 For every journal identified, search for its RSS feed URL. Apply these known patterns first before searching:
 
@@ -55,7 +76,7 @@ If a journal has no RSS feed at all, note it and handle it in Step 6.
 
 ---
 
-### Step 5 — Match journals to existing scrapers
+### Step 6 — Match journals to existing scrapers
 
 For each journal with an RSS feed, check the `scrapers/` directory to determine which scraper to use. The existing publishers and their scrapers are:
 
@@ -86,7 +107,7 @@ For each journal with an RSS feed, check the `scrapers/` directory to determine 
 
 ---
 
-### Step 6 — Plan new scrapers (if needed)
+### Step 7 — Plan new scrapers (if needed)
 
 For any journal that needs a new or modified scraper, plan it following these rules:
 
@@ -103,7 +124,7 @@ For any journal that needs a new or modified scraper, plan it following these ru
 
 ---
 
-### Step 7 — Handle journals with no RSS (OpenAlex ISSN path)
+### Step 8 — Handle journals with no RSS (OpenAlex ISSN path)
 
 For journals with no RSS feed, use the OpenAlex ISSN path:
 
@@ -120,7 +141,7 @@ Find the journal's ISSN (print or electronic) via a web search or OpenAlex. This
 
 ---
 
-### Step 8 — Draft the fields.json entry
+### Step 9 — Draft the fields.json entry
 
 Produce the complete JSON block for the new field:
 
@@ -140,7 +161,7 @@ Rules:
 
 ---
 
-### Step 8b — Dropped journals table
+### Step 9b — Dropped journals table
 
 After drafting the fields.json entry, include a table of **every journal that was considered and dropped** during research. This is mandatory — do not skip it even if the final list looks complete.
 
@@ -154,15 +175,16 @@ Reason categories:
 - **Blocked (Cloudflare)** — RSS or page fetch is blocked from the server IP. State this explicitly. The user may want to investigate a workaround (institutional access, API token, alternative mirror).
 - **No RSS / No OpenAlex coverage** — could not find a usable feed or ISSN with adequate coverage.
 - **Low volume** — journal publishes too infrequently to be worth including.
-- **Out of scope** — journal covers adjacent territory not central to the field.
-- **Duplicate coverage** — another included journal covers the same papers.
+- **Out of scope** — journal covers territory clearly unrelated to the field.
 - **Other** — describe briefly.
+
+Note: a journal appearing in another field is NOT a valid reason to drop it. Include it anyway.
 
 If a journal was dropped due to a blocker (Cloudflare, IP ban, paywalled API), make that **very clear** so the user can follow up manually.
 
 ---
 
-### Step 9 — Verification plan
+### Step 10 — Verification plan
 
 After all code and config changes are made, include a verification step:
 
@@ -180,7 +202,7 @@ After all code and config changes are made, include a verification step:
 
 ---
 
-### Step 10 — Deployment checklist
+### Step 11 — Deployment checklist
 
 Present the user with the full deployment checklist:
 
@@ -195,7 +217,7 @@ Present the user with the full deployment checklist:
 
 When this skill runs:
 1. Call `EnterPlanMode` immediately.
-2. Work through Steps 1–8 (research + planning), producing a concrete proposed fields.json entry and scraper plan.
-3. Present the full plan to the user for approval before making any file changes.
-4. On approval, exit plan mode and execute: write scrapers, edit fields.json, then run the verification (Step 9).
-5. After verification passes, present the deployment checklist (Step 10).
+2. Work through Steps 1–9 (research + planning), producing a concrete proposed fields.json entry and scraper plan.
+3. Present the full plan to the user for approval before making any file changes. The plan must include the **field overview paragraph** from Step 2 as its opening section.
+4. On approval, exit plan mode and execute: write scrapers, edit fields.json, then run the verification (Step 10).
+5. After verification passes, present the deployment checklist (Step 11).

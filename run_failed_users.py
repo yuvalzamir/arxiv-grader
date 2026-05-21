@@ -64,10 +64,11 @@ def parse_failed_users(log_file: Path, date_str: str) -> list[str]:
         failed: list[str] = []
         # Skip the separator line after "Run summary" (==== … ====)
         for line in lines[summary_start + 2:]:
-            m = re.match(r"^\s+(\S+)\s+(OK|FAILED)\s*$", line)
+            m = re.match(r"^\s+(\S+)\s+(\S+)\s*$", line)
             if m:
                 if m.group(2) == "FAILED":
                     failed.append(m.group(1))
+                # OK, NO-RUN, and any future statuses are skipped
             elif line.strip() == "" or line.startswith("="):
                 continue
             else:

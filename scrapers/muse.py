@@ -24,4 +24,6 @@ class MuseScraper(BaseScraper):
     def scrape_article(self, url: str, entry=None) -> dict:
         title = getattr(entry, "title", "") if entry is not None else ""
         abstract = self._fetch_abstract_semanticscholar(title)
+        if not abstract:
+            abstract = self._fetch_abstract_openalex_title(title)
         return {"abstract": abstract, "subject_tags": [], "skip_rss_fallback": True}

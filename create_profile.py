@@ -28,6 +28,7 @@ import requests
 from anthropic import Anthropic, AuthenticationError
 from dotenv import load_dotenv
 from scrapers.base import BaseScraper
+from scrapers import SCRAPERS
 
 load_dotenv()  # loads credentials from .env if present
 
@@ -491,7 +492,7 @@ def fetch_arxiv_batch(urls: list[str]) -> list[dict]:
     """Fetch metadata for a list of arXiv URLs using the batch API."""
     ids = []
     for url in urls:
-        m = re.search(r"arxiv\.org/abs/([0-9]{4}\.[0-9]{4,5}(?:v\d+)?)", url)
+        m = re.search(r"arxiv\.org/(?:abs|pdf)/([0-9]{4}\.[0-9]{4,5}(?:v\d+)?)", url)
         if m:
             ids.append(m.group(1))
     if not ids:
@@ -535,48 +536,98 @@ def fetch_arxiv_batch(urls: list[str]) -> list[dict]:
     return papers
 
 
+# Maps URL substrings to SCRAPERS keys — same publishers as the pipeline
+_URL_TO_PUBLISHER = [
+    ("journals.aps.org",           "aps"),
+    ("link.aps.org",               "aps"),
+    ("nature.com",                 "nature"),
+    ("science.org",                "science"),
+    ("pnas.org",                   "pnas"),
+    ("pubs.acs.org",               "acs"),
+    ("onlinelibrary.wiley.com",    "wiley"),
+    ("sciencedirect.com",          "elsevier"),
+    ("cell.com",                   "cell"),
+    ("journals.plos.org",          "plos"),
+    ("iopscience.iop.org",         "iop"),
+    ("academic.oup.com",           "oup"),
+    ("royalsocietypublishing.org", "royalsociety"),
+    ("cambridge.org",              "cambridge"),
+    ("opticapublishing.org",       "optica"),
+    ("scipost.org",                "scipost"),
+    ("edpsciences.org",            "edp"),
+    ("aip.scitation.org",          "aip"),
+    ("pubs.aip.org",               "aip"),
+]
+
+
+def _detect_publisher(url: str) -> str | None:
+    for pattern, publisher in _URL_TO_PUBLISHER:
+        if pattern in url:
+            return publisher
+    return None
+
+
 def fetch_journal_paper(url: str) -> dict:
     """
     Fetch title, authors, and abstract from a journal page.
-    Uses standard citation meta tags present on most publisher sites.
-    Falls back to Open Graph / page title if meta tags are absent.
+    Tries publisher-specific scraper first (same as pipeline) for best abstract quality.
+    Falls back to HTML citation meta tags, then OpenAlex/CrossRef for title.
     """
     log.info("Fetching journal paper: %s", url)
+
+    abstract = ""
+    scraper_authors = []
+
+    # --- Try publisher-specific scraper for abstract (same as pipeline) ---
+    publisher = _detect_publisher(url)
+    if publisher and publisher in SCRAPERS:
+        try:
+            scraper = SCRAPERS[publisher]()
+            result = scraper.scrape_article(url, entry=None)
+            if result:
+                abstract = result.get("abstract", "")
+                scraper_authors = result.get("authors", [])
+                if abstract:
+                    log.info("  [%s scraper] abstract fetched (%d chars)", publisher, len(abstract))
+        except Exception as exc:
+            log.warning("  [%s scraper] failed: %s", publisher, exc)
+
+    # --- Fetch title and authors from HTML (scrapers don't return title) ---
+    title = ""
+    html_authors = []
     try:
         resp = requests.get(url, timeout=20, headers=HEADERS)
         resp.raise_for_status()
         html = resp.text[:HTML_CAP]
+
+        def _meta(name):
+            m = re.search(
+                rf'<meta\s[^>]*name=["\']citation_{name}["\'][^>]*content=["\'](.*?)["\']',
+                html, re.IGNORECASE | re.DOTALL,
+            )
+            return m.group(1).strip() if m else ""
+
+        def _all_meta(name):
+            return re.findall(
+                rf'<meta\s[^>]*name=["\']citation_{name}["\'][^>]*content=["\'](.*?)["\']',
+                html, re.IGNORECASE | re.DOTALL,
+            )
+
+        title = _meta("title")
+        if not abstract:
+            abstract = _meta("abstract")
+        html_authors = [a.strip() for a in _all_meta("author") if a.strip()]
+
+        if not title:
+            m = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
+            title = re.sub(r"\s+", " ", m.group(1)).strip() if m else ""
+        if not abstract:
+            m = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\'](.*?)["\']', html, re.IGNORECASE)
+            abstract = m.group(1).strip() if m else ""
     except Exception as exc:
-        log.warning("Could not fetch %s: %s", url, exc)
-        return {"source": "journal", "url": url, "title": "", "abstract": "", "authors": []}
+        log.warning("Could not fetch HTML for %s: %s", url, exc)
 
-    # citation_* meta tags — supported by Google Scholar, most publishers.
-    def meta(name):
-        m = re.search(
-            rf'<meta\s[^>]*name=["\']citation_{name}["\'][^>]*content=["\'](.*?)["\']',
-            html, re.IGNORECASE | re.DOTALL,
-        )
-        return m.group(1).strip() if m else ""
-
-    def all_meta(name):
-        return re.findall(
-            rf'<meta\s[^>]*name=["\']citation_{name}["\'][^>]*content=["\'](.*?)["\']',
-            html, re.IGNORECASE | re.DOTALL,
-        )
-
-    title = meta("title")
-    abstract = meta("abstract")
-    authors = [a.strip() for a in all_meta("author") if a.strip()]
-
-    # Fallbacks.
-    if not title:
-        m = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
-        title = re.sub(r"\s+", " ", m.group(1)).strip() if m else url
-    if not abstract:
-        m = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\'](.*?)["\']', html, re.IGNORECASE)
-        abstract = m.group(1).strip() if m else ""
-
-    # API fallback: if title or abstract still missing, try DOI-based lookup
+    # --- OpenAlex / CrossRef fallback for title ---
     if not title or not abstract:
         doi = _doi_from_url(url)
         if doi:
@@ -585,16 +636,17 @@ def fetch_journal_paper(url: str) -> dict:
                 title = oa.get("title", "")
             if not abstract:
                 abstract = oa.get("abstract", "")
-            if not authors:
-                authors = oa.get("authors", [])
-            # CrossRef for title only if OpenAlex also missed it
+            if not html_authors:
+                html_authors = oa.get("authors", [])
             if not title:
                 cr = BaseScraper._fetch_metadata_crossref(doi)
                 title = cr.get("title", "")
-                if not authors:
-                    authors = cr.get("authors", [])
+                if not html_authors:
+                    html_authors = cr.get("authors", [])
             if title:
                 log.info("  [DOI fallback] %s — %s", doi, title[:60])
+
+    authors = scraper_authors or html_authors
 
     log.info("  [journal] %s — %s", url[:50], title[:60])
     return {

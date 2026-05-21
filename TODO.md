@@ -59,5 +59,17 @@ scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log
 ### Adaptation speed
 - [ ] **Topic-aware liked-paper selection for scoring** (#32) — Make `_sample_liked_papers()` select papers most semantically similar to today's triage survivors (keyword overlap in Python, no embeddings). Scoring agent sees few-shot examples most relevant to today's batch.
 
+### Abstract coverage — CORE API fallback
+- [ ] **CORE API abstract enrichment** — API key: `HyQYgNwRSCc0Mtix1Xv7rJof9lpmOAkF`. Add `_fetch_abstract_core(doi)` to `base.py` using `GET https://api.core.ac.uk/v3/works/doi:{doi}` with `Authorization: {key}` header. Returns `abstract` field for indexed OA papers. Add as third fallback in `TandfonlineScraper.scrape_article` (after OpenAlex, before S2 batch) and in `SageScraper`. Rate: 1,000 req/day registered — sufficient. Expected lift: ~5–10% on OA papers not yet in OpenAlex.
+
+  **Relevant journals by field (all tandfonline publisher):**
+  - `edu-policy`: JEdPolicy, ComparativeEdu, StudiesHigherEdu, OxfordReviewEdu, AssessmentInEdu
+  - `econ-political`: PoliticalComm
+  - `econ-education`: EduEconomics, JEconEducation, SchoolLeadership, JEdWork
+  - `gender-studies`: GenderPlaceCulture
+  - `literature-and-culture`: JModernJewishStudies, JewishCultureHistory
+
+  Also relevant for Elsevier social-science journals with same Nov-2024 restriction (elsevier_general): EconEdReview, TeachingTeacherEdu, EarlyChildhoodResQ, IntJEdDevelopment, ComputersEdu (edu-policy field).
+
 ### Discovery
 - Deferred to `docs/scaling_analysis.md` — need more users per field first.

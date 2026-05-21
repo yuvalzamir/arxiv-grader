@@ -24,7 +24,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, render_template_string, send_from_directory, url_for
 
 load_dotenv()
 
@@ -44,6 +44,41 @@ _SMTP_PORT     = int(os.environ.get("EMAIL_SMTP_PORT", "587"))
 _SMTP_USER     = os.environ.get("EMAIL_SMTP_USER", "")
 _SMTP_PASSWORD = os.environ.get("EMAIL_SMTP_PASSWORD", "")
 _EMAIL_FROM    = os.environ.get("EMAIL_FROM", "")
+
+
+_UNSUBSCRIBE_CONFIRM_HTML = """<!DOCTYPE html>
+<html><body style="font-family:sans-serif;max-width:480px;margin:60px auto;padding:0 20px">
+<h2>Unsubscribe from Incoming Science</h2>
+<p>Stop receiving digests for <strong>{{ username }}</strong>?</p>
+<p><a href="{{ confirm_url }}"
+   style="background:#c0392b;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px">
+   Yes, unsubscribe me</a></p>
+<p style="margin-top:24px;font-size:13px;color:#666">To re-subscribe, reply to any previous digest email.</p>
+</body></html>"""
+
+_UNSUBSCRIBE_DONE_HTML = """<!DOCTYPE html>
+<html><body style="font-family:sans-serif;max-width:480px;margin:60px auto;padding:0 20px">
+<h2>You've been unsubscribed</h2>
+<p><strong>{{ username }}</strong> will no longer receive digest emails.</p>
+<p style="font-size:13px;color:#666">To re-subscribe, reply to any previous digest email.</p>
+</body></html>"""
+
+
+def _send_unsubscribe_notification(username: str) -> None:
+    """Notify operator when a user unsubscribes."""
+    if not _SMTP_USER or not _SMTP_PASSWORD:
+        return
+    msg = MIMEText(f"User '{username}' has unsubscribed from Incoming Science digests.")
+    msg["Subject"] = f"Incoming Science — unsubscribed: {username}"
+    msg["From"]    = _EMAIL_FROM
+    msg["To"]      = _EMAIL_FROM
+    try:
+        with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=15) as s:
+            s.ehlo(); s.starttls(); s.ehlo()
+            s.login(_SMTP_USER, _SMTP_PASSWORD)
+            s.sendmail(_EMAIL_FROM, [_EMAIL_FROM], msg.as_string())
+    except Exception:
+        pass
 
 
 def _send_signup_notification(slug: str, field: str, submitted_at: str) -> None:
@@ -299,6 +334,40 @@ def rate():
     return render("Rated!", body), 200
 
 
+@app.route("/unsubscribe")
+def unsubscribe():
+    username = request.args.get("user", "").strip()
+    confirm  = request.args.get("confirm", "")
+
+    if not username:
+        return "Missing user parameter.", 400
+
+    profile_path = USERS_DIR / username / "taste_profile.json"
+    if not profile_path.exists():
+        return "User not found.", 404
+
+    if confirm != "1":
+        confirm_url = url_for("unsubscribe", user=username, confirm="1")
+        return render_template_string(_UNSUBSCRIBE_CONFIRM_HTML,
+                                      username=username, confirm_url=confirm_url)
+
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    already_off = (not profile.get("daily_digest", True)
+                   and not profile.get("weekly_digest", False))
+
+    profile["daily_digest"]  = False
+    profile["weekly_digest"] = False
+    with _write_lock:
+        profile_path.write_text(json.dumps(profile, indent=2, ensure_ascii=False),
+                                encoding="utf-8")
+    app.logger.info("Unsubscribed user: %s", username)
+
+    if not already_off:
+        _send_unsubscribe_notification(username)
+
+    return render_template_string(_UNSUBSCRIBE_DONE_HTML, username=username)
+
+
 @app.route("/")
 def index():
     return send_from_directory(
@@ -428,6 +497,14 @@ def robots():
 def legal():
     return send_from_directory(
         BASE_DIR / "website" / "stitch_platform_user_expansion" / "legal_final",
+        "code.html",
+    )
+
+
+@app.route("/sources")
+def sources():
+    return send_from_directory(
+        BASE_DIR / "website" / "stitch_platform_user_expansion" / "sources_final",
         "code.html",
     )
 

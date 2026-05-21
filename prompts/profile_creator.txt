@@ -35,7 +35,7 @@ ANALYSIS — reason through all inputs before writing any JSON
 
 4. Authors — Python has pre-counted how many papers each author appears in. Use those counts
    plus the explicitly-followed list to build the final ranked author list:
-   a. Explicitly followed authors → highest ranks regardless of paper count.
+   a. Explicitly followed authors → highest ranks regardless of paper count. Every author the user explicitly listed MUST appear in the final list — do not omit any.
    b. Authors with high paper counts → rank by count.
    c. Single-paper authors → include only if that paper is clearly central.
    d. Deduplicate name variants: "J. Smith" and "Jane Smith" are the same person —

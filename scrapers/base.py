@@ -21,6 +21,7 @@ SLEEP_BETWEEN_REQUESTS = 1.5
 _OPENALEX_API_URL = "https://api.openalex.org/works/doi:{doi}"
 _EUROPEPMC_API_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 _CR_API_URL = "https://api.crossref.org/works/{doi}"
+_S2_BATCH_URL = "https://api.semanticscholar.org/graph/v1/paper/batch"
 _S2_SEARCH_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 _API_HEADERS = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
 
@@ -83,6 +84,30 @@ class BaseScraper(ABC):
         """Fetch abstract from OpenAlex by DOI. Returns "" on miss or error."""
         return self._fetch_metadata_openalex(doi).get("abstract", "")
 
+    def _fetch_abstract_openalex_title(self, title: str) -> str:
+        """Fetch abstract from OpenAlex by title search. Returns "" on miss or error."""
+        if not title:
+            return ""
+        try:
+            r = requests.get(
+                "https://api.openalex.org/works",
+                params={"search": title, "per_page": 1, "select": "title,abstract_inverted_index"},
+                headers=_API_HEADERS,
+                timeout=15,
+            )
+            if r.status_code != 200:
+                log.debug("OpenAlex title search returned %d for '%s'", r.status_code, title[:60])
+                return ""
+            results = r.json().get("results", [])
+            if not results:
+                return ""
+            inv = results[0].get("abstract_inverted_index")
+            if inv:
+                return self._reconstruct_openalex_abstract(inv)
+        except Exception as exc:
+            log.warning("OpenAlex title search failed for '%s': %s", title[:60], exc)
+        return ""
+
     @staticmethod
     def _fetch_metadata_crossref(doi: str) -> dict:
         """Return {title, authors} from CrossRef. Used as title/author fallback."""
@@ -106,6 +131,69 @@ class BaseScraper(ABC):
             log.debug("CrossRef metadata fetch failed for DOI %s: %s", doi, exc)
             return {}
 
+    @staticmethod
+    def _fetch_abstracts_s2_batch(s2_ids: list[str], api_key: str = "") -> dict[str, str]:
+        """POST up to 500 S2 IDs per chunk; returns {s2_id: abstract} for hits."""
+        results: dict[str, str] = {}
+        headers = dict(_API_HEADERS)
+        if api_key:
+            headers["x-api-key"] = api_key
+        for i in range(0, len(s2_ids), 500):
+            chunk = s2_ids[i:i + 500]
+            try:
+                r = requests.post(
+                    _S2_BATCH_URL,
+                    params={"fields": "abstract"},
+                    json={"ids": chunk},
+                    headers=headers,
+                    timeout=30,
+                )
+                if r.status_code == 200:
+                    for s2_id, item in zip(chunk, r.json()):
+                        if item and item.get("abstract"):
+                            results[s2_id] = item["abstract"]
+                else:
+                    log.warning("S2 batch returned %d for chunk of %d IDs", r.status_code, len(chunk))
+            except Exception as exc:
+                log.warning("S2 batch request failed: %s", exc)
+        return results
+
+    @staticmethod
+    def enrich_missing_abstracts_s2(papers: list[dict], api_key: str = "") -> None:
+        """Fill in missing abstracts from Semantic Scholar batch API (in-place)."""
+        eligible = [p for p in papers if p["abstract_quality"] != "full" and p["arxiv_id"].startswith("10.")]
+        if not eligible:
+            return
+        s2_ids = ["DOI:" + p["arxiv_id"] for p in eligible]
+        hits = BaseScraper._fetch_abstracts_s2_batch(s2_ids, api_key)
+        filled = 0
+        for paper, s2_id in zip(eligible, s2_ids):
+            abstract = hits.get(s2_id, "")
+            if abstract and len(abstract) > len(paper["abstract"]):
+                paper["abstract"] = abstract
+                paper["abstract_quality"] = "full" if len(abstract) >= 400 else "truncated"
+                filled += 1
+        log.info("S2 batch: filled %d/%d missing abstracts", filled, len(eligible))
+
+    def _fetch_abstract_europepmc(self, doi: str) -> str:
+        """Fetch abstract from Europe PMC by DOI. Returns "" on miss or error."""
+        try:
+            r = requests.get(
+                _EUROPEPMC_API_URL,
+                params={"query": f"DOI:{doi}", "format": "json", "resultType": "core"},
+                headers=_API_HEADERS,
+                timeout=15,
+            )
+            if r.status_code == 200:
+                results = r.json().get("resultList", {}).get("result", [])
+                if results:
+                    return results[0].get("abstractText", "") or ""
+            else:
+                log.debug("Europe PMC returned %d for DOI %s", r.status_code, doi)
+        except Exception as exc:
+            log.warning("Europe PMC request failed for DOI %s: %s", doi, exc)
+        return ""
+
     def _fetch_abstract_semanticscholar(self, title: str) -> str:
         """Fetch abstract from Semantic Scholar by title search. Returns "" on miss or error."""
         if not title:
@@ -125,25 +213,6 @@ class BaseScraper(ABC):
                 log.debug("Semantic Scholar returned %d for title '%s'", r.status_code, title[:60])
         except Exception as exc:
             log.warning("Semantic Scholar request failed for title '%s': %s", title[:60], exc)
-        return ""
-
-    def _fetch_abstract_europepmc(self, doi: str) -> str:
-        """Fetch abstract from Europe PMC by DOI. Returns "" on miss or error."""
-        try:
-            r = requests.get(
-                _EUROPEPMC_API_URL,
-                params={"query": f"DOI:{doi}", "format": "json", "resultType": "core"},
-                headers=_API_HEADERS,
-                timeout=15,
-            )
-            if r.status_code == 200:
-                results = r.json().get("resultList", {}).get("result", [])
-                if results:
-                    return results[0].get("abstractText", "") or ""
-            else:
-                log.debug("Europe PMC returned %d for DOI %s", r.status_code, doi)
-        except Exception as exc:
-            log.warning("Europe PMC request failed for DOI %s: %s", doi, exc)
         return ""
 
     @abstractmethod

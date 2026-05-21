@@ -34,6 +34,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from retry_abstracts import add_to_bank, load_bank, retry_bank, save_bank
+from scrapers.sources import journal_key
 
 BASE_DIR  = Path(__file__).parent
 USERS_DIR = BASE_DIR / "users"
@@ -184,12 +185,7 @@ def filter_for_field(scraped_papers: list[dict], field_config: dict) -> list[dic
     """
     url_tag_filters = {}
     for j in field_config["journals"]:
-        if "url" in j:
-            key = j["url"]
-        elif "crossref_issn" in j:
-            key = f"crossref:{j['crossref_issn']}"
-        else:
-            key = f"openalex:{j['openalex_issn']}"
+        key = journal_key(j)
         url_tag_filters[key] = j["tag_filter"]
     result = []
     for paper in scraped_papers:
@@ -558,7 +554,7 @@ def _journal_coverage_lines(date_str: str) -> list[str]:
     return lines
 
 
-def _send_run_summary(results: dict[str, bool], date_str: str) -> None:
+def _send_run_summary(results: dict[str, bool | None], date_str: str) -> None:
     """Email the run summary table to the operator after every full pipeline run."""
     smtp_host = os.environ.get("EMAIL_SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.environ.get("EMAIL_SMTP_PORT", "587"))
@@ -568,16 +564,21 @@ def _send_run_summary(results: dict[str, bool], date_str: str) -> None:
     to_addr   = "yuval.zamir@icfo.eu"
 
     ok_users     = [u for u, ok in results.items() if ok]
-    failed_users = [u for u, ok in results.items() if not ok]
+    failed_users = [u for u, ok in results.items() if ok is False]
+    no_run_users = [u for u, ok in results.items() if ok is None]
 
     lines = [f"Run date: {date_str}", ""]
     lines.append(f"{'User':<22} {'Status'}")
     lines.append("-" * 32)
     for name, ok in sorted(results.items()):
-        lines.append(f"{name:<22} {'OK' if ok else 'FAILED'}")
+        status = "OK" if ok else ("NO-RUN" if ok is None else "FAILED")
+        lines.append(f"{name:<22} {status}")
+    total_line = f"Total: {len(ok_users)} OK, {len(failed_users)} FAILED"
+    if no_run_users:
+        total_line += f", {len(no_run_users)} NO-RUN"
     lines += [
         "",
-        f"Total: {len(ok_users)} OK, {len(failed_users)} FAILED",
+        total_line,
         "",
         "Full logs: /var/log/arxiv-grader/daily.log",
     ]
@@ -768,6 +769,7 @@ def main():
     # Maps user name → path to their field's merged papers (arXiv + journals).
     user_papers: dict[str, Path | None] = {u.name: None for u in users}
     triage_failed: set[str] = set()
+    no_papers_today: set[str] = set()
     shared_data_dir: Path | None = None
 
     if not args.refine:
@@ -814,7 +816,7 @@ def main():
             papers = json.loads(arxiv_path.read_text())
             if has_arxiv and not papers:
                 log.info("Field '%s': no arXiv papers today — skipping field.", field)
-                triage_failed.update(u.name for u in field_users)
+                no_papers_today.update(u.name for u in field_users)
                 continue
 
             arxiv_papers_by_field[field] = papers
@@ -918,7 +920,7 @@ def main():
 
             if not merged_papers:
                 log.warning("Field '%s': no papers from any source today — skipping %d user(s).", field, len(field_users))
-                return {u.name: None for u in field_users}, {u.name: False for u in field_users}
+                return {u.name: None for u in field_users}, {u.name: None for u in field_users}
 
             field_user_papers = {u.name: merged_path for u in field_users}
             triage_results = run_centralized_triage(
@@ -935,7 +937,9 @@ def main():
                     field_user_papers, triage_results = future.result()
                     user_papers.update(field_user_papers)
                     for user_name, ok in triage_results.items():
-                        if not ok:
+                        if ok is None:
+                            no_papers_today.add(user_name)
+                        elif not ok:
                             triage_failed.add(user_name)
                 except Exception as e:
                     log.error("Field '%s' triage FAILED: %s", field, e)
@@ -944,8 +948,14 @@ def main():
     # --- Triage-only mode: stop here, skip scoring/PDF/email ---
     if args.triage_only:
         log.info("--triage-only: stopping after triage. filtered_papers.json written per user.")
-        for name, failed in [(u.name, u.name in triage_failed) for u in users]:
-            log.info("  %-20s  %s", name, "FAILED" if failed else "OK")
+        for u in users:
+            if u.name in no_papers_today:
+                status = "NO-RUN"
+            elif u.name in triage_failed:
+                status = "FAILED"
+            else:
+                status = "OK"
+            log.info("  %-20s  %s", u.name, status)
         return
 
     # --- Build per-user args and run ---
@@ -994,8 +1004,12 @@ def main():
     with ThreadPoolExecutor(max_workers=max(len(users), 1)) as executor:
         futures = {}
         for user_dir in users:
+            if user_dir.name in no_papers_today:
+                log.info("--- [%s] Skipped — no papers today ---", user_dir.name)
+                results[user_dir.name] = None
+                continue
             if user_dir.name in triage_failed:
-                log.warning("--- [%s] Skipped — triage failed or no papers today ---", user_dir.name)
+                log.warning("--- [%s] Skipped — triage failed ---", user_dir.name)
                 results[user_dir.name] = False
                 continue
             extra_args = list(base_extra_args)
@@ -1012,7 +1026,8 @@ def main():
     print("  Run summary")
     print("=" * 50)
     for name, ok in results.items():
-        print(f"  {name:20s}  {'OK' if ok else 'FAILED'}")
+        status = "OK" if ok else ("NO-RUN" if ok is None else "FAILED")
+        print(f"  {name:20s}  {status}")
     print()
 
     # Clean up shared data folders older than 3 days (keeps today's for --no-fetch re-runs).

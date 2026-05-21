@@ -134,6 +134,9 @@ def send_email(pdf_path: Path, today_str: str, username: str, list_env_var: str 
     smtp_pass = _SMTP_PASSWORD
     from_addr = _EMAIL_FROM
 
+    rating_base = os.getenv("RATING_BASE_URL", "").rstrip("/")
+    unsubscribe_url = f"{rating_base}/unsubscribe?user={username}" if rating_base else ""
+
     subject = f"Incoming Science — {today_str}"
     body = (
         f"Your daily scientific literature digest is attached.\n\n"
@@ -141,6 +144,8 @@ def send_email(pdf_path: Path, today_str: str, username: str, list_env_var: str 
         f"Date: {today_str}\n"
         f"Open the PDF, tap rating buttons on papers that catch your eye.\n"
     )
+    if unsubscribe_url:
+        body += f"\n---\nTo unsubscribe: {unsubscribe_url}\n"
 
     msg = MIMEMultipart()
     msg["From"]    = from_addr

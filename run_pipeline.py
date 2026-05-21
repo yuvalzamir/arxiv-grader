@@ -660,14 +660,14 @@ def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, 
     try:
         if use_batch:
             response = _submit_and_poll(
-                client, "scoring", SCORING_MODEL, 8192, system_prompt, user_message, "Scoring",
+                client, "scoring", SCORING_MODEL, 16000, system_prompt, user_message, "Scoring",
             )
         else:
-            response = _call_direct(client, SCORING_MODEL, 8192, system_prompt, user_message, "Scoring")
+            response = _call_direct(client, SCORING_MODEL, 16000, system_prompt, user_message, "Scoring")
     except BatchTimeoutError:
         log.warning("Scoring: batch timed out — retrying with direct API...")
         try:
-            response = _call_direct(client, SCORING_MODEL, 8192, system_prompt, user_message, "Scoring")
+            response = _call_direct(client, SCORING_MODEL, 16000, system_prompt, user_message, "Scoring")
             no_batch_succeeded = True
         except Exception as e:
             no_batch_succeeded = False
