@@ -216,7 +216,9 @@
   },
   "quantum-sensing": {
     "arxiv_categories": [
-      "cond-mat",
+      "cond-mat.mes-hall",
+      "cond-mat.supr-con",
+      "quant-ph",
       "physics.app-ph",
       "physics.optics",
       "physics.chem-ph"
@@ -248,12 +250,6 @@
         "tag_filter": null
       },
       {
-        "name": "Small",
-        "url": "https://onlinelibrary.wiley.com/feed/16136829/most-recent",
-        "publisher": "wiley",
-        "tag_filter": null
-      },
-      {
         "name": "Nanophotonics",
         "url": "https://onlinelibrary.wiley.com/feed/21928614/most-recent",
         "publisher": "wiley",
@@ -278,12 +274,6 @@
         "tag_filter": null
       },
       {
-        "name": "NatMat",
-        "url": "https://www.nature.com/nmat.rss",
-        "publisher": "nature",
-        "tag_filter": null
-      },
-      {
         "name": "NatComms",
         "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",
         "publisher": "nature",
@@ -298,12 +288,6 @@
       {
         "name": "Science",
         "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
-        "publisher": "science",
-        "tag_filter": null
-      },
-      {
-        "name": "ScienceAdvances",
-        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=sciadv",
         "publisher": "science",
         "tag_filter": null
       }
@@ -1071,8 +1055,12 @@
     ]
   },
   "ml": {
-    "arxiv_categories": ["cs.LG", "cs.AI", "stat.ML"],
-    "description": "Machine learning — learning theory, optimization, probabilistic models, representation learning, and generative models",
+    "arxiv_categories": [
+      "cs.LG",
+      "cs.AI",
+      "stat.ML"
+    ],
+    "description": "Machine learning \u00e2\u20ac\u201d learning theory, optimization, probabilistic models, representation learning, and generative models",
     "journals": [
       {
         "name": "JMLR",
@@ -1111,10 +1099,17 @@
         "tag_filter": null
       }
     ],
-    "tree_path": ["Natural Sciences", "Computer Science", "AI", "Machine Learning"]
+    "tree_path": [
+      "Natural Sciences",
+      "Computer Science",
+      "AI",
+      "Machine Learning"
+    ]
   },
   "soft-eng": {
-    "arxiv_categories": ["cs.SE"],
+    "arxiv_categories": [
+      "cs.SE"
+    ],
     "description": "Empirical software engineering, privacy compliance in open-source software, AI-assisted development, process mining, and software governance",
     "journals": [
       {
@@ -1160,120 +1155,509 @@
         "tag_filter": null
       }
     ],
-    "tree_path": ["Natural Sciences", "Computer Science", "Software Engineering", "Empirical Software Engineering"]
+    "tree_path": [
+      "Natural Sciences",
+      "Computer Science",
+      "Software Engineering",
+      "Empirical Software Engineering"
+    ]
   },
   "econ-political": {
-    "arxiv_categories": ["econ.GN", "econ.EM", "econ.TH"],
+    "arxiv_categories": [
+      "econ.GN",
+      "econ.EM",
+      "econ.TH"
+    ],
     "description": "Political economy, media economics, and applied microeconomics",
     "journals": [
-      { "name": "AER",             "crossref_issn": "1944-7981",                                                                                                                    "tag_filter": null },
-      { "name": "QJE",             "url": "https://academic.oup.com/rss/site_5504/3365.xml",                                                "publisher": "oup",             "tag_filter": null },
-      { "name": "JPE",             "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jpe",                    "publisher": "oup",             "tag_filter": null },
-      { "name": "REStud",          "url": "https://academic.oup.com/rss/site_5508/advanceAccess_3369.xml",                                    "publisher": "oup",             "tag_filter": null },
-      { "name": "Econometrica",    "url": "https://onlinelibrary.wiley.com/feed/14680262/most-recent",                                      "publisher": "wiley",           "tag_filter": null },
-      { "name": "EconomicJournal", "url": "https://academic.oup.com/rss/site_6182/advanceAccess_4014.xml",                                  "publisher": "oup",             "tag_filter": null },
-      { "name": "AEJ:Applied",     "crossref_issn": "1945-7782",                                                                                                                    "tag_filter": null },
-      { "name": "AEJ:Policy",      "crossref_issn": "1945-774X",                                                                                                                    "tag_filter": null },
-      { "name": "JPubEcon",        "url": "https://rss.sciencedirect.com/publication/science/00472727",                                     "publisher": "elsevier_general","id_pattern": "pii/S(\\d+)", "tag_filter": null },
-      { "name": "AJPS",            "url": "https://onlinelibrary.wiley.com/feed/15405907/most-recent",                                      "publisher": "wiley",           "tag_filter": null },
-      { "name": "APSR",            "url": "https://www.cambridge.org/core/rss/product/id/833A7242AC7B607BA7F6168DA072DB3B",                 "publisher": "cambridge",       "tag_filter": null },
-      { "name": "JoP",             "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jop",                    "publisher": "plos",            "tag_filter": null },
-      { "name": "PoliticalComm",   "url": "https://www.tandfonline.com/feed/rss/upcp20",                                                    "publisher": "tandfonline",     "tag_filter": null }
+      {
+        "name": "AER",
+        "crossref_issn": "1944-7981",
+        "tag_filter": null
+      },
+      {
+        "name": "QJE",
+        "url": "https://academic.oup.com/rss/site_5504/3365.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "JPE",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jpe",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "REStud",
+        "url": "https://academic.oup.com/rss/site_5508/advanceAccess_3369.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "Econometrica",
+        "url": "https://onlinelibrary.wiley.com/feed/14680262/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "EconomicJournal",
+        "url": "https://academic.oup.com/rss/site_6182/advanceAccess_4014.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "AEJ:Applied",
+        "crossref_issn": "1945-7782",
+        "tag_filter": null
+      },
+      {
+        "name": "AEJ:Policy",
+        "crossref_issn": "1945-774X",
+        "tag_filter": null
+      },
+      {
+        "name": "JPubEcon",
+        "url": "https://rss.sciencedirect.com/publication/science/00472727",
+        "publisher": "elsevier_general",
+        "id_pattern": "pii/S(\\d+)",
+        "tag_filter": null
+      },
+      {
+        "name": "AJPS",
+        "url": "https://onlinelibrary.wiley.com/feed/15405907/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "APSR",
+        "url": "https://www.cambridge.org/core/rss/product/id/833A7242AC7B607BA7F6168DA072DB3B",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "JoP",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jop",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "PoliticalComm",
+        "url": "https://www.tandfonline.com/feed/rss/upcp20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      }
     ],
     "preprints": [
-      { "name": "NBER", "url": "https://back.nber.org/rss/new.xml",        "id_pattern": "w(\\d+)",  "tag_filter": null },
-      { "name": "CEPR", "url": "https://cepr.org/rss/discussion-paper",    "id_pattern": "dp(\\d+)", "tag_filter": null }
+      {
+        "name": "NBER",
+        "url": "https://back.nber.org/rss/new.xml",
+        "id_pattern": "w(\\d+)",
+        "tag_filter": null
+      },
+      {
+        "name": "CEPR",
+        "url": "https://cepr.org/rss/discussion-paper",
+        "id_pattern": "dp(\\d+)",
+        "tag_filter": null
+      }
     ],
-    "tree_path": ["Social Sciences", "Economics", "Applied Microeconomics", "Political & Media Economics"]
+    "tree_path": [
+      "Social Sciences",
+      "Economics",
+      "Applied Microeconomics",
+      "Political & Media Economics"
+    ]
   },
   "quantum-computing": {
-    "arxiv_categories": ["quant-ph", "cond-mat.supr-con", "physics.atom-ph"],
-    "description": "Quantum computing hardware — superconducting qubits, optical tweezers, cold atoms, and photonic qubits",
-    "journals": [
-      { "name": "PRXQuantum",  "url": "http://feeds.aps.org/rss/recent/prxquantum.xml",                                                                              "publisher": "aps",     "tag_filter": null },
-      { "name": "npjQI",       "url": "https://www.nature.com/npjqi.rss",                                                                                             "publisher": "nature",  "tag_filter": null },
-      { "name": "Quantum",     "url": "https://quantum-journal.org/feed/",                                                                                            "publisher": "plos",    "tag_filter": null },
-      { "name": "QST",         "url": "https://iopscience.iop.org/journal/rss/2058-9565",                                                                             "publisher": "iop",     "tag_filter": null },
-      { "name": "PRB",         "url": "http://feeds.aps.org/rss/recent/prb.xml",                                                                                      "publisher": "aps",     "tag_filter": null },
-      { "name": "PRL",         "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",                   "publisher": "aps",     "tag_filter": null },
-      { "name": "PRL",         "url": "https://feeds.aps.org/rss/tocsec/PRL-CondensedMatterStructureetc.xml",                                                         "publisher": "aps",     "tag_filter": null },
-      { "name": "PRL",         "url": "https://feeds.aps.org/rss/tocsec/PRL-AtomicMolecularandOpticalPhysics.xml",                                                    "publisher": "aps",     "tag_filter": null },
-      { "name": "PRA-QI",      "url": "https://feeds.aps.org/rss/tocsec/PRA-Quantuminformation.xml",                                                                  "publisher": "aps",     "tag_filter": null },
-      { "name": "PRA-AMO",     "url": "https://feeds.aps.org/rss/tocsec/PRA-Atomicandmolecularprocessesinexternalfields.xml",                                        "publisher": "aps",     "tag_filter": null },
-      { "name": "PRA-Optics",  "url": "https://feeds.aps.org/rss/tocsec/PRA-Quantumopticsphysicsoflasersnonlinearopticsclassicaloptics.xml",                          "publisher": "aps",     "tag_filter": null },
-      { "name": "NatPhoton",   "url": "https://www.nature.com/nphoton.rss",                                                                                           "publisher": "nature",  "tag_filter": null },
-      { "name": "Nature",      "url": "https://www.nature.com/nature.rss",                                                                                            "publisher": "nature",  "tag_filter": null },
-      { "name": "NatPhys",     "url": "https://www.nature.com/nphys.rss",                                                                                             "publisher": "nature",  "tag_filter": null },
-      { "name": "Science",     "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",                                                        "publisher": "science", "tag_filter": null },
-      { "name": "NatComms",    "url": "https://www.nature.com/subjects/physics/ncomms.rss",                                                                           "publisher": "nature",  "tag_filter": null },
-      { "name": "NatComms",    "url": "https://www.nature.com/subjects/optics-and-photonics/ncomms.rss",                                                              "publisher": "nature",  "tag_filter": null },
-      { "name": "NatComms",    "url": "https://www.nature.com/subjects/nanoscience-and-technology/ncomms.rss",                                                        "publisher": "nature",  "tag_filter": null },
-      { "name": "NanoLett",    "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",                                                               "publisher": "acs",     "tag_filter": null },
-      { "name": "ACSNano",     "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",                                                               "publisher": "acs",     "tag_filter": null }
+    "arxiv_categories": [
+      "quant-ph",
+      "cond-mat.supr-con",
+      "physics.atom-ph"
     ],
-    "tree_path": ["Natural Sciences", "Physics", "Quantum Physics", "Quantum Computing Hardware"]
+    "description": "Quantum computing hardware \u00e2\u20ac\u201d superconducting qubits, optical tweezers, cold atoms, and photonic qubits",
+    "journals": [
+      {
+        "name": "PRXQuantum",
+        "url": "http://feeds.aps.org/rss/recent/prxquantum.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "npjQI",
+        "url": "https://www.nature.com/npjqi.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Quantum",
+        "url": "https://quantum-journal.org/feed/",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "QST",
+        "url": "https://iopscience.iop.org/journal/rss/2058-9565",
+        "publisher": "iop",
+        "tag_filter": null
+      },
+      {
+        "name": "PRB",
+        "url": "http://feeds.aps.org/rss/recent/prb.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-CondensedMatterStructureetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-AtomicMolecularandOpticalPhysics.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRA-QI",
+        "url": "https://feeds.aps.org/rss/tocsec/PRA-Quantuminformation.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRA-AMO",
+        "url": "https://feeds.aps.org/rss/tocsec/PRA-Atomicandmolecularprocessesinexternalfields.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRA-Optics",
+        "url": "https://feeds.aps.org/rss/tocsec/PRA-Quantumopticsphysicsoflasersnonlinearopticsclassicaloptics.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "NatPhoton",
+        "url": "https://www.nature.com/nphoton.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/physics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/optics-and-photonics/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/nanoscience-and-technology/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NanoLett",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ACSNano",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "publisher": "acs",
+        "tag_filter": null
+      }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Quantum Physics",
+      "Quantum Computing Hardware"
+    ]
   },
   "computational-neuroscience": {
-    "arxiv_categories": ["q-bio.NC", "q-bio.QM"],
-    "description": "Computational neuroscience — neural circuits, brain-computer interfaces, MEA/ECoG recording, functional connectivity, and quantitative brain modeling",
-    "journals": [
-      { "name": "JNeuralEng",   "url": "https://iopscience.iop.org/journal/rss/1741-2552",                     "publisher": "iop",             "tag_filter": null },
-      { "name": "Neuron",       "url": "https://www.cell.com/neuron/inpress.rss",                              "publisher": "cell",            "tag_filter": null },
-      { "name": "NatNeurosci",  "url": "https://www.nature.com/neuro.rss",                                     "publisher": "nature",          "tag_filter": null },
-      { "name": "NatMethods",   "url": "https://www.nature.com/nmeth.rss",                                     "publisher": "nature",          "tag_filter": null },
-      { "name": "PLOSCompBio",  "url": "http://feeds.plos.org/ploscompbiol/NewArticles",                       "publisher": "plos",            "tag_filter": null },
-      { "name": "NatComms",     "url": "https://www.nature.com/subjects/neuroscience/ncomms.rss",              "publisher": "nature",          "tag_filter": null },
-      { "name": "NeuroImage",   "url": "https://rss.sciencedirect.com/publication/science/10538119",           "publisher": "elsevier_general","tag_filter": null },
-      { "name": "JCompNeurosci","url": "https://link.springer.com/search.rss?facet-journal-id=10827",          "publisher": "springer",        "tag_filter": null },
-      { "name": "NetNeuro",     "openalex_issn": "2472-1751",                                                  "publisher": "openalex",        "tag_filter": null },
-      { "name": "JNeurosci",    "openalex_issn": "1529-2401",                                                  "publisher": "openalex",        "tag_filter": null }
+    "arxiv_categories": [
+      "q-bio.NC",
+      "q-bio.QM"
     ],
-    "tree_path": ["Natural Sciences", "Biology", "Neuroscience", "Computational Neuroscience"]
+    "description": "Computational neuroscience \u00e2\u20ac\u201d neural circuits, brain-computer interfaces, MEA/ECoG recording, functional connectivity, and quantitative brain modeling",
+    "journals": [
+      {
+        "name": "JNeuralEng",
+        "url": "https://iopscience.iop.org/journal/rss/1741-2552",
+        "publisher": "iop",
+        "tag_filter": null
+      },
+      {
+        "name": "Neuron",
+        "url": "https://www.cell.com/neuron/inpress.rss",
+        "publisher": "cell",
+        "tag_filter": null
+      },
+      {
+        "name": "NatNeurosci",
+        "url": "https://www.nature.com/neuro.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatMethods",
+        "url": "https://www.nature.com/nmeth.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "PLOSCompBio",
+        "url": "http://feeds.plos.org/ploscompbiol/NewArticles",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/neuroscience/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NeuroImage",
+        "url": "https://rss.sciencedirect.com/publication/science/10538119",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "JCompNeurosci",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10827",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "NetNeuro",
+        "openalex_issn": "2472-1751",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "JNeurosci",
+        "openalex_issn": "1529-2401",
+        "publisher": "openalex",
+        "tag_filter": null
+      }
+    ],
+    "tree_path": [
+      "Natural Sciences",
+      "Biology",
+      "Neuroscience",
+      "Computational Neuroscience"
+    ]
   },
   "music-theory": {
     "arxiv_categories": [],
-    "description": "Music theory, computational musicology, and music cognition — harmonic analysis, music perception, empirical musicology, and quantitative approaches to musical structure",
+    "description": "Music theory, computational musicology, and music cognition \u00e2\u20ac\u201d harmonic analysis, music perception, empirical musicology, and quantitative approaches to musical structure",
     "journals": [
-      { "name": "MusicPerception",     "openalex_issn": "1533-8312", "publisher": "openalex", "tag_filter": null },
-      { "name": "PsychologyOfMusic",   "openalex_issn": "1741-3087", "publisher": "openalex", "tag_filter": null },
-      { "name": "MusicTheoryOnline",   "openalex_issn": "1067-3040", "publisher": "openalex", "tag_filter": null },
-      { "name": "EmpiricalMusicology", "openalex_issn": "1559-5749", "publisher": "openalex", "tag_filter": null },
-      { "name": "MusicTheorySpectrum", "openalex_issn": "1533-8339", "publisher": "openalex", "tag_filter": null },
-      { "name": "JournalOfMusicTheory","openalex_issn": "1941-7497", "publisher": "openalex", "tag_filter": null }
+      {
+        "name": "MusicPerception",
+        "openalex_issn": "1533-8312",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "PsychologyOfMusic",
+        "openalex_issn": "1741-3087",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "MusicTheoryOnline",
+        "openalex_issn": "1067-3040",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "EmpiricalMusicology",
+        "openalex_issn": "1559-5749",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "MusicTheorySpectrum",
+        "openalex_issn": "1533-8339",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "JournalOfMusicTheory",
+        "openalex_issn": "1941-7497",
+        "publisher": "openalex",
+        "tag_filter": null
+      }
     ],
-    "tree_path": ["Humanities & Arts", "Music", "Music Theory", "Music Theory & Musicology"]
+    "tree_path": [
+      "Humanities & Arts",
+      "Music",
+      "Music Theory",
+      "Music Theory & Musicology"
+    ]
   },
   "comparative-literature": {
     "arxiv_categories": [],
-    "description": "Comparative literature, literary theory, and world literature — cross-cultural literary analysis, narratology, literary history, and the theory and history of criticism",
+    "description": "Comparative literature, literary theory, and world literature \u00e2\u20ac\u201d cross-cultural literary analysis, narratology, literary history, and the theory and history of criticism",
     "journals": [
-      { "name": "ComparativeLiterature",       "openalex_issn": "1945-8517", "publisher": "openalex", "tag_filter": null },
-      { "name": "NewLiteraryHistory",           "openalex_issn": "1080-661X", "publisher": "openalex", "tag_filter": null },
-      { "name": "PMLA",                         "openalex_issn": "1938-1530", "publisher": "openalex", "tag_filter": null },
-      { "name": "PoeticsToday",                 "openalex_issn": "1527-5507", "publisher": "openalex", "tag_filter": null },
-      { "name": "ComparativeLiteratureStudies", "openalex_issn": "1528-4212", "publisher": "openalex", "tag_filter": null },
-      { "name": "ModernLanguageReview",         "openalex_issn": "2222-4319", "publisher": "openalex", "tag_filter": null }
+      {
+        "name": "ComparativeLiterature",
+        "openalex_issn": "1945-8517",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "NewLiteraryHistory",
+        "openalex_issn": "1080-661X",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "PMLA",
+        "openalex_issn": "1938-1530",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "PoeticsToday",
+        "openalex_issn": "1527-5507",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "ComparativeLiteratureStudies",
+        "openalex_issn": "1528-4212",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "ModernLanguageReview",
+        "openalex_issn": "2222-4319",
+        "publisher": "openalex",
+        "tag_filter": null
+      }
     ],
-    "tree_path": ["Humanities & Arts", "Literature", "Comparative Literature", "Comparative Literature"]
+    "tree_path": [
+      "Humanities & Arts",
+      "Literature",
+      "Comparative Literature",
+      "Comparative Literature"
+    ]
   },
   "gender-studies": {
     "arxiv_categories": [],
-    "description": "Gender studies, feminist theory, and women's studies — intersectionality, feminist philosophy, queer theory, and the sociology of gender across cultural, political, and social contexts",
+    "description": "Gender studies, feminist theory, and women's studies \u00e2\u20ac\u201d intersectionality, feminist philosophy, queer theory, and the sociology of gender across cultural, political, and social contexts",
     "journals": [
-      { "name": "GenderSociety",         "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=gasa", "publisher": "sage",             "tag_filter": null },
-      { "name": "Signs",                 "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=signs",                           "publisher": "oup",              "tag_filter": null },
-      { "name": "WomensStudiesIntForum", "url": "https://rss.sciencedirect.com/publication/science/02775395",                                               "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "Hypatia",               "openalex_issn": "1527-2001",                                                                                       "publisher": "openalex",         "tag_filter": null },
-      { "name": "GenderPlaceCulture",    "url": "https://www.tandfonline.com/feed/rss/cgpc20",                                                              "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "FeministTheory",        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=ftya",   "publisher": "sage",             "tag_filter": null },
-      { "name": "FeministStudies",       "openalex_issn": "2153-3873",                                                                                       "publisher": "openalex",         "tag_filter": null },
-      { "name": "FeministFormations",    "openalex_issn": "1527-1889",                                                                                       "publisher": "openalex",         "tag_filter": null },
-      { "name": "GLQ",                   "openalex_issn": "1527-9375",                                                                                       "publisher": "openalex",         "tag_filter": null },
-      { "name": "AmericanSocReview",     "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=asra",   "publisher": "sage",             "tag_filter": null },
-      { "name": "AmericanJSociology",    "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=ajs",                              "publisher": "oup",              "tag_filter": null },
-      { "name": "SocialForces",          "openalex_issn": "1534-7605",                                                                                       "publisher": "openalex",         "tag_filter": null }
+      {
+        "name": "GenderSociety",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=gasa",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "Signs",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=signs",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "WomensStudiesIntForum",
+        "url": "https://rss.sciencedirect.com/publication/science/02775395",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "Hypatia",
+        "openalex_issn": "1527-2001",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "GenderPlaceCulture",
+        "url": "https://www.tandfonline.com/feed/rss/cgpc20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "FeministTheory",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=ftya",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "FeministStudies",
+        "openalex_issn": "2153-3873",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "FeministFormations",
+        "openalex_issn": "1527-1889",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "GLQ",
+        "openalex_issn": "1527-9375",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "AmericanSocReview",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=asra",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "AmericanJSociology",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=ajs",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "SocialForces",
+        "openalex_issn": "1534-7605",
+        "publisher": "openalex",
+        "tag_filter": null
+      }
     ],
-    "tree_path": ["Social Sciences", "Gender & Feminist Studies", "Gender Studies", "Gender Studies"]
+    "tree_path": [
+      "Social Sciences",
+      "Gender & Feminist Studies",
+      "Gender Studies",
+      "Gender Studies"
+    ]
   },
   "systems-biology": {
     "arxiv_categories": [
@@ -1400,121 +1784,577 @@
   },
   "literature-and-culture": {
     "arxiv_categories": [],
-    "description": "Literary and cultural history — 19th-century American literature, transcendentalism, confessional poetry, 20th-century Polish literature, interwar Polish history, narrative theory, cultural studies, secular Jewish identity",
+    "description": "Literary and cultural history \u00e2\u20ac\u201d 19th-century American literature, transcendentalism, confessional poetry, 20th-century Polish literature, interwar Polish history, narrative theory, cultural studies, secular Jewish identity",
     "journals": [
-      { "name": "AmericanLiterature",   "openalex_issn": "0002-9831",  "publisher": "openalex",    "tag_filter": null },
-      { "name": "AmericanLitHistory",   "openalex_issn": "1468-4365",  "publisher": "openalex",    "tag_filter": null },
-      { "name": "PMLA",                 "openalex_issn": "1938-1530",  "publisher": "openalex",    "tag_filter": null },
-      { "name": "NewLitHistory",        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=144", "publisher": "muse", "tag_filter": null },
-      { "name": "Narrative",            "url": "https://muse.jhu.edu/feeds/latest_articles?jid=135", "publisher": "muse", "tag_filter": null },
-      { "name": "CriticalInquiry",      "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=ci",    "publisher": "oup", "tag_filter": null },
-      { "name": "Signs",                "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=signs", "publisher": "oup", "tag_filter": null },
-      { "name": "NineteenthCenturyLit", "openalex_issn": "0891-9356",  "publisher": "openalex",    "tag_filter": null },
-      { "name": "Representations",      "openalex_issn": "1533-855X",  "publisher": "openalex",    "tag_filter": null },
-      { "name": "CulturalCritique",     "url": "https://muse.jhu.edu/feeds/latest_articles?jid=41",  "publisher": "muse", "tag_filter": null },
-      { "name": "SlavicReview",         "url": "https://www.cambridge.org/core/rss/product/id/BE028C241144CA93B60D30FFBA435841", "publisher": "cambridge", "tag_filter": null },
-      { "name": "SlavEastEuroReview",   "openalex_issn": "2222-4327",  "publisher": "openalex",    "tag_filter": null },
-      { "name": "ModernJudaism",        "openalex_issn": "0276-1114",  "publisher": "openalex",    "tag_filter": null },
-      { "name": "JModernJewishStudies", "url": "https://www.tandfonline.com/feed/rss/cmjs20",       "publisher": "tandfonline", "tag_filter": null },
-      { "name": "JewishCultureHistory", "url": "https://www.tandfonline.com/feed/rss/rjch20",       "publisher": "tandfonline", "tag_filter": null },
-      { "name": "JewishSocialStudies",  "url": "https://muse.jhu.edu/feeds/latest_articles?jid=105","publisher": "muse", "tag_filter": null },
-      { "name": "Prooftexts",           "url": "https://muse.jhu.edu/feeds/latest_articles?jid=167","publisher": "muse", "tag_filter": null },
-      { "name": "Shofar",              "url": "https://muse.jhu.edu/feeds/latest_articles?jid=181","publisher": "muse", "tag_filter": null },
-      { "name": "Legacy",              "url": "https://muse.jhu.edu/feeds/latest_articles?jid=115","publisher": "muse", "tag_filter": null }
+      {
+        "name": "AmericanLiterature",
+        "openalex_issn": "0002-9831",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "AmericanLitHistory",
+        "openalex_issn": "1468-4365",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "PMLA",
+        "openalex_issn": "1938-1530",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "NewLitHistory",
+        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=144",
+        "publisher": "muse",
+        "tag_filter": null
+      },
+      {
+        "name": "Narrative",
+        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=135",
+        "publisher": "muse",
+        "tag_filter": null
+      },
+      {
+        "name": "CriticalInquiry",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=ci",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "Signs",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=signs",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "NineteenthCenturyLit",
+        "openalex_issn": "0891-9356",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "Representations",
+        "openalex_issn": "1533-855X",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "CulturalCritique",
+        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=41",
+        "publisher": "muse",
+        "tag_filter": null
+      },
+      {
+        "name": "SlavicReview",
+        "url": "https://www.cambridge.org/core/rss/product/id/BE028C241144CA93B60D30FFBA435841",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "SlavEastEuroReview",
+        "openalex_issn": "2222-4327",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "ModernJudaism",
+        "openalex_issn": "0276-1114",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "JModernJewishStudies",
+        "url": "https://www.tandfonline.com/feed/rss/cmjs20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "JewishCultureHistory",
+        "url": "https://www.tandfonline.com/feed/rss/rjch20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "JewishSocialStudies",
+        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=105",
+        "publisher": "muse",
+        "tag_filter": null
+      },
+      {
+        "name": "Prooftexts",
+        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=167",
+        "publisher": "muse",
+        "tag_filter": null
+      },
+      {
+        "name": "Shofar",
+        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=181",
+        "publisher": "muse",
+        "tag_filter": null
+      },
+      {
+        "name": "Legacy",
+        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=115",
+        "publisher": "muse",
+        "tag_filter": null
+      }
     ],
-    "tree_path": ["Humanities & Arts", "Literature", "Literary & Cultural Studies", "American, European & Jewish Literature"]
+    "tree_path": [
+      "Humanities & Arts",
+      "Literature",
+      "Literary & Cultural Studies",
+      "American, European & Jewish Literature"
+    ]
   },
   "econ-education": {
-    "arxiv_categories": ["econ.GN", "econ.LM"],
+    "arxiv_categories": [
+      "econ.GN",
+      "econ.LM"
+    ],
     "description": "Economics of education, human capital, resource allocation in schools, and labor market returns to schooling",
     "journals": [
-      { "name": "EconEdReview",     "url": "https://rss.sciencedirect.com/publication/science/02727757",                                                                    "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "JHumanCapital",    "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jhc",                                                   "publisher": "oup",              "tag_filter": null },
-      { "name": "JOLE",             "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jole",                                                  "publisher": "oup",              "tag_filter": null },
-      { "name": "EduEconomics",     "url": "https://www.tandfonline.com/feed/rss/cede20",                                                                                   "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "JEconEducation",   "url": "https://www.tandfonline.com/feed/rss/vece20",                                                                                   "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "EduFinancePolicy", "openalex_issn": "1557-3079",                                                                                                           "publisher": "openalex",         "tag_filter": null },
-      { "name": "EduAdminQ",        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=eaqa",                        "publisher": "sage",             "tag_filter": null },
-      { "name": "JEdAdmin",         "openalex_issn": "1758-7395",                                                                                                           "publisher": "openalex",         "tag_filter": null },
-      { "name": "SchoolLeadership", "url": "https://www.tandfonline.com/feed/rss/cslm20",                                                                                   "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "ResHigherEd",      "url": "https://link.springer.com/search.rss?facet-journal-id=11162",                                                                   "publisher": "springer",         "tag_filter": null },
-      { "name": "HigherEducation",  "url": "https://link.springer.com/search.rss?facet-journal-id=10734",                                                                   "publisher": "springer",         "tag_filter": null },
-      { "name": "JPubEcon",         "url": "https://rss.sciencedirect.com/publication/science/00472727",                                                                    "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "LabourEcon",       "url": "https://rss.sciencedirect.com/publication/science/09275371",                                                                    "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "JDevEcon",         "url": "https://rss.sciencedirect.com/publication/science/03043878",                                                                    "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "JEdWork",          "url": "https://www.tandfonline.com/feed/rss/cjew20",                                                                                   "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "AEJ:Applied",      "crossref_issn": "1945-7782",                                                                                                                                            "tag_filter": null },
-      { "name": "AEJ:Policy",       "crossref_issn": "1945-774X",                                                                                                                                            "tag_filter": null },
-      { "name": "AER",              "crossref_issn": "1944-7981",                                                                                                                                            "tag_filter": null },
-      { "name": "JPE",              "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jpe",                                                   "publisher": "oup",              "tag_filter": null },
-      { "name": "QJE",              "url": "https://academic.oup.com/rss/site_5504/3365.xml",                                                                               "publisher": "oup",              "tag_filter": null },
-      { "name": "REStud",           "url": "https://academic.oup.com/rss/site_5508/advanceAccess_3369.xml",                                                                   "publisher": "oup",              "tag_filter": null },
-      { "name": "REStat",           "openalex_issn": "1530-9142",                                                                                                           "publisher": "openalex",         "tag_filter": null },
-      { "name": "Econometrica",     "url": "https://onlinelibrary.wiley.com/feed/14680262/most-recent",                                                                     "publisher": "wiley",            "tag_filter": null },
-      { "name": "EconomicJournal",  "url": "https://academic.oup.com/rss/site_6182/advanceAccess_4014.xml",                                                                 "publisher": "oup",              "tag_filter": null }
+      {
+        "name": "EconEdReview",
+        "url": "https://rss.sciencedirect.com/publication/science/02727757",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "JHumanCapital",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jhc",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "JOLE",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jole",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "EduEconomics",
+        "url": "https://www.tandfonline.com/feed/rss/cede20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "JEconEducation",
+        "url": "https://www.tandfonline.com/feed/rss/vece20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "EduFinancePolicy",
+        "openalex_issn": "1557-3079",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "EduAdminQ",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=eaqa",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "JEdAdmin",
+        "openalex_issn": "1758-7395",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "SchoolLeadership",
+        "url": "https://www.tandfonline.com/feed/rss/cslm20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "ResHigherEd",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=11162",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "HigherEducation",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10734",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "JPubEcon",
+        "url": "https://rss.sciencedirect.com/publication/science/00472727",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "LabourEcon",
+        "url": "https://rss.sciencedirect.com/publication/science/09275371",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "JDevEcon",
+        "url": "https://rss.sciencedirect.com/publication/science/03043878",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "JEdWork",
+        "url": "https://www.tandfonline.com/feed/rss/cjew20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "AEJ:Applied",
+        "crossref_issn": "1945-7782",
+        "tag_filter": null
+      },
+      {
+        "name": "AEJ:Policy",
+        "crossref_issn": "1945-774X",
+        "tag_filter": null
+      },
+      {
+        "name": "AER",
+        "crossref_issn": "1944-7981",
+        "tag_filter": null
+      },
+      {
+        "name": "JPE",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jpe",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "QJE",
+        "url": "https://academic.oup.com/rss/site_5504/3365.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "REStud",
+        "url": "https://academic.oup.com/rss/site_5508/advanceAccess_3369.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "REStat",
+        "openalex_issn": "1530-9142",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "Econometrica",
+        "url": "https://onlinelibrary.wiley.com/feed/14680262/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "EconomicJournal",
+        "url": "https://academic.oup.com/rss/site_6182/advanceAccess_4014.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      }
     ],
     "preprints": [
-      { "name": "NBER", "url": "https://back.nber.org/rss/new.xml",     "id_pattern": "w(\\d+)",  "tag_filter": null },
-      { "name": "CEPR", "url": "https://cepr.org/rss/discussion-paper", "id_pattern": "dp(\\d+)", "tag_filter": null }
+      {
+        "name": "NBER",
+        "url": "https://back.nber.org/rss/new.xml",
+        "id_pattern": "w(\\d+)",
+        "tag_filter": null
+      },
+      {
+        "name": "CEPR",
+        "url": "https://cepr.org/rss/discussion-paper",
+        "id_pattern": "dp(\\d+)",
+        "tag_filter": null
+      }
     ],
-    "tree_path": ["Social Sciences", "Economics", "Applied Microeconomics", "Educational Economics"]
+    "tree_path": [
+      "Social Sciences",
+      "Economics",
+      "Applied Microeconomics",
+      "Educational Economics"
+    ]
   },
   "edu-policy": {
     "arxiv_categories": [],
-    "description": "Education policy, school governance, teacher workforce, equity and access, and evidence-based reform — research for national and regional policymakers",
+    "description": "Education policy, school governance, teacher workforce, equity and access, and evidence-based reform \u00e2\u20ac\u201d research for national and regional policymakers",
     "journals": [
-      { "name": "EducationalPolicy",      "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=epxa", "publisher": "sage",             "tag_filter": null },
-      { "name": "EduEvalPolicyAnalysis",  "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=epaa", "publisher": "sage",             "tag_filter": null },
-      { "name": "AmEdResJournal",         "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=aera", "publisher": "sage",             "tag_filter": null },
-      { "name": "ReviewEdResearch",       "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=rera", "publisher": "sage",             "tag_filter": null },
-      { "name": "EducationalResearcher",  "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=edra", "publisher": "sage",             "tag_filter": null },
-      { "name": "JTeacherEducation",      "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=jtea", "publisher": "sage",             "tag_filter": null },
-      { "name": "EduMgmtAdminLeadership", "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=emad", "publisher": "sage",             "tag_filter": null },
-      { "name": "JEdPolicy",              "url": "https://www.tandfonline.com/feed/rss/tedp20",                                                             "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "ComparativeEdu",         "url": "https://www.tandfonline.com/feed/rss/cced20",                                                             "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "StudiesHigherEdu",       "url": "https://www.tandfonline.com/feed/rss/cshe20",                                                             "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "OxfordReviewEdu",        "url": "https://www.tandfonline.com/feed/rss/core20",                                                             "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "AssessmentInEdu",        "url": "https://www.tandfonline.com/feed/rss/caie20",                                                             "publisher": "tandfonline",      "tag_filter": null },
-      { "name": "EconEdReview",           "url": "https://rss.sciencedirect.com/publication/science/02727757",                                              "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "TeachingTeacherEdu",     "url": "https://rss.sciencedirect.com/publication/science/0742051X",                                              "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "EarlyChildhoodResQ",     "url": "https://rss.sciencedirect.com/publication/science/08852006",                                              "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "IntJEdDevelopment",      "url": "https://rss.sciencedirect.com/publication/science/07380593",                                              "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "ComputersEdu",           "url": "https://rss.sciencedirect.com/publication/science/03601315",                                              "publisher": "elsevier_general", "tag_filter": null },
-      { "name": "BERJ",                   "url": "https://onlinelibrary.wiley.com/feed/14693518/most-recent",                                               "publisher": "wiley",            "tag_filter": null },
-      { "name": "BJET",                   "url": "https://onlinelibrary.wiley.com/feed/14678535/most-recent",                                               "publisher": "wiley",            "tag_filter": null },
-      { "name": "HigherEdPolicy",         "url": "https://link.springer.com/search.rss?query=*&content-type=Article&sortBy=relevance&search-within=Journal&facet-journal-id=41307", "publisher": "springer", "tag_filter": null },
-      { "name": "ResHigherEd",            "url": "https://link.springer.com/search.rss?facet-journal-id=11162",                                            "publisher": "springer",         "tag_filter": null },
-      { "name": "HigherEducation",        "url": "https://link.springer.com/search.rss?facet-journal-id=10734",                                            "publisher": "springer",         "tag_filter": null },
-      { "name": "JHumanCapital",          "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jhc",                             "publisher": "oup",              "tag_filter": null },
-      { "name": "JOLE",                   "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jole",                            "publisher": "oup",              "tag_filter": null },
-      { "name": "JEdAdmin",               "openalex_issn": "1758-7395",                                                                                     "publisher": "openalex",         "tag_filter": null },
-      { "name": "AEJ:Applied",            "crossref_issn": "1945-7782",                                                                                                                      "tag_filter": null },
-      { "name": "AEJ:Policy",             "crossref_issn": "1945-774X",                                                                                                                      "tag_filter": null }
+      {
+        "name": "EducationalPolicy",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=epxa",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "EduEvalPolicyAnalysis",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=epaa",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "AmEdResJournal",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=aera",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "ReviewEdResearch",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=rera",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "EducationalResearcher",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=edra",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "JTeacherEducation",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=jtea",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "EduMgmtAdminLeadership",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=emad",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "JEdPolicy",
+        "url": "https://www.tandfonline.com/feed/rss/tedp20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "ComparativeEdu",
+        "url": "https://www.tandfonline.com/feed/rss/cced20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "StudiesHigherEdu",
+        "url": "https://www.tandfonline.com/feed/rss/cshe20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "OxfordReviewEdu",
+        "url": "https://www.tandfonline.com/feed/rss/core20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "AssessmentInEdu",
+        "url": "https://www.tandfonline.com/feed/rss/caie20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "EconEdReview",
+        "url": "https://rss.sciencedirect.com/publication/science/02727757",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "TeachingTeacherEdu",
+        "url": "https://rss.sciencedirect.com/publication/science/0742051X",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "EarlyChildhoodResQ",
+        "url": "https://rss.sciencedirect.com/publication/science/08852006",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "IntJEdDevelopment",
+        "url": "https://rss.sciencedirect.com/publication/science/07380593",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "ComputersEdu",
+        "url": "https://rss.sciencedirect.com/publication/science/03601315",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "BERJ",
+        "url": "https://onlinelibrary.wiley.com/feed/14693518/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "BJET",
+        "url": "https://onlinelibrary.wiley.com/feed/14678535/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "HigherEdPolicy",
+        "url": "https://link.springer.com/search.rss?query=*&content-type=Article&sortBy=relevance&search-within=Journal&facet-journal-id=41307",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "ResHigherEd",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=11162",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "HigherEducation",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10734",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "JHumanCapital",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jhc",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "JOLE",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=jole",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "JEdAdmin",
+        "openalex_issn": "1758-7395",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "AEJ:Applied",
+        "crossref_issn": "1945-7782",
+        "tag_filter": null
+      },
+      {
+        "name": "AEJ:Policy",
+        "crossref_issn": "1945-774X",
+        "tag_filter": null
+      }
     ],
     "preprints": [
-      { "name": "NBER", "url": "https://back.nber.org/rss/new.xml",     "id_pattern": "w(\\d+)",  "tag_filter": null },
-      { "name": "CEPR", "url": "https://cepr.org/rss/discussion-paper", "id_pattern": "dp(\\d+)", "tag_filter": null }
+      {
+        "name": "NBER",
+        "url": "https://back.nber.org/rss/new.xml",
+        "id_pattern": "w(\\d+)",
+        "tag_filter": null
+      },
+      {
+        "name": "CEPR",
+        "url": "https://cepr.org/rss/discussion-paper",
+        "id_pattern": "dp(\\d+)",
+        "tag_filter": null
+      }
     ],
-    "tree_path": ["Social Sciences", "Education", "Education Policy", "Education Policy & Reform"]
+    "tree_path": [
+      "Social Sciences",
+      "Education",
+      "Education Policy",
+      "Education Policy & Reform"
+    ]
   },
   "demography": {
-    "arxiv_categories": ["econ.GN", "stat.AP"],
+    "arxiv_categories": [
+      "econ.GN",
+      "stat.AP"
+    ],
     "description": "Empirical demography and population studies",
-    "tree_path": ["Social Sciences", "Sociology", "Demography", "Demography"],
+    "tree_path": [
+      "Social Sciences",
+      "Sociology",
+      "Demography",
+      "Demography"
+    ],
     "journals": [
-      { "name": "Demography",             "publisher": "openalex", "openalex_issn": "1533-7790", "tag_filter": null },
-      { "name": "PopDevReview",           "url": "https://onlinelibrary.wiley.com/feed/17284457/most-recent",                                                              "publisher": "wiley",       "tag_filter": null },
-      { "name": "PopulationStudies",      "url": "https://www.tandfonline.com/feed/rss/rpst20",                                                                            "publisher": "tandfonline", "tag_filter": null },
-      { "name": "EurJPopulation",         "url": "https://link.springer.com/search.rss?facet-journal-id=10680",                                                            "publisher": "springer",    "tag_filter": null },
-      { "name": "JPopulationEconomics",   "url": "https://link.springer.com/search.rss?facet-journal-id=148",                                                              "publisher": "springer",    "tag_filter": null },
-      { "name": "PopResPolicyReview",     "url": "https://link.springer.com/search.rss?facet-journal-id=11113",                                                            "publisher": "springer",    "tag_filter": null },
-      { "name": "AmSocReview",            "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=asra",                 "publisher": "sage",        "tag_filter": null },
-      { "name": "AmJSociology",           "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=ajs",                                            "publisher": "oup",         "tag_filter": null },
-      { "name": "PopSpacePlace",          "url": "https://onlinelibrary.wiley.com/feed/15448452/most-recent",                                                              "publisher": "wiley",       "tag_filter": null },
-      { "name": "SociologyBSA",           "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=soca",                 "publisher": "sage",        "tag_filter": null },
-      { "name": "DemographicResearch",    "url": "https://www.demographic-research.org/dr.rss",                                                                              "publisher": "springer",    "tag_filter": null },
-      { "name": "SocialForces",           "url": "https://academic.oup.com/rss/site_5513/advanceAccess_3374.xml",                                                             "publisher": "oup",         "tag_filter": null },
-      { "name": "JDemographicEconomics",  "publisher": "openalex", "openalex_issn": "2054-0906", "tag_filter": null }
+      {
+        "name": "Demography",
+        "publisher": "openalex",
+        "openalex_issn": "1533-7790",
+        "tag_filter": null
+      },
+      {
+        "name": "PopDevReview",
+        "url": "https://onlinelibrary.wiley.com/feed/17284457/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "PopulationStudies",
+        "url": "https://www.tandfonline.com/feed/rss/rpst20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "EurJPopulation",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10680",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "JPopulationEconomics",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=148",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "PopResPolicyReview",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=11113",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "AmSocReview",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=asra",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "AmJSociology",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=ajs",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "PopSpacePlace",
+        "url": "https://onlinelibrary.wiley.com/feed/15448452/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "SociologyBSA",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=soca",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "DemographicResearch",
+        "url": "https://www.demographic-research.org/dr.rss",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "SocialForces",
+        "url": "https://academic.oup.com/rss/site_5513/advanceAccess_3374.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "JDemographicEconomics",
+        "publisher": "openalex",
+        "openalex_issn": "2054-0906",
+        "tag_filter": null
+      }
     ]
   },
   "quantum-phenomena": {
@@ -1524,24 +2364,104 @@
       "cond-mat.str-el",
       "cond-mat.mes-hall"
     ],
-    "description": "Exotic and macroscopic quantum phenomena — superconductivity, superfluidity, BEC, topological effects, quantum phase transitions, and many-body quantum effects",
+    "description": "Exotic and macroscopic quantum phenomena \u00e2\u20ac\u201d superconductivity, superfluidity, BEC, topological effects, quantum phase transitions, and many-body quantum effects",
     "journals": [
-      { "name": "PRL",       "url": "https://feeds.aps.org/rss/tocsec/PRL-CondensedMatterStructureetc.xml",                                                              "publisher": "aps",     "tag_filter": null },
-      { "name": "PRL",       "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",                       "publisher": "aps",     "tag_filter": null },
-      { "name": "PRB",       "url": "http://feeds.aps.org/rss/recent/prb.xml",                                                                                           "publisher": "aps",     "tag_filter": null },
-      { "name": "PRX",       "url": "http://feeds.aps.org/rss/recent/prx.xml",                                                                                           "publisher": "aps",     "tag_filter": null },
-      { "name": "PRXQuantum","url": "http://feeds.aps.org/rss/recent/prxquantum.xml",                                                                                    "publisher": "aps",     "tag_filter": null },
-      { "name": "NatPhys",   "url": "https://www.nature.com/nphys.rss",                                                                                                  "publisher": "nature",  "tag_filter": null },
-      { "name": "NatComms",  "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",                                                                      "publisher": "nature",  "tag_filter": null },
-      { "name": "CommPhys",  "url": "https://www.nature.com/commsphys.rss",                                                                                              "publisher": "nature",  "tag_filter": null },
-      { "name": "npjQM",     "url": "https://www.nature.com/npjquantmats.rss",                                                                                           "publisher": "nature",  "tag_filter": null },
-      { "name": "NJP",       "url": "https://iopscience.iop.org/journal/rss/1367-2630",                                                                                  "publisher": "iop",     "tag_filter": null },
-      { "name": "NanoLett",  "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",                                                               "publisher": "acs",     "tag_filter": null },
-      { "name": "ACSNano",   "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",                                                               "publisher": "acs",     "tag_filter": null },
-      { "name": "Nature",    "url": "https://www.nature.com/nature.rss",                                                                                                  "publisher": "nature",  "tag_filter": null },
-      { "name": "Science",   "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",                                                             "publisher": "science", "tag_filter": null },
-      { "name": "PNAS",      "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=phys",                                             "publisher": "pnas",    "tag_filter": null }
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-CondensedMatterStructureetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRL",
+        "url": "https://feeds.aps.org/rss/tocsec/PRL-GeneralPhysicsStatisticalandQuantumMechanicsQuantumInformationetc.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRB",
+        "url": "http://feeds.aps.org/rss/recent/prb.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRX",
+        "url": "http://feeds.aps.org/rss/recent/prx.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "PRXQuantum",
+        "url": "http://feeds.aps.org/rss/recent/prxquantum.xml",
+        "publisher": "aps",
+        "tag_filter": null
+      },
+      {
+        "name": "NatPhys",
+        "url": "https://www.nature.com/nphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NatComms",
+        "url": "https://www.nature.com/subjects/physical-sciences/ncomms.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "CommPhys",
+        "url": "https://www.nature.com/commsphys.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "npjQM",
+        "url": "https://www.nature.com/npjquantmats.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "NJP",
+        "url": "https://iopscience.iop.org/journal/rss/1367-2630",
+        "publisher": "iop",
+        "tag_filter": null
+      },
+      {
+        "name": "NanoLett",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "ACSNano",
+        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "publisher": "acs",
+        "tag_filter": null
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "publisher": "nature",
+        "tag_filter": null
+      },
+      {
+        "name": "Science",
+        "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        "publisher": "science",
+        "tag_filter": null
+      },
+      {
+        "name": "PNAS",
+        "url": "https://www.pnas.org/action/showFeed?type=searchTopic&taxonomyCode=topic&tagCode=phys",
+        "publisher": "pnas",
+        "tag_filter": null
+      }
     ],
-    "tree_path": ["Natural Sciences", "Physics", "Quantum Physics", "Quantum Phenomena"]
+    "tree_path": [
+      "Natural Sciences",
+      "Physics",
+      "Quantum Physics",
+      "Quantum Phenomena"
+    ]
   }
 }
