@@ -1,8 +1,21 @@
 # Incoming Science — arXiv Daily Digest
 
-A personal arXiv digest tool for researchers. Every day it fetches the latest papers in your field, ranks them by relevance to your research interests using AI, and delivers a scored PDF to your inbox — ready to read on your phone. Rate papers with one tap; ratings feed back into an evolving taste profile that sharpens recommendations over time.
+## Executive Summary
+
+Incoming Science is a production AI system that delivers personalized daily science digests to researchers. Each morning it ingests arXiv preprints and articles from ~100 top journals, runs a two-stage Claude pipeline to rank papers by each user's taste, and emails a scored PDF digest. Users rate papers with one tap in the PDF; ratings accumulate into a taste profile that is automatically refined monthly by Claude.
+
+**What makes it work:**
+- **Two-stage AI pipeline:** Claude Haiku (cheap, fast) triages ~200–400 papers per field down to ~30 candidates; Claude Sonnet (more capable) scores each 1–10 with a one-line justification. Triage is shared across users in the same field with prompt caching — the paper list is cached and each user only pays for their profile.
+- **Multi-source ingestion:** arXiv RSS feeds + publisher-specific scrapers for APS, Nature, Science, ACS, Wiley, Elsevier, IOP, OUP, Optica, Cell, PLOS, PNAS, SciPost, Project MUSE, and others — configured per research field in `fields.json`.
+- **Closed feedback loop:** Excellent / Good / Irrelevant ratings in the PDF hit a Flask endpoint, accumulate in a per-user archive, and feed a monthly Claude Sonnet refiner that adjusts keyword and area grades.
+- **Cost:** ~$0.05/user/day. Prompt caching and the Batch API (50% discount) keep it economical at scale.
+- **Infrastructure:** A single Linux VPS, cron-scheduled, ~37 active users across physics, ML, economics, biology, and humanities fields.
 
 Live at [incomingscience.xyz](https://incomingscience.xyz)
+
+---
+
+A personal arXiv digest tool for researchers. Every day it fetches the latest papers in your field, ranks them by relevance to your research interests using AI, and delivers a scored PDF to your inbox — ready to read on your phone. Rate papers with one tap; ratings feed back into an evolving taste profile that sharpens recommendations over time.
 
 ---
 
@@ -27,7 +40,7 @@ Live at [incomingscience.xyz](https://incomingscience.xyz)
 
 Each scraped paper is tagged with `feed_url` (the RSS URL it came from). `filter_for_field` uses this URL — not the display name — to decide whether a paper belongs to a field. This means the same journal can appear in multiple fields with different RSS subfeeds (e.g. a photonics subfeed for optics, a physics subfeed for cond-mat) and papers will be routed correctly. The `source` field (journal display name) is unaffected and used only for display in the PDF. `feed_url` is never passed to triage or scoring prompts.
 
-**Abstract availability by publisher:** Nature scrapes article pages for full abstracts + subject tags. Science uses Semantic Scholar (~50% hit rate). APS uses the truncated RSS abstract (article pages Cloudflare-blocked, no API source). ACS uses the Europe PMC API (DOI lookup) — ~93–95% hit rate for NanoLett, ACSNano, ACSSensors; ACSPhotonics is not indexed by Europe PMC and falls back to empty abstract. Wiley extracts full abstracts directly from the RSS feed, no page fetches needed. Optica uses the RSS feed for metadata and OpenAlex API for full abstract reconstruction (high hit rate, no page fetches needed). Cambridge University Press, Royal Society Publishing, and AIP Publishing all include full abstracts directly in their RSS feeds, no page fetches needed.
+**Abstract availability by publisher:** Nature scrapes article pages for full abstracts + subject tags. APS fetches full abstracts via the `harvest.aps.org` Harvest API (no auth required; covers PRL, PRB, PRX, PRXQuantum). Science uses OpenAlex by DOI as the primary source; S2 batch enrichment fills remaining gaps. ACS article pages are Cloudflare-blocked — triage runs on title + authors only, S2 batch enrichment fills ~50% of abstracts post-triage. Wiley and IOP extract full abstracts directly from RSS feeds, no page fetches needed. Optica uses the RSS feed for metadata and OpenAlex API for full abstract reconstruction (high hit rate). Elsevier (ScienceDirect) and Springer RSS feeds include full abstracts. Project MUSE article pages are CAPTCHA-blocked — S2 title search followed by OpenAlex title search achieves ~68% coverage.
 
 **Holiday handling:** arXiv papers are fetched before journals. If all fields return empty arXiv feeds (holiday or off-day), the pipeline exits before the journal scraper runs — watermarks are not advanced and journal papers are preserved for the next day.
 
@@ -282,19 +295,28 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 |------|---------|
 | `fetch_papers.py` | Daily arXiv RSS fetch and parse (once per field) |
 | `fetch_journals.py` | Journal scraping — journals across all fields via RSS/eTOC (once per run) |
-| `scrapers/aps.py` | APS publisher scraper (PRL, PRB, PRX, PRXQuantum) — truncated RSS abstract |
+| `scrapers/aps.py` | APS publisher scraper (PRL, PRB, PRX, PRXQuantum) — full abstract via harvest.aps.org API |
 | `scrapers/nature.py` | Nature publisher scraper — full abstract + subject tags from article page |
-| `scrapers/science.py` | Science eTOC scraper — full abstract via Semantic Scholar API |
-| `scrapers/acs.py` | ACS publisher scraper — no abstract available; title + authors only |
+| `scrapers/science.py` | Science eTOC scraper — full abstract via OpenAlex by DOI |
+| `scrapers/acs.py` | ACS publisher scraper — Cloudflare-blocked; title + authors only (S2 batch enrichment post-triage) |
 | `scrapers/wiley.py` | Wiley publisher scraper — full abstract from RSS feed, no page fetches |
 | `scrapers/optica.py` | Optica Publishing Group scraper — RSS metadata + full abstract via OpenAlex API |
 | `scrapers/cambridge.py` | Cambridge University Press scraper — full abstract from RSS feed, no page fetches |
 | `scrapers/royalsociety.py` | Royal Society Publishing scraper — full abstract from RSS feed, no page fetches |
 | `scrapers/aip.py` | AIP Publishing scraper — full abstract from RSS feed, no page fetches |
-| `scrapers/scholar.py` | Google Scholar profile scraper — resolves papers to abstracts for onboarding |
+| `scrapers/iop.py` | IOP Publishing scraper — full abstract from RSS feed |
+| `scrapers/oup.py` | Oxford University Press scraper — full abstract from RSS feed |
+| `scrapers/elsevier.py` | Elsevier / ScienceDirect scraper — full abstract from RSS feed |
+| `scrapers/springer.py` | Springer scraper — full abstract from RSS feed |
+| `scrapers/edp.py` | EDP Sciences scraper |
+| `scrapers/scipost.py` | SciPost scraper — abstract via OpenAlex by DOI |
+| `scrapers/sage.py` | SAGE Publications scraper — abstract via OpenAlex / CORE fallback |
+| `scrapers/tandfonline.py` | Taylor & Francis scraper — abstract via OpenAlex / CORE fallback |
+| `scrapers/muse.py` | Project MUSE scraper — abstract via S2 title search + OpenAlex title search (~68% hit rate) |
 | `scrapers/cell.py` | Cell Press scraper |
 | `scrapers/plos.py` | PLOS scraper |
 | `scrapers/pnas.py` | PNAS scraper (topic-specific RSS feeds) |
+| `scrapers/scholar.py` | Google Scholar profile scraper — resolves papers to abstracts for onboarding |
 | `fields.json` | Field definitions — arxiv category, journal list, tag filters |
 | `create_profile.py` | One-time interactive user onboarding |
 | `process_pending.py` | Owner tool — processes web signups from `users_pending/` into full user profiles |
@@ -308,6 +330,7 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 | `run_all_users.py` | Master orchestrator — fetch, triage, parallel per-user scoring, weekly dispatch, run summary email |
 | `run_weekly_digest.py` | Weekly digest — collects scored ≥ 8 papers from past 7 days, builds PDF, emails |
 | `run_weekly_only.py` | Standalone weekend runner — runs weekly digest phase only (no fetch/triage/scoring) |
+| `run_failed_users.py` | Retry today's failed users — parses daily.log, reuses existing papers, skips re-fetch |
 | `run_profile_refiner.py` | Monthly taste profile refiner |
 | `prompts/profile_creator.txt` | System prompt for profile creation |
 | `prompts/triage.txt` | System prompt for arXiv triage agent |
