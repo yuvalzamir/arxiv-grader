@@ -2,6 +2,10 @@
 
 ## Pending
 
+- [ ] **Profile edit skill with user input** — Build a Claude Code skill that walks through editing a user's `taste_profile.json` interactively (keywords, areas, authors, grades) with prompts for each section.
+- [ ] **Measure daily fetch time** — Instrument `fetch_papers.py` and `fetch_journals.py` to log elapsed time per stage; check how long the full fetch takes on the server.
+- [ ] **Parallelize journal scraping** — Journal fetching takes ~18 min sequentially (bottleneck: Neural Networks ~77s, TPAMI ~29s, etc.). Run scrapers concurrently per field using `ThreadPoolExecutor` in `fetch_journals.py`. Risk: per-publisher rate limits — may need to group by publisher and limit concurrency per group.
+
 ## Upcoming
 
 ---
@@ -42,7 +46,7 @@ scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log
 
 - Cron changed to Mon–Fri 05:30 UTC (was Tue–Sat) — Friday arXiv data now delivered Monday
 - On Mondays, arXiv feed has 120–165 papers due to weekend accumulation — triage cap of 15 handles this
-- Scoring agent `max_tokens=8192` — sufficient for up to ~30 filtered papers (cap 15+15)
+- Scoring agent `max_tokens=16000` — sufficient for up to ~30 filtered papers (cap 15+15)
 - Cron: system timezone set to `America/New_York` (`timedatectl set-timezone`); crontab runs at 00:30 ET daily, 01:30 ET monthly refiner — DST handled automatically
 - Anthropic Batch API (Sonnet) can get stuck during incidents — use `--no-batch` flag as fallback
 

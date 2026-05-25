@@ -18,11 +18,19 @@ Usage:
 
 import argparse
 import json
+import logging
 import re
 import subprocess
 import sys
 from datetime import date
 from pathlib import Path
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log = logging.getLogger(__name__)
 
 BASE_DIR  = Path(__file__).parent
 USERS_DIR = BASE_DIR / "users"
@@ -130,26 +138,26 @@ def main() -> None:
     log_file = Path(args.log)
 
     if not log_file.exists():
-        print(f"Error: log file not found: {log_file}", file=sys.stderr)
+        log.error("Log file not found: %s", log_file)
         sys.exit(1)
 
     # Step 1: find failed users
     failed = parse_failed_users(log_file, date_str)
     if not failed:
-        print(f"No failed users found in log for {date_str}.")
+        log.info("No failed users found in log for %s.", date_str)
         sys.exit(0)
-    print(f"Failed users for {date_str}: {', '.join(failed)}")
+    log.info("Failed users for %s: %s", date_str, ", ".join(failed))
 
     # Step 2: check data readiness
     retryable   = [u for u in failed if check_data_ready(u, date_str)]
     unretryable = [u for u in failed if u not in retryable]
 
     if unretryable:
-        print(f"Skipping (merged papers file missing): {', '.join(unretryable)}")
+        log.warning("Skipping (merged papers file missing): %s", ", ".join(unretryable))
     if not retryable:
-        print("No users have data ready for retry.")
+        log.info("No users have data ready for retry.")
         sys.exit(0)
-    print(f"Retrying: {', '.join(retryable)}")
+    log.info("Retrying: %s", ", ".join(retryable))
 
     # Step 3: delegate to run_all_users.py
     cmd = [
