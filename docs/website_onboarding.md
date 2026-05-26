@@ -1,5 +1,7 @@
 # Web Onboarding — Design & Implementation
 
+*Related vault notes: [[User Onboarding]] · [[Infrastructure]]*
+
 ## Overview
 
 A static multi-page HTML onboarding flow that collects user registration data and produces a structured JSON profile. Hosted alongside the Flask server at `incomingscience.xyz`. New users self-register; the owner manually activates each account by adding an Anthropic API key and running `process_pending.py`.

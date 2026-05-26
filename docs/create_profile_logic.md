@@ -1,5 +1,7 @@
 # create_profile.py — Logic Documentation
 
+*Related vault notes: [[User Onboarding]] · [[Taste Profile]]*
+
 ## Purpose
 
 One-time onboarding script. Interviews the user, fetches metadata for papers they have read, calls Claude once to extract and rank their research interests, and writes `taste_profile.json`. This profile is the seed that drives all future paper recommendations.

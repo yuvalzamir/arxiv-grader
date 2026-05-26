@@ -1,5 +1,7 @@
 # Multi-user architecture plan
 
+*Related vault notes: [[Pipeline Overview]] · [[Infrastructure]] · [[Taste Profile]]*
+
 ## Context
 
 ~10 users, each with their own taste profile, history, API key, email address, and daily digest. The pipeline runs sequentially for all users once per day on a single server (Red Pitaya).

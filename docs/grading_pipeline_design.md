@@ -1,5 +1,7 @@
 # Grading pipeline design — triage vs. scoring
 
+*Related vault notes: [[AI Pipeline]] · [[Prompt Caching]] · [[Cost Model]]*
+
 ## Core philosophy
 
 | | Triage | Scoring |

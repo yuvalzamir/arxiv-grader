@@ -1,5 +1,7 @@
 # Scaling Analysis — incomingscience.xyz
 
+*Related vault notes: [[Infrastructure]] · [[Cost Model]] · [[Operations]]*
+
 *Written 2026-03-25. Re-evaluate if user count grows significantly.*
 
 ---

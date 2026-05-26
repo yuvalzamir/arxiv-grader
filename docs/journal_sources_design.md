@@ -1,5 +1,7 @@
 # Journal Sources Upgrade — Design Document
 
+*Related vault notes: [[Journal Scrapers]] · [[Abstract Enrichment]] · [[Pipeline Overview]]*
+
 *Written 2026-03-25. Updated with field-based architecture and scrape-then-filter design.*
 
 ---

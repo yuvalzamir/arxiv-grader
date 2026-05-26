@@ -1,5 +1,7 @@
 # Systems Biology Field — Implementation Plan
 
+*Related vault notes: [[Journal Scrapers]] · [[Pipeline Overview]]*
+
 **Branch:** `systems-biology`
 **First user:** Yael
 **arXiv:** all of `q-bio` (top-level category, covering all subcategories: CB, MN, GN, BM, NC, QM, SC, TO, PE, OT)

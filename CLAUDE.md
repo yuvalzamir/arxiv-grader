@@ -4,6 +4,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @TODO.md
 
+## Project Memory
+
+This project uses an Obsidian vault (vault root = project root, `.obsidian/` config present) as its knowledge base. Vault notes live in `docs/`.
+
+**Entry point: `docs/Home.md`** — read this for navigation, quick-reference command table, and links to all topic notes.
+
+Vault structure (all in `docs/`):
+- `Home.md` — master index
+- `Pipeline Overview.md` · `AI Pipeline.md` · `Prompt Caching.md` — pipeline internals
+- `Journal Scrapers.md` · `Abstract Enrichment.md` — data ingestion
+- `Taste Profile.md` · `User Onboarding.md` · `Monthly Refiner.md` · `Paper Insights.md` — user & profile
+- `Daily Digest.md` · `Weekly Digest.md` — delivery
+- `Infrastructure.md` · `Operations.md` · `Cost Model.md` — ops
+- (deeper design docs live alongside the vault notes, also in `docs/`)
+
+When you discover something significant — a decision, a new feature, a constraint, a failure mode — update or create the relevant note in the vault with `[[wikilinks]]` to related concepts.
+
+## Claude's Responsibilities
+
+**At the start of any task:** read `docs/Home.md` and identify which vault notes are relevant before beginning. Read those notes.
+
+**When documenting or wrapping up a task:** update the relevant vault note(s) in `docs/`. Also update `docs/Home.md` if a new note was created or an existing one changed scope. Do this before any context compaction happens — treat it as part of completing the task, not optional follow-up.
+
+**When analyzing a pipeline run (logs, costs, paper counts, triage rates):** create a note at `docs/runs/YYYY-MM-DD.md` as soon as analysis begins. Update it as findings emerge. Do not wait until the end to write it.
+
+**When correcting a mistake traced to a vault note:** point out the stale or wrong entry explicitly and ask the user to confirm the correction before updating the note. Do not silently fix it — make the change visible.
+
 ## Project Overview
 
 **Incoming Science** is a multi-user AI-powered daily arXiv digest system. It fetches papers from arXiv and top physics journals, grades them using a two-stage Claude pipeline (triage → scoring), generates a PDF digest with rating buttons, emails it to users, and uses collected ratings to refine each user's taste profile monthly.

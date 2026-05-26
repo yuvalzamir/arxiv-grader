@@ -1,5 +1,7 @@
 # Weekly Digest — Design Document
 
+*Related vault notes: [[Weekly Digest]] · [[Daily Digest]] · [[Taste Profile]]*
+
 ## Overview
 
 Add support for a **weekly email digest** containing only papers scored ≥ 8 from the past 7 days. This is orthogonal to the existing daily digest: each user independently opts in or out of daily and weekly delivery. A typical use case is a small research group sharing one taste profile, where some members want the daily feed and others prefer a curated weekly summary.

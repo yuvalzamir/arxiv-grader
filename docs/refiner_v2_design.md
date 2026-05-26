@@ -1,5 +1,7 @@
 # Refiner v2 — Design & Implementation Plan
 
+*Related vault notes: [[Monthly Refiner]] · [[Taste Profile]]*
+
 Captures all design decisions made in the April 2026 planning session.
 Implement when ready; this document is the single source of truth.
 

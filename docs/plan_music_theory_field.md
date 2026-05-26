@@ -1,5 +1,7 @@
 # Plan: Add `music-theory` field
 
+*Related vault notes: [[Journal Scrapers]] · [[Pipeline Overview]]*
+
 ## Context
 
 A new user interested in music theory needs a field. No music field exists yet.

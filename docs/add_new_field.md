@@ -1,5 +1,7 @@
 # How to add a new field
 
+*Related vault notes: [[Journal Scrapers]] · [[Infrastructure]] · [[Operations]] · [[Prompt Caching]]*
+
 A "field" is a scientific discipline that groups one or more arXiv categories with a set of journals. All users in a field share the same arXiv fetch, journal scrape, and triage cache.
 
 ---

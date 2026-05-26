@@ -1,5 +1,7 @@
 # New Field Plan: AI & Computer Vision (`ai-vision`)
 
+*Related vault notes: [[Journal Scrapers]] · [[Pipeline Overview]]*
+
 ## Field Identity
 
 **Field key:** `ai-vision`

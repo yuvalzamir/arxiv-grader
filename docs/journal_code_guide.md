@@ -1,5 +1,7 @@
 # Journal Feature — Code Guide
 
+*Related vault notes: [[Journal Scrapers]] · [[Abstract Enrichment]] · [[Pipeline Overview]] · [[Daily Digest]]*
+
 This document explains how the journal pipeline works at the code level.
 For architecture decisions and design rationale, see `journal_sources_design.md`.
 For triage prompt tuning history, see `journal_triage_tuning.md`.

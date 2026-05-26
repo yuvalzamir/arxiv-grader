@@ -1,5 +1,7 @@
 # Google Scholar profile import — implementation plan
 
+*Related vault notes: [[User Onboarding]] · [[Abstract Enrichment]]*
+
 ## Goal
 
 Allow new users to provide their Google Scholar profile URL during web onboarding. We extract their publication list, resolve each paper to a publisher URL or DOI, fetch the abstract using our existing scraper infrastructure, and feed the results (up to 60 papers) into the profile creation process.

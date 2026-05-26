@@ -1,5 +1,7 @@
 # Triage Rate-Limit Orchestrator — Implementation Plan
 
+*Related vault notes: [[Prompt Caching]] · [[AI Pipeline]] · [[Pipeline Overview]]*
+
 ## Background
 
 The triage pipeline uses the Anthropic cached API for Haiku triage calls. The rate limit

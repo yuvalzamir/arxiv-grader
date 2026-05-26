@@ -1,5 +1,7 @@
 # Mobile Responsiveness Plan — Incoming Science Website
 
+*Related vault notes: [[User Onboarding]] · [[Infrastructure]]*
+
 > Status: **planned** — not yet implemented
 > Scope: all 6 pages under `website/stitch_platform_user_expansion/`
 

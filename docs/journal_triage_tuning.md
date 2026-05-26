@@ -1,5 +1,7 @@
 # Journal Triage Tuning Log
 
+*Related vault notes: [[AI Pipeline]] · [[Journal Scrapers]]*
+
 ## Problem
 
 Initial journal triage pass rate was ~4% (4–6/104 papers). Target: ~10 papers/day.

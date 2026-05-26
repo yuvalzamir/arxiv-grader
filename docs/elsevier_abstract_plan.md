@@ -1,5 +1,7 @@
 # Elsevier Abstract Solution (Scopus API)
 
+*Related vault notes: [[Abstract Enrichment]] · [[Journal Scrapers]]*
+
 ## Problem
 
 Elsevier journals (Speech Communication, CS&L, Pattern Recognition, Neural Networks, etc.)

@@ -1,5 +1,7 @@
 # Server Access Guide
 
+*Related vault notes: [[Infrastructure]] · [[Operations]] · [[User Onboarding]]*
+
 **Server:** Hetzner CX23 — `116.203.255.222`
 **Domain:** `incomingscience.xyz`
 

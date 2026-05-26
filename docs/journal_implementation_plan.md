@@ -1,5 +1,7 @@
 # Journal Sources — Implementation Plan
 
+*Related vault notes: [[Journal Scrapers]] · [[Abstract Enrichment]] · [[Pipeline Overview]]*
+
 *Written 2026-03-25. Branch: `journal_grader`.*
 *Architecture reference: `docs/journal_sources_design.md`.*
 
