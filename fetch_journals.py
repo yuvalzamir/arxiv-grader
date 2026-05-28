@@ -23,6 +23,9 @@ import json
 import logging
 import os
 import sys
+import threading
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -89,6 +92,53 @@ def _collect_journals(fields_data: dict, active_fields: list[str]) -> list[dict]
     return journals
 
 
+def _scrape_publisher_group(
+    publisher: str,
+    pub_journals: list,
+    watermarks: dict,
+    preprint_watermarks: dict,
+    lock: threading.Lock,
+    since_override: str | None,
+    advance_watermark: bool,
+    yesterday: date,
+) -> list:
+    papers_out = []
+    for journal in pub_journals:
+        url_key = journal_key(journal)
+
+        with lock:
+            if since_override:
+                since = date.fromisoformat(since_override)
+            else:
+                since = date.fromisoformat(watermarks[url_key]) if url_key in watermarks else yesterday - timedelta(days=1)
+
+            if "id_pattern" in journal or "ieee_pub_id" in journal:
+                journal = dict(journal)
+                journal["since_id"] = preprint_watermarks.get(journal["name"], 0)
+                log.info("[%s] %s: watermark is %s (ID-based)", publisher, journal["name"], journal["since_id"])
+            else:
+                log.info("[%s] %s: watermark is %s", publisher, journal["name"], since)
+
+        try:
+            papers, max_date, max_id = fetch_journal(journal, since, SCRAPERS)
+        except Exception as e:
+            log.warning("[%s] %s: fetch error — skipping. %s", publisher, journal.get("name", url_key), e)
+            continue
+
+        with lock:
+            if advance_watermark:
+                if max_id is not None:
+                    preprint_watermarks[journal["name"]] = max_id
+                    log.info("[%s] %s: ID watermark advanced to %d", publisher, journal["name"], max_id)
+                elif max_date is not None:
+                    new_watermark = min(max_date, yesterday)
+                    watermarks[url_key] = new_watermark.isoformat()
+                    log.info("[%s] %s: watermark advanced to %s", publisher, journal["name"], new_watermark)
+
+        papers_out.extend(papers)
+    return papers_out
+
+
 def main():
     _configure_logging()
 
@@ -98,6 +148,8 @@ def main():
     parser.add_argument("--since", default=None, help="Override watermark: scrape entries after this date (YYYY-MM-DD)")
     parser.add_argument("--no-advance-watermark", action="store_true", help="Read watermarks normally but do not save updates (useful for re-runs).")
     parser.add_argument("--fields-file", default="fields.json", help="Path to fields.json")
+    parser.add_argument("--max-publisher-workers", type=int, default=8,
+                        help="Max concurrent publisher threads (default: 8).")
     args = parser.parse_args()
 
     yesterday = date.today() - timedelta(days=1)
@@ -110,43 +162,40 @@ def main():
         log.error("No journals found for fields: %s", args.fields)
         sys.exit(1)
 
-    log.info("Scraping %d journal(s) for field(s): %s", len(journals), args.fields)
-
-    all_papers = []
+    # Group journals by publisher so journals from the same publisher run
+    # sequentially within their thread (respecting per-publisher rate limits),
+    # while different publishers run concurrently.
+    publisher_groups: dict = defaultdict(list)
     for journal in journals:
-        url_key = journal_key(journal)
+        pub = journal.get("publisher", "unknown")
+        publisher_groups[pub].append(journal)
 
-        if args.since:
-            since = date.fromisoformat(args.since)
-        else:
-            since = date.fromisoformat(watermarks[url_key]) if url_key in watermarks else yesterday - timedelta(days=1)
+    n_workers = min(len(publisher_groups), args.max_publisher_workers)
+    advance = not args.since and not args.no_advance_watermark
+    log.info(
+        "Scraping %d journal(s) across %d publisher group(s) with up to %d concurrent workers — field(s): %s",
+        len(journals), len(publisher_groups), n_workers, args.fields,
+    )
 
-        if "id_pattern" in journal or "ieee_pub_id" in journal:
-            journal = dict(journal)
-            journal["since_id"] = preprint_watermarks.get(journal["name"], 0)
-            log.info("%s: watermark is %s (ID-based)", journal["name"], journal["since_id"])
-        else:
-            log.info("%s: watermark is %s", journal["name"], since)
-
-        try:
-            papers, max_date, max_id = fetch_journal(journal, since, SCRAPERS)
-            all_papers.extend(papers)
-
-            if max_id is not None:
-                # ID-based watermark (e.g. Elsevier PII) — stored in preprint_watermarks
-                if not args.since and not args.no_advance_watermark:
-                    preprint_watermarks[journal["name"]] = max_id
-                    log.info("%s: ID watermark advanced to %d", journal["name"], max_id)
-            elif max_date is not None:
-                # Advance watermark to min(max_date, yesterday) — never advance
-                # to today, as papers published after this run would be missed tomorrow.
-                new_watermark = min(max_date, yesterday)
-                if not args.since and not args.no_advance_watermark:
-                    watermarks[url_key] = new_watermark.isoformat()
-                    log.info("%s: watermark advanced to %s", journal["name"], new_watermark)
-
-        except Exception as e:
-            log.warning("Unexpected error scraping %s: %s — skipping.", journal["name"], e)
+    lock = threading.Lock()
+    all_papers = []
+    with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        futures = {
+            executor.submit(
+                _scrape_publisher_group,
+                pub, pub_journals, watermarks, preprint_watermarks,
+                lock, args.since, advance, yesterday,
+            ): pub
+            for pub, pub_journals in publisher_groups.items()
+        }
+        for future in as_completed(futures):
+            pub = futures[future]
+            try:
+                papers = future.result()
+                all_papers.extend(papers)
+                log.info("Publisher '%s': %d paper(s) collected.", pub, len(papers))
+            except Exception as e:
+                log.error("Publisher '%s' thread failed entirely: %s", pub, e)
 
     if not args.since and not args.no_advance_watermark:
         _save_watermarks(watermarks)
