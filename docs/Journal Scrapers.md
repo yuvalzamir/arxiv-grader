@@ -1,6 +1,6 @@
 # Journal Scrapers
 
-[[Home]] | [[Pipeline Overview]] | [[Abstract Enrichment]] | [[AI Pipeline]]
+[[Home]] | [[Pipeline Overview]] | [[Abstract Enrichment]] | [[AI Pipeline]] | [[Preprint Sources]]
 
 Code guide: `journal_code_guide.md`
 Architecture rationale: `journal_sources_design.md`
@@ -148,6 +148,108 @@ for paper in scraped_papers:
 ```
 
 `subject_tags` are stripped from the output before writing to `{field}_journals.json` — they are never passed to Claude.
+
+---
+
+## Preprint Sources (bioRxiv / medRxiv)
+
+bioRxiv and medRxiv are handled by `fetch_preprints.py` alongside NBER/CEPR working papers.
+
+**Feed URLs:**
+- bioRxiv: `https://connect.biorxiv.org/biorxiv_xml.php?subject={subject}`
+- medRxiv: `https://connect.medrxiv.org/medrxiv_xml.php?subject={subject}`
+
+**`fields.json` config key:** `preprint_categories`
+```json
+"preprint_categories": {
+  "biorxiv": ["systems-biology", "bioinformatics", "genetics"],
+  "medrxiv": []
+}
+```
+Empty list = skip that server. Absent key = no bio preprints.
+
+**Watermarking:** date-based, stored in `preprint_watermarks.json` under `"{server}:{subject}"` keys (e.g. `"biorxiv:systems-biology": "2026-05-25"`). Papers with `dc:date > watermark` are new.
+
+**Paper schema differences vs arXiv:**
+- `arxiv_id` holds the DOI (e.g. `10.1101/2026.05.25.727716`)
+- `source` = `"bioRxiv"` or `"medRxiv"` (not `preprint_source`)
+- `subcategories: []` — no arXiv-style subcategory codes
+- `preprint_date` field added (informational)
+
+**Triage routing:** `source ∈ {"bioRxiv", "medRxiv"}` routes to the arXiv pool (`run_pipeline.py:PREPRINT_SOURCES`), not the journal pool. Papers match on keywords/authors/title only (no subcategory filter).
+
+**Enabled fields:** `systems-biology` (bioRxiv: systems-biology, bioinformatics, genetics, immunology, physiology, cell-biology).
+
+---
+
+## Parallel Scraping (fetch_journals.py)
+
+Implemented 2026-05-28 on branch `parallelize-journal-scraping`.
+
+### Design
+
+`fetch_journals.py` groups journals by `publisher` field, then runs each publisher group in a `ThreadPoolExecutor` (default 8 workers). Within each group, journals run sequentially — preserving per-publisher rate-limit safety. A single `threading.Lock` protects all watermark reads and writes.
+
+```
+publisher_groups = defaultdict(list)   # group by journal["publisher"]
+ThreadPoolExecutor(max_workers=8)      # one thread per publisher
+  └─ _scrape_publisher_group()         # sequential within group, lock-protected watermarks
+main thread collects results via as_completed()
+watermark file saves, dedup, S2 enrichment → all sequential after executor exits
+```
+
+New CLI flag: `--max-publisher-workers N` (default 8).
+
+### Publisher journal counts by field (2026-05-28)
+
+| Field | Journals | Publishers |
+|-------|----------|------------|
+| edu-policy | 27 | sage, tandfonline, elsevier_general, wiley, springer, oup, openalex, unknown |
+| econ-education | 24 | elsevier_general, oup, tandfonline, openalex, sage, springer, unknown, wiley |
+| quantum-computing | 20 | aps, nature, plos, iop, science, acs |
+| literature-and-culture | 19 | openalex, muse, oup, cambridge, tandfonline |
+| optics | 18 | aps, nature, science, pnas, optica, acs |
+| systems-biology | 18 | cell, science, pnas, plos, nature |
+| cond-mat | 16 | aps, nature, science, pnas, acs |
+| quantum-info | 16 | aps, nature, plos, iop, science, acs |
+| quantum-phenomena | 15 | aps, nature, iop, acs, science, pnas |
+| astrophysics | 14 | aps, iop, oup, edp, nature, science |
+| econ-political | 13 | unknown, oup, wiley, elsevier_general, cambridge, plos, tandfonline |
+| demography | 13 | openalex, wiley, tandfonline, springer, sage, oup |
+| hep | 12 | aps, elsevier, edp, iop, scipost, nature, science |
+| fluid-dynamics | 12 | aps, nature, science, cambridge, royalsociety, aip |
+| computational-neuroscience | 10 | iop, cell, nature, plos, elsevier_general, springer, openalex |
+| gender-studies | 12 | sage, oup, elsevier_general, openalex, tandfonline |
+| soft-matter | 15 | aps, acs, nature, science |
+| ml | 6 | openalex, springer, elsevier_general, ieee_rest, ieee, plos |
+| soft-eng | 7 | ieee, acm, springer, elsevier_general, wiley |
+| ai-vision | 5 | ieee, springer, nature, science |
+| nlp | 7 | springer, openalex, cambridge, plos, elsevier_general, acm |
+| cond-mat-optics | 15 | aps, nature, science, pnas, acs |
+| quantum-sensing | 11 | acs, wiley, nature, pnas, science |
+| music-theory | 6 | openalex |
+| comparative-literature | 6 | openalex |
+| ai-speech | 2 | springer, ieee |
+
+### Known slow publishers
+
+- **Elsevier** (`elsevier_general`) — article-level page scraping; Neural Networks journal historically ~77s
+- **IEEE** (`ieee`, `ieee_rest`) — TPAMI historically ~29s
+- **Tandfonline / SAGE** — OpenAlex fallback chain adds latency (~5–15s per journal)
+
+Fields with the most parallelism benefit: `edu-policy`, `econ-education` (8 publishers each), `literature-and-culture` (5 publishers).
+
+### Verification
+
+```bash
+# Parallel (default)
+time python fetch_journals.py --fields edu-policy econ-education ai-vision ml \
+  --since 2026-05-25 --output /tmp/journals_parallel_test.json
+
+# Sequential (for comparison)
+time python fetch_journals.py --fields edu-policy econ-education ai-vision ml \
+  --since 2026-05-25 --output /tmp/journals_seq_test.json --max-publisher-workers 1
+```
 
 ---
 
