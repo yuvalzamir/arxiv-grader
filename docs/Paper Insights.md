@@ -1,4 +1,4 @@
-# Paper Insights (Opt-In Feature)
+# Paper Insights
 
 [[Home]] | [[AI Pipeline]] | [[Daily Digest]] | [[Taste Profile]]
 
@@ -6,29 +6,13 @@
 
 ## Overview
 
-An optional scoring enhancement that generates a structured three-field analysis for each paper instead of the standard one-line justification. Enabled per user — not a global toggle.
-
----
-
-## How to Enable
-
-Set `"paper_insights": true` in the user's `taste_profile.json` on the server:
-```json
-{
-  "paper_insights": true,
-  ...
-}
-```
-
-This must be set manually (no UI toggle currently).
+Scoring enhancement that generates a structured three-field analysis for each paper instead of the standard one-line justification. **Enabled for all users as of 2026-05-28** — `run_pipeline.py` always loads `prompts/scoring_insights.txt`. The `"paper_insights"` flag in `taste_profile.json` is no longer checked.
 
 ---
 
 ## What Changes
 
-When `paper_insights: true`:
-- `run_pipeline.py` loads `prompts/scoring_insights.txt` instead of `prompts/scoring.txt`
-- The scoring agent outputs an `insights` object per paper
+`run_pipeline.py` loads `prompts/scoring_insights.txt` instead of `prompts/scoring.txt`. The scoring agent outputs an `insights` object per paper.
 
 **Standard scoring output:**
 ```json
