@@ -564,8 +564,9 @@ def run_triage(
     is_first_user: True for the first user in a field (cache_write cost), False for
     subsequent users (cache_read, free ITPM).
     """
-    arxiv_papers  = [p for p in papers if not p.get("source")]
-    journal_papers = [p for p in papers if p.get("source")]
+    PREPRINT_SOURCES = {"bioRxiv", "medRxiv"}
+    arxiv_papers   = [p for p in papers if not p.get("source") or p.get("source") in PREPRINT_SOURCES]
+    journal_papers = [p for p in papers if p.get("source") and p.get("source") not in PREPRINT_SOURCES]
 
     batch_arxiv   = use_batch_arxiv   if use_batch_arxiv   is not None else use_batch
     batch_journals = use_batch_journals if use_batch_journals is not None else use_batch
@@ -772,8 +773,7 @@ def main():
     # Load prompts.
     triage_prompt         = load_prompt("triage.txt")
     triage_journal_prompt = load_prompt("triage_journals.txt")
-    generate_insights = profile.get("paper_insights", False)
-    scoring_prompt_file = "scoring_insights.txt" if generate_insights else "scoring.txt"
+    scoring_prompt_file = "scoring_insights.txt"
     scoring_prompt        = load_prompt(scoring_prompt_file)
 
     # --- Stage 1: triage ---
