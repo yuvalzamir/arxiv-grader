@@ -189,7 +189,7 @@
 <!-- Dynamic Field Coverage Section -->
 <div class="hidden space-y-6 pt-6 mt-6 border-t border-outline-variant/10" id="field-coverage">
 <div>
-<h4 class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-4">Included arXiv Categories</h4>
+<h4 class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-4">Pre-prints</h4>
 <div class="flex flex-wrap gap-2" id="category-chips"></div>
 </div>
 <div>
@@ -434,9 +434,27 @@
 
         const data = fieldData[fieldKey];
 
-        categoryChips.innerHTML = data.arxiv_categories.map(cat =>
-            `<span class="px-4 py-1.5 bg-tertiary-fixed text-on-tertiary-fixed rounded-full text-[10px] font-bold tracking-wider uppercase">${cat}</span>`
+        let chipsHtml = (data.arxiv_categories || []).map(cat =>
+            `<span class="px-4 py-1.5 bg-tertiary-fixed text-on-tertiary-fixed rounded-full text-[10px] font-bold tracking-wider uppercase">arXiv · ${cat}</span>`
         ).join('');
+
+        if (data.preprint_categories) {
+            for (const [server, cats] of Object.entries(data.preprint_categories)) {
+                if (cats && cats.length) {
+                    chipsHtml += cats.map(cat =>
+                        `<span class="px-4 py-1.5 bg-secondary-fixed text-on-secondary-fixed rounded-full text-[10px] font-bold tracking-wider uppercase">${server} · ${cat}</span>`
+                    ).join('');
+                }
+            }
+        }
+
+        if (data.preprints && data.preprints.length) {
+            chipsHtml += data.preprints.map(p =>
+                `<span class="px-4 py-1.5 bg-secondary-fixed text-on-secondary-fixed rounded-full text-[10px] font-bold tracking-wider uppercase">${p.name}</span>`
+            ).join('');
+        }
+
+        categoryChips.innerHTML = chipsHtml;
 
         const uniqueNames = [...new Set(data.journals.map(j => j.name))];
         journalList.innerHTML = uniqueNames.map(name =>
