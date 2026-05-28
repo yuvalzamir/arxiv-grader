@@ -1,9 +1,5 @@
 # TODO
 
-## Upcoming
-
-- [ ] **User profile self-service page** — Add a section to `incomingscience.xyz` for existing users to manage their own profile. Three capabilities: (1) **Delivery preferences** — change daily/weekly toggle and day-of-week, with changes written immediately to `taste_profile.json` on the server; (2) **Free-text interest update** — a text box where users can describe changes to their research interests, which gets queued for the operator to process via the `/edit-profile` skill; (3) **Email lookup** — the entry point is the user's email address (no passwords; treat it like a magic-link-lite flow or just trust the email input for now). Backend: new Flask endpoints in `server.py`. Frontend: new pages in the onboarding website. The queued interest-update text should land somewhere the operator can find it easily (e.g., a `users/<slug>/pending_profile_update.txt` file that triggers a notification email).
-
 ---
 
 ## Monitoring — how to check the logs

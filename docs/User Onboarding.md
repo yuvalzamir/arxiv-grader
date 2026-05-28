@@ -7,6 +7,19 @@ Profile creation logic: `create_profile_logic.md`
 
 ---
 
+## Website: Field Selection Page (`/signup/field`)
+
+The field browser shows a three-column tree and a **Pre-prints** section once a field is selected.
+
+**Pre-prints chips** (rendered by `updateFieldCoverage()` in `onboarding_research_field_final/code.html`):
+- `arxiv_categories` → chips labelled `arXiv · <category>` (tertiary color)
+- `preprint_categories` (bioRxiv/medRxiv) → chips labelled `bioRxiv · <subject>` / `medRxiv · <subject>` (secondary color)
+- `preprints` (NBER/CEPR named entries) → chips labelled by `name` field e.g. `NBER`, `CEPR` (secondary color)
+
+Fields without bioRxiv/NBER entries show only arXiv chips. Section renamed from "Included arXiv Categories" → "Pre-prints" (2026-05-28).
+
+---
+
 ## Two Paths
 
 | Path | Use case | Script |

@@ -1,0 +1,511 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<link rel="icon" type="image/png" href="/assets/favicon.png" />
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "tertiary-fixed": "#adeeed",
+                    "primary-container": "#1a2b3c",
+                    "on-background": "#1b1c1d",
+                    "surface-dim": "#dbd9db",
+                    "secondary-fixed": "#dde3ed",
+                    "error-container": "#ffdad6",
+                    "surface-tint": "#4f6073",
+                    "tertiary": "#001818",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c4c6cd",
+                    "inverse-surface": "#303032",
+                    "on-surface": "#1b1c1d",
+                    "on-secondary-fixed-variant": "#41474f",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#91d2d0",
+                    "secondary-container": "#dde3ed",
+                    "on-primary-fixed": "#0b1d2d",
+                    "secondary": "#595f67",
+                    "on-tertiary-fixed-variant": "#00504f",
+                    "primary-fixed": "#d2e4fb",
+                    "inverse-on-surface": "#f2f0f2",
+                    "on-primary-container": "#8192a7",
+                    "inverse-primary": "#b7c8de",
+                    "outline": "#74777d",
+                    "surface-container-highest": "#e4e2e3",
+                    "surface-container-high": "#e9e7e9",
+                    "on-secondary-container": "#5f656d",
+                    "primary": "#041627",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed": "#00201f",
+                    "on-secondary-fixed": "#161c23",
+                    "on-secondary": "#ffffff",
+                    "surface-variant": "#e4e2e3",
+                    "on-tertiary-container": "#5b9b9a",
+                    "surface": "#fbf9fa",
+                    "primary-fixed-dim": "#b7c8de",
+                    "background": "#fbf9fa",
+                    "on-primary-fixed-variant": "#38485a",
+                    "surface-bright": "#fbf9fa",
+                    "on-primary": "#ffffff",
+                    "surface-container": "#efedef",
+                    "tertiary-container": "#002f2f",
+                    "secondary-fixed-dim": "#c1c7d1",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#44474c",
+                    "surface-container-low": "#f5f3f4"
+                },
+                "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+                },
+                "fontFamily": {
+                    "headline": ["Newsreader"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+                }
+            },
+        },
+    }
+</script>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+    }
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, .serif { font-family: 'Newsreader', serif; }
+</style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex antialiased">
+
+<!-- Sidebar -->
+<aside class="hidden md:flex fixed left-0 top-0 h-full flex-col py-8 px-6 bg-slate-100 border-none w-64 z-50">
+    <a href="/" class="mb-12 flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <img alt="Incoming Science Logo" class="w-10 h-10 object-contain mix-blend-multiply" src="/assets/logo.png">
+        <span class="text-xl font-serif italic text-slate-900 block leading-tight">Incoming Science</span>
+    </a>
+    <nav class="flex-1 mt-2">
+        <div class="flex items-center gap-3 py-2.5">
+            <span class="material-symbols-outlined text-sm text-slate-400">settings</span>
+            <span class="font-label text-xs uppercase tracking-widest text-slate-900 font-bold">Manage</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-2 leading-relaxed pl-7">Update your delivery preferences and research interests.</p>
+    </nav>
+</aside>
+
+<!-- Main -->
+<main class="md:ml-64 flex-1 flex flex-col relative overflow-x-hidden">
+    <header class="flex justify-between items-center w-full px-4 md:px-12 py-8 bg-transparent">
+        <div class="flex items-center gap-2">
+            <span class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">Account</span>
+            <div class="w-8 h-[1px] bg-outline-variant opacity-30"></div>
+            <span class="font-label text-[10px] uppercase tracking-[0.2em] text-primary">Manage</span>
+        </div>
+    </header>
+
+    <div class="flex-1 max-w-3xl mx-auto w-full px-4 md:px-12 pb-32">
+
+        <!-- Hero -->
+        <div class="mb-12">
+            <h1 class="text-3xl md:text-[3rem] leading-[1.1] font-headline text-primary -tracking-[0.02em] mb-4">
+                Manage your <span class="italic">preferences</span>
+            </h1>
+            <p class="text-base text-on-surface-variant font-body leading-relaxed opacity-80">
+                Update delivery frequency or send us feedback about your research interests.
+            </p>
+        </div>
+
+        <!-- ── PHASE 1: Email lookup ── -->
+        <div id="phase-lookup">
+            <div class="bg-surface-container-lowest rounded-lg p-8 md:p-10 shadow-[0_32px_48px_rgba(27,28,29,0.04)] border border-outline-variant/15">
+                <label class="block font-label text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-4">Your registered email</label>
+                <div class="relative max-w-lg">
+                    <input id="email-input" type="email" placeholder="Enter your email..."
+                        class="w-full bg-transparent border-0 border-b border-outline-variant/30 py-4 text-2xl font-headline focus:ring-0 focus:border-primary transition-all pr-12"
+                        oninput="onEmailInput()" onkeydown="if(event.key==='Enter') doLookup()">
+                </div>
+                <div id="lookup-error" class="hidden mt-4 text-sm text-error font-body"></div>
+                <div class="mt-8">
+                    <button id="lookup-btn" onclick="doLookup()"
+                        class="bg-outline-variant text-on-surface-variant px-10 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold opacity-40 cursor-not-allowed pointer-events-none transition-all">
+                        Look up my account
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── PHASE 2: Settings (hidden until lookup succeeds) ── -->
+        <div id="phase-settings" class="hidden space-y-8">
+
+            <!-- Field chip -->
+            <div class="flex items-center gap-3">
+                <span class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Field</span>
+                <span id="field-chip" class="px-4 py-1.5 bg-secondary-fixed text-on-secondary-fixed rounded-full text-[10px] font-bold tracking-wider uppercase"></span>
+            </div>
+
+            <!-- ── Frequency section ── -->
+            <div class="bg-surface-container-lowest rounded-lg p-8 md:p-10 shadow-[0_32px_48px_rgba(27,28,29,0.04)] border border-outline-variant/15 space-y-8">
+                <div>
+                    <h3 class="font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Delivery frequency</h3>
+                    <p class="text-xs text-on-surface-variant opacity-60">Changes take effect from the next scheduled run.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Daily toggle -->
+                    <div class="p-6 rounded-lg bg-surface-container-low border border-transparent hover:border-outline-variant/20 transition-all">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-label font-bold text-[10px] text-primary uppercase tracking-widest">Daily Digest</h4>
+                                <p class="text-xs text-on-surface-variant mt-2 leading-relaxed opacity-80">New papers every weekday morning.</p>
+                            </div>
+                            <button id="daily-toggle" onclick="toggleDaily()" type="button"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none">
+                                <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Weekly toggle -->
+                    <div class="p-6 rounded-lg bg-surface-container-low border border-transparent hover:border-outline-variant/20 transition-all">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="font-label font-bold text-[10px] text-primary uppercase tracking-widest">Weekly Digest</h4>
+                                <p class="text-xs text-on-surface-variant mt-2 leading-relaxed opacity-80">Top papers of the week, once a week.</p>
+                            </div>
+                            <button id="weekly-toggle" onclick="toggleWeekly()" type="button"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none">
+                                <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                            </button>
+                        </div>
+                        <!-- Day picker -->
+                        <div id="day-picker" class="pt-4 border-t border-outline-variant/20 transition-opacity duration-300">
+                            <label class="block font-label text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-3">Delivery day</label>
+                            <div class="flex flex-wrap gap-2">
+                                <button data-day="monday"    onclick="selectDay(this)" type="button" class="day-btn px-3 py-2 rounded font-label text-[10px] font-bold uppercase tracking-tighter transition-all">Mon</button>
+                                <button data-day="tuesday"   onclick="selectDay(this)" type="button" class="day-btn px-3 py-2 rounded font-label text-[10px] font-bold uppercase tracking-tighter transition-all">Tue</button>
+                                <button data-day="wednesday" onclick="selectDay(this)" type="button" class="day-btn px-3 py-2 rounded font-label text-[10px] font-bold uppercase tracking-tighter transition-all">Wed</button>
+                                <button data-day="thursday"  onclick="selectDay(this)" type="button" class="day-btn px-3 py-2 rounded font-label text-[10px] font-bold uppercase tracking-tighter transition-all">Thu</button>
+                                <button data-day="friday"    onclick="selectDay(this)" type="button" class="day-btn px-3 py-2 rounded font-label text-[10px] font-bold uppercase tracking-tighter transition-all">Fri</button>
+                                <button data-day="saturday"  onclick="selectDay(this)" type="button" class="day-btn px-3 py-2 rounded font-label text-[10px] font-bold uppercase tracking-tighter transition-all">Sat</button>
+                                <button data-day="sunday"    onclick="selectDay(this)" type="button" class="day-btn px-3 py-2 rounded font-label text-[10px] font-bold uppercase tracking-tighter transition-all">Sun</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Both-off warning -->
+                <div id="both-off-warning" class="hidden flex items-start gap-3 p-4 rounded-lg bg-error-container">
+                    <span class="material-symbols-outlined text-on-error-container text-lg mt-0.5">warning</span>
+                    <p class="text-sm text-on-error-container font-body leading-relaxed">
+                        Turning off both options will effectively unsubscribe you from all digests.
+                    </p>
+                </div>
+
+                <!-- Frequency actions -->
+                <div class="flex items-center gap-4 pt-2">
+                    <button onclick="revertFrequency()" type="button"
+                        class="px-6 py-2.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold border border-outline-variant/40 text-on-surface-variant hover:border-primary hover:text-primary transition-all">
+                        Revert
+                    </button>
+                    <button id="save-freq-btn" onclick="saveFrequency()" type="button"
+                        class="bg-primary text-on-primary px-8 py-2.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold hover:scale-[1.02] active:scale-95 transition-all">
+                        Save frequency
+                    </button>
+                    <span id="freq-status" class="text-xs font-body text-on-surface-variant opacity-0 transition-opacity duration-300"></span>
+                </div>
+            </div>
+
+            <!-- ── Feedback section ── -->
+            <div class="bg-surface-container-lowest rounded-lg p-8 md:p-10 shadow-[0_32px_48px_rgba(27,28,29,0.04)] border border-outline-variant/15 space-y-6">
+                <div>
+                    <h3 class="font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Research interests update</h3>
+                    <p class="text-xs text-on-surface-variant opacity-60 leading-relaxed">
+                        Describe what has changed in your research — new topics, techniques, authors, or directions you want more or less of. We'll update your profile manually within a few days.
+                    </p>
+                </div>
+
+                <!-- Pending notice (shown if feedback already queued) -->
+                <div id="feedback-pending" class="hidden flex items-start gap-3 p-4 rounded-lg bg-secondary-fixed">
+                    <span class="material-symbols-outlined text-on-secondary-fixed text-lg mt-0.5">schedule</span>
+                    <p class="text-sm text-on-secondary-fixed font-body leading-relaxed">
+                        You have a pending feedback request being processed. We'll update your profile soon.
+                    </p>
+                </div>
+
+                <!-- Feedback form -->
+                <div id="feedback-form">
+                    <textarea id="feedback-text" rows="5" maxlength="5000"
+                        placeholder="e.g. I've shifted focus toward quantum error correction and am less interested in photonics now. I'm also following work by John Preskill closely."
+                        class="w-full bg-surface-container-low border border-outline-variant/20 rounded-lg p-4 text-sm font-body text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary transition-all resize-none leading-relaxed">
+                    </textarea>
+                    <div class="flex items-center justify-between mt-2">
+                        <span id="char-count" class="text-xs text-on-surface-variant opacity-40 font-body">0 / 5000</span>
+                    </div>
+                    <div id="feedback-error" class="hidden mt-3 text-sm text-error font-body"></div>
+                    <div class="mt-4">
+                        <button id="send-feedback-btn" onclick="sendFeedback()" type="button"
+                            class="bg-primary text-on-primary px-8 py-2.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold hover:scale-[1.02] active:scale-95 transition-all">
+                            Send feedback
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Feedback submitted confirmation -->
+                <div id="feedback-done" class="hidden flex items-start gap-3 p-4 rounded-lg bg-tertiary-fixed">
+                    <span class="material-symbols-outlined text-on-tertiary-fixed text-lg mt-0.5" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                    <p class="text-sm text-on-tertiary-fixed font-body leading-relaxed">
+                        Feedback received. We'll update your profile within a few days.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+        <!-- end phase-settings -->
+
+    </div>
+    <!-- end content -->
+
+    <div class="fixed top-24 right-[-40px] rotate-90 origin-left pointer-events-none hidden xl:block">
+        <span class="font-label text-[10px] uppercase tracking-[0.5em] text-outline-variant/40 select-none">Scholarly Artifact ID: 005-MGT-PREFS</span>
+    </div>
+</main>
+
+<script>
+    // ── State ──────────────────────────────────────────────────────────────────
+    let email = '';
+    let original = { daily_digest: false, weekly_digest: false, weekly_day: 'friday' };
+    let current  = { daily_digest: false, weekly_digest: false, weekly_day: 'friday' };
+
+    // ── Phase 1: Email lookup ──────────────────────────────────────────────────
+    function onEmailInput() {
+        email = document.getElementById('email-input').value.trim();
+        const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        const btn = document.getElementById('lookup-btn');
+        if (valid) {
+            btn.className = 'bg-primary text-on-primary px-10 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer';
+        } else {
+            btn.className = 'bg-outline-variant text-on-surface-variant px-10 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] font-bold opacity-40 cursor-not-allowed pointer-events-none transition-all';
+        }
+        document.getElementById('lookup-error').classList.add('hidden');
+    }
+
+    async function doLookup() {
+        const errEl = document.getElementById('lookup-error');
+        errEl.classList.add('hidden');
+
+        const btn = document.getElementById('lookup-btn');
+        btn.textContent = 'Looking up…';
+        btn.classList.add('opacity-60', 'pointer-events-none');
+
+        try {
+            const res = await fetch('/manage/lookup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+
+            if (data.status === 'not_found') {
+                errEl.textContent = 'No account found for that email. If you signed up recently, your account may still be pending activation.';
+                errEl.classList.remove('hidden');
+                btn.textContent = 'Look up my account';
+                btn.classList.remove('opacity-60', 'pointer-events-none');
+                return;
+            }
+
+            if (data.status !== 'ok') {
+                errEl.textContent = 'Something went wrong. Please try again.';
+                errEl.classList.remove('hidden');
+                btn.textContent = 'Look up my account';
+                btn.classList.remove('opacity-60', 'pointer-events-none');
+                return;
+            }
+
+            // Success — populate phase 2
+            original = { daily_digest: data.daily_digest, weekly_digest: data.weekly_digest, weekly_day: data.weekly_day };
+            current  = { ...original };
+
+            document.getElementById('field-chip').textContent = data.field || 'unknown';
+            applyToggle('daily-toggle',  current.daily_digest);
+            applyToggle('weekly-toggle', current.weekly_digest);
+            applyDaySelection(current.weekly_day);
+            updateDayPickerVisibility();
+            updateBothOffWarning();
+
+            if (data.has_pending_feedback) {
+                document.getElementById('feedback-pending').classList.remove('hidden');
+                document.getElementById('feedback-form').classList.add('hidden');
+            }
+
+            document.getElementById('phase-lookup').classList.add('hidden');
+            document.getElementById('phase-settings').classList.remove('hidden');
+
+        } catch (e) {
+            errEl.textContent = 'Network error. Please check your connection and try again.';
+            errEl.classList.remove('hidden');
+            btn.textContent = 'Look up my account';
+            btn.classList.remove('opacity-60', 'pointer-events-none');
+        }
+    }
+
+    // ── Frequency controls ─────────────────────────────────────────────────────
+    function applyToggle(id, on) {
+        const btn = document.getElementById(id);
+        btn.classList.toggle('bg-primary', on);
+        btn.classList.toggle('bg-outline-variant', !on);
+        btn.querySelector('span').classList.toggle('translate-x-5', on);
+        btn.querySelector('span').classList.toggle('translate-x-0', !on);
+    }
+
+    function toggleDaily() {
+        current.daily_digest = !current.daily_digest;
+        applyToggle('daily-toggle', current.daily_digest);
+        updateBothOffWarning();
+    }
+
+    function toggleWeekly() {
+        current.weekly_digest = !current.weekly_digest;
+        applyToggle('weekly-toggle', current.weekly_digest);
+        updateDayPickerVisibility();
+        updateBothOffWarning();
+    }
+
+    function updateDayPickerVisibility() {
+        document.getElementById('day-picker').style.opacity = current.weekly_digest ? '1' : '0.4';
+        document.getElementById('day-picker').style.pointerEvents = current.weekly_digest ? 'auto' : 'none';
+    }
+
+    function updateBothOffWarning() {
+        const bothOff = !current.daily_digest && !current.weekly_digest;
+        document.getElementById('both-off-warning').classList.toggle('hidden', !bothOff);
+    }
+
+    function selectDay(btn) {
+        current.weekly_day = btn.dataset.day;
+        applyDaySelection(current.weekly_day);
+    }
+
+    function applyDaySelection(day) {
+        document.querySelectorAll('.day-btn').forEach(b => {
+            const on = b.dataset.day === day;
+            b.classList.toggle('bg-primary', on);
+            b.classList.toggle('text-white', on);
+            b.classList.toggle('bg-white', !on);
+            b.classList.toggle('border', !on);
+            b.classList.toggle('border-outline-variant/30', !on);
+            b.classList.toggle('hover:bg-primary', !on);
+            b.classList.toggle('hover:text-white', !on);
+        });
+    }
+
+    function revertFrequency() {
+        current = { ...original };
+        applyToggle('daily-toggle',  current.daily_digest);
+        applyToggle('weekly-toggle', current.weekly_digest);
+        applyDaySelection(current.weekly_day);
+        updateDayPickerVisibility();
+        updateBothOffWarning();
+        showFreqStatus('');
+    }
+
+    async function saveFrequency() {
+        const btn = document.getElementById('save-freq-btn');
+        btn.textContent = 'Saving…';
+        btn.classList.add('opacity-60', 'pointer-events-none');
+
+        try {
+            const res = await fetch('/manage/update-frequency', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, ...current }),
+            });
+            const data = await res.json();
+
+            if (data.status === 'ok') {
+                original = { ...current };
+                showFreqStatus('Saved.');
+            } else {
+                showFreqStatus('Save failed — please try again.');
+            }
+        } catch (e) {
+            showFreqStatus('Network error — please try again.');
+        }
+
+        btn.textContent = 'Save frequency';
+        btn.classList.remove('opacity-60', 'pointer-events-none');
+    }
+
+    function showFreqStatus(msg) {
+        const el = document.getElementById('freq-status');
+        el.textContent = msg;
+        el.style.opacity = msg ? '1' : '0';
+    }
+
+    // ── Feedback ───────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        const ta = document.getElementById('feedback-text');
+        if (ta) {
+            ta.addEventListener('input', () => {
+                document.getElementById('char-count').textContent = `${ta.value.length} / 5000`;
+            });
+        }
+    });
+
+    async function sendFeedback() {
+        const ta = document.getElementById('feedback-text');
+        const errEl = document.getElementById('feedback-error');
+        const text = ta.value.trim();
+
+        errEl.classList.add('hidden');
+
+        if (!text) {
+            errEl.textContent = 'Please write something before sending.';
+            errEl.classList.remove('hidden');
+            return;
+        }
+
+        const btn = document.getElementById('send-feedback-btn');
+        btn.textContent = 'Sending…';
+        btn.classList.add('opacity-60', 'pointer-events-none');
+
+        try {
+            const res = await fetch('/manage/submit-feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, feedback_text: text }),
+            });
+            const data = await res.json();
+
+            if (res.status === 429) {
+                errEl.textContent = data.message || 'You can submit feedback once every 24 hours.';
+                errEl.classList.remove('hidden');
+                btn.textContent = 'Send feedback';
+                btn.classList.remove('opacity-60', 'pointer-events-none');
+                return;
+            }
+
+            if (data.status === 'ok') {
+                document.getElementById('feedback-form').classList.add('hidden');
+                document.getElementById('feedback-done').classList.remove('hidden');
+                return;
+            }
+
+            errEl.textContent = data.message || 'Something went wrong. Please try again.';
+            errEl.classList.remove('hidden');
+        } catch (e) {
+            errEl.textContent = 'Network error — please try again.';
+            errEl.classList.remove('hidden');
+        }
+
+        btn.textContent = 'Send feedback';
+        btn.classList.remove('opacity-60', 'pointer-events-none');
+    }
+</script>
+</body></html>

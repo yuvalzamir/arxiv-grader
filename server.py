@@ -17,7 +17,7 @@ import os
 import re
 import smtplib
 import threading
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -518,6 +518,208 @@ def sitemap():
 def health():
     """Liveness check — confirm the server is running."""
     return {"status": "ok", "date": date.today().isoformat()}, 200
+
+
+# ── /manage — user self-service ───────────────────────────────────────────────
+
+VALID_DAYS = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
+_FEEDBACK_RATE_LIMIT_HOURS = 24
+
+
+def _email_to_slug(email: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", email.strip().lower()).strip("-")
+
+
+def _find_user_by_email(email: str) -> tuple[str, Path] | None:
+    """Return (slug, profile_path) for a registered user, or None if not found.
+
+    Checks two things:
+    1. Slug derived from email matches a user directory (fast path).
+    2. Any EMAIL_TO / EMAIL_TO_DAILY / EMAIL_TO_WEEKLY in any user's .env matches.
+    """
+    email = email.strip().lower()
+    if not email:
+        return None
+
+    # Fast path: slug match
+    slug = _email_to_slug(email)
+    if slug:
+        profile_path = USERS_DIR / slug / "taste_profile.json"
+        if profile_path.exists():
+            return slug, profile_path
+
+    # Fallback: scan all .env files for matching email addresses
+    for env_path in USERS_DIR.glob("*/.env"):
+        try:
+            env_emails = set()
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                if line.startswith(("EMAIL_TO=", "EMAIL_TO_DAILY=", "EMAIL_TO_WEEKLY=")):
+                    val = line.split("=", 1)[1]
+                    for addr in val.split(","):
+                        addr = addr.strip().lower()
+                        if addr:
+                            env_emails.add(addr)
+            if email in env_emails:
+                user_dir = env_path.parent
+                profile_path = user_dir / "taste_profile.json"
+                if profile_path.exists():
+                    return user_dir.name, profile_path
+        except OSError:
+            continue
+
+    return None
+
+
+def _send_feedback_notification(slug: str, feedback_text: str) -> None:
+    if not _SMTP_USER or not _SMTP_PASSWORD:
+        return
+    body = f"Profile feedback submitted by: {slug}\n\n{feedback_text}\n\nRun: /edit-profile-from-file {slug}"
+    msg = MIMEText(body)
+    msg["Subject"] = f"[Incoming Science] Profile feedback from {slug}"
+    msg["From"]    = _EMAIL_FROM
+    msg["To"]      = _EMAIL_FROM
+    try:
+        with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=15) as s:
+            s.ehlo(); s.starttls(); s.ehlo()
+            s.login(_SMTP_USER, _SMTP_PASSWORD)
+            s.sendmail(_EMAIL_FROM, [_EMAIL_FROM], msg.as_string())
+    except Exception:
+        pass
+
+
+def _get_last_feedback_time(pending_path: Path) -> datetime | None:
+    """Parse the most recent timestamp from pending_profile_update.txt."""
+    if not pending_path.exists():
+        return None
+    text = pending_path.read_text(encoding="utf-8")
+    # Timestamps are written as [YYYY-MM-DDTHH:MM:SSZ] at the start of each block
+    matches = re.findall(r"\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\]", text)
+    if not matches:
+        return None
+    try:
+        return datetime.fromisoformat(matches[-1].replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+@app.route("/manage")
+def manage():
+    return send_from_directory(
+        BASE_DIR / "website" / "stitch_platform_user_expansion" / "manage_final",
+        "code.html",
+    )
+
+
+@app.route("/manage/lookup", methods=["POST"])
+def manage_lookup():
+    """Look up a user by email and return their current delivery settings."""
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+    if not email:
+        return {"status": "error", "message": "Email required."}, 400
+
+    result = _find_user_by_email(email)
+    if result is None:
+        # Always return the same message to avoid enumerating registered emails
+        return {"status": "not_found"}, 200
+
+    slug, profile_path = result
+    try:
+        profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {"status": "error", "message": "Could not read profile."}, 500
+
+    pending_path = USERS_DIR / slug / "pending_profile_update.txt"
+
+    return {
+        "status": "ok",
+        "slug": slug,
+        "daily_digest":  profile.get("daily_digest", False),
+        "weekly_digest": profile.get("weekly_digest", False),
+        "weekly_day":    profile.get("weekly_day", "friday"),
+        "field":         profile.get("field", ""),
+        "has_pending_feedback": pending_path.exists(),
+    }, 200
+
+
+@app.route("/manage/update-frequency", methods=["POST"])
+def manage_update_frequency():
+    """Update delivery frequency settings for a user identified by email."""
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+    if not email:
+        return {"status": "error", "message": "Email required."}, 400
+
+    result = _find_user_by_email(email)
+    if result is None:
+        return {"status": "not_found"}, 200
+
+    slug, profile_path = result
+
+    daily_digest  = bool(data.get("daily_digest", False))
+    weekly_digest = bool(data.get("weekly_digest", False))
+    weekly_day    = str(data.get("weekly_day", "friday")).strip().lower()
+
+    if weekly_day not in VALID_DAYS:
+        return {"status": "error", "message": f"Invalid weekly_day: {weekly_day}"}, 400
+
+    try:
+        with _write_lock:
+            profile = json.loads(profile_path.read_text(encoding="utf-8"))
+            profile["daily_digest"]  = daily_digest
+            profile["weekly_digest"] = weekly_digest
+            profile["weekly_day"]    = weekly_day
+            profile_path.write_text(
+                json.dumps(profile, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+    except (json.JSONDecodeError, OSError) as e:
+        app.logger.error("manage_update_frequency: %s", e)
+        return {"status": "error", "message": "Failed to update profile."}, 500
+
+    app.logger.info("manage: updated frequency for %s (daily=%s weekly=%s day=%s)",
+                    slug, daily_digest, weekly_digest, weekly_day)
+    return {"status": "ok"}, 200
+
+
+@app.route("/manage/submit-feedback", methods=["POST"])
+def manage_submit_feedback():
+    """Append free-text interest feedback to pending_profile_update.txt."""
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+    feedback_text = str(data.get("feedback_text", "")).strip()
+
+    if not email:
+        return {"status": "error", "message": "Email required."}, 400
+    if not feedback_text:
+        return {"status": "error", "message": "Feedback text required."}, 400
+    if len(feedback_text) > 5000:
+        return {"status": "error", "message": "Feedback too long (max 5000 characters)."}, 400
+
+    result = _find_user_by_email(email)
+    if result is None:
+        return {"status": "not_found"}, 200
+
+    slug, _ = result
+    pending_path = USERS_DIR / slug / "pending_profile_update.txt"
+
+    # Rate limit: one submission per 24h
+    last_time = _get_last_feedback_time(pending_path)
+    if last_time is not None:
+        now = datetime.now(tz=timezone.utc)
+        if (now - last_time) < timedelta(hours=_FEEDBACK_RATE_LIMIT_HOURS):
+            return {"status": "rate_limited",
+                    "message": "You can submit feedback once every 24 hours."}, 429
+
+    timestamp = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    block = f"[{timestamp}]\n{feedback_text}\n\n---\n"
+
+    with _write_lock:
+        with open(pending_path, "a", encoding="utf-8") as f:
+            f.write(block)
+
+    _send_feedback_notification(slug, feedback_text)
+    app.logger.info("manage: feedback received from %s", slug)
+    return {"status": "ok"}, 200
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

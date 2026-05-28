@@ -74,6 +74,10 @@ Runs under Gunicorn (systemd service), behind Caddy reverse proxy.
 | `POST /onboarding/submit` | Receives completed onboarding JSON |
 | `GET /rate` | Records paper rating |
 | `GET /unsubscribe` | Self-service unsubscribe |
+| `GET /manage` | User self-service profile page |
+| `POST /manage/lookup` | Email lookup → returns current delivery settings |
+| `POST /manage/update-frequency` | Updates daily/weekly/weekly_day in taste_profile.json |
+| `POST /manage/submit-feedback` | Queues free-text interest update for operator review |
 | `GET /fields.json` | Serves fields.json for field-selector UI |
 | `GET /assets/<filename>` | Static assets |
 | `GET /legal` | Legal page |
@@ -129,6 +133,7 @@ onboarding_research_field_final/code.html       → /signup/field
 onboarding_signals_interests_final/code.html    → /signup/interests
 onboarding_seed_papers_final/code.html          → /signup/papers
 onboarding_success_final/code.html              → /signup/done
+manage_final/code.html                          → /manage
 ```
 
 Built with Tailwind CSS (CDN). Mobile-responsive. All inter-page links use absolute URLs (served by Flask routes, not relative paths).

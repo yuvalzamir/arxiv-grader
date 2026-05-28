@@ -15,18 +15,24 @@
 
 ### Data & Ingestion
 - [[Journal Scrapers]] — publisher scrapers, watermarks, fields.json
+- [[Preprint Sources]] — bioRxiv/medRxiv (date watermarked) + NBER/CEPR (ID watermarked); triage routing
 - [[Abstract Enrichment]] — per-publisher fallback chain (OpenAlex → S2 → CORE)
 
 ### User & Profile
 - [[Taste Profile]] — profile schema, grade system, liked_papers
 - [[User Onboarding]] — web signup, process_pending.py, create_profile.py
 - [[Monthly Refiner]] — rating analysis, keyword/area grade changes, area management
+- [[Profile Edit Skill]] — free-text user feedback → manual profile patch (`.claude/skills/edit-profile.md`)
+- [[Manage Profile]] — `/manage` self-service page: frequency toggles, interest feedback, email lookup
 - [[Paper Insights]] — opt-in deep-analysis feature (`paper_insights: true`)
 
 ### Infrastructure & Ops
 - [[Infrastructure]] — VPS, Caddy, Gunicorn, cron schedule
 - [[Operations]] — monitoring, logs, common debugging commands
 - [[Cost Model]] — per-user cost, Batch API savings, caching multiplier
+
+### Run Notes
+- [[runs/2026-05-28]] — No-run bug: SystemExit from sys.exit() in run_pipeline.py propagated through except Exception, killing the process after triage
 
 ---
 
@@ -102,6 +108,7 @@ Journals ───┘                                              │
 - `scholar_import_plan.md` — Google Scholar import flow
 - `improvement_brainstorm.md` — feature ideas and open questions
 - `mobile_responsiveness_plan.md` — onboarding website mobile fixes
+- `user_self_service_design.md` — `/manage` page design decisions, alternatives, and decided constraints
 
 **Field Plans:**
 - `systems_biology_plan.md` — systems-biology field (Cell, PLOS, PNAS scrapers)
