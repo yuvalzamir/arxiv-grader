@@ -233,6 +233,28 @@ New CLI flag: `--max-publisher-workers N` (default 8).
 | comparative-literature | 6 | openalex |
 | ai-speech | 2 | springer, ieee |
 
+### Publisher Blocklist
+
+`publisher_blocklist.json` lets you temporarily skip publishers by setting an unblock date. `fetch_journals.py` reads this at startup and excludes blocked publishers from the scrape run entirely.
+
+```json
+{
+  "tandfonline": "2026-06-10",
+  "sage": "2026-06-10",
+  "oup": "2026-06-10",
+  "wiley": "2026-06-10",
+  "plos": "2026-06-10"
+}
+```
+
+Publishers with a future unblock date are silently skipped (logged at INFO level). Once `date.today() >= unblock_date`, they re-enable automatically — no code change needed.
+
+**Current block (set 2026-06-03):** tandfonline, sage, oup, wiley, plos — confirmed Cloudflare managed-challenge IP block (`cType: 'managed'`). The parallel scraper burst (introduced 2026-05-28) triggered the initial flag; daily scraping refreshed it. Blocked until 2026-06-10 to allow IP reputation recovery. See [[runs/2026-06-03-cloudflare]].
+
+**To extend or remove the block:** edit `publisher_blocklist.json` on the server. To unblock immediately, delete the publisher entry or set the date to today.
+
+---
+
 ### RSS Concurrency Limit
 
 `scrapers/sources.py` enforces a `threading.Semaphore(2)` around every `feedparser.parse()` call. This limits concurrent RSS fetches to 2 at a time across all publisher threads, preventing CDN burst-detection (Cloudflare).

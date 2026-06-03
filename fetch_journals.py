@@ -76,6 +76,23 @@ def _save_preprint_watermarks(watermarks: dict):
         json.dump(watermarks, f, indent=2)
 
 
+BLOCKLIST_FILE = Path(__file__).parent / "publisher_blocklist.json"
+
+
+def _load_publisher_blocklist(today: date) -> set[str]:
+    """Return set of publisher names currently blocked (unblock date not yet reached)."""
+    if not BLOCKLIST_FILE.exists():
+        return set()
+    with open(BLOCKLIST_FILE) as f:
+        blocklist = json.load(f)
+    blocked = set()
+    for pub, unblock_str in blocklist.items():
+        if today < date.fromisoformat(unblock_str):
+            blocked.add(pub)
+            log.info("Publisher '%s' is blocklisted until %s — skipping.", pub, unblock_str)
+    return blocked
+
+
 def _collect_journals(fields_data: dict, active_fields: list[str]) -> list[dict]:
     """Union all journals across active fields, deduplicated by URL or ISSN key."""
     seen_keys = set()
@@ -165,10 +182,12 @@ def main():
     # Group journals by publisher so journals from the same publisher run
     # sequentially within their thread (respecting per-publisher rate limits),
     # while different publishers run concurrently.
+    blocked_publishers = _load_publisher_blocklist(date.today())
     publisher_groups: dict = defaultdict(list)
     for journal in journals:
         pub = journal.get("publisher", "unknown")
-        publisher_groups[pub].append(journal)
+        if pub not in blocked_publishers:
+            publisher_groups[pub].append(journal)
 
     n_workers = min(len(publisher_groups), args.max_publisher_workers)
     advance = not args.since and not args.no_advance_watermark
