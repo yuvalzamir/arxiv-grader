@@ -123,6 +123,28 @@ python process_pending.py <slug>    # process one by slug
 cp data/2026-04-14/journal_watermarks_snapshot.json journal_watermarks.json
 ```
 
+### Publisher Blocklist
+
+`publisher_blocklist.json` pauses publishers that are Cloudflare-blocked or misbehaving. Publishers with a future unblock date are skipped entirely during scraping.
+
+```bash
+# Check which publishers are currently blocked
+cat /opt/arxiv-grader/publisher_blocklist.json
+
+# Extend the block for another week (on server)
+sed -i 's/2026-06-10/2026-06-17/g' /opt/arxiv-grader/publisher_blocklist.json
+
+# Test whether a publisher's RSS is unblocked (replace URL as needed)
+curl -s -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" \
+  "https://www.tandfonline.com/feed/rss/cced20" | head -2
+# If output starts with <?xml → unblocked. If <!DOCTYPE html> → still blocked.
+
+# Remove all entries to unblock immediately (SCP updated file from local)
+scp publisher_blocklist.json root@116.203.255.222:/opt/arxiv-grader/
+```
+
+Current block (set 2026-06-03): `tandfonline`, `sage`, `oup`, `wiley`, `plos` — blocked until **2026-06-10**. See [[runs/2026-06-03-cloudflare]].
+
 ### Re-Run a Specific Date
 
 ```bash

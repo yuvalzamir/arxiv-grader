@@ -72,6 +72,8 @@ Body: {"ids": ["DOI:10.1021/...", ...], "fields": "title,abstract"}
 
 **Full abstract in RSS feed** — no additional HTTP requests needed.
 
+> ⚠ **Current block (until 2026-06-10):** Wiley and OUP are Cloudflare-blocked at the server IP level. Their RSS feeds return an HTML challenge page instead of XML. Both are listed in `publisher_blocklist.json` and skipped until IP reputation recovers. See [[runs/2026-06-03-cloudflare]].
+
 ---
 
 ### Optica (Optica, Optics Letters, Optics Express)
@@ -92,20 +94,22 @@ Primary: **OpenAlex by DOI**
 ### SAGE Publications
 
 Primary: **OpenAlex by DOI**
-Fallback: **CORE API**
-```
-GET https://api.core.ac.uk/v3/works/doi:{doi}
-Authorization: {CORE_API_KEY}
-```
-CORE API key: `HyQYgNwRSCc0Mtix1Xv7rJof9lpmOAkF` (1,000 req/day).
+Fallback: **S2 title search**
+
+*CORE API planned as middle fallback (between OpenAlex and S2) — not yet implemented. See plan file.*
+
+> ⚠ **Current block (until 2026-06-10):** SAGE RSS feeds are Cloudflare-blocked. Listed in `publisher_blocklist.json`. See [[runs/2026-06-03-cloudflare]].
 
 ---
 
 ### Taylor & Francis (Tandfonline)
 
 Primary: **OpenAlex by DOI**
-Secondary: **CORE API** (same as SAGE)
-Tertiary: S2 batch (for some journals)
+Fallback: **S2 title search**
+
+*CORE API planned as middle fallback (between OpenAlex and S2) — not yet implemented. See plan file.*
+
+> ⚠ **Current block (until 2026-06-10):** Tandfonline RSS feeds are Cloudflare-blocked. Listed in `publisher_blocklist.json`. See [[runs/2026-06-03-cloudflare]].
 
 ---
 
