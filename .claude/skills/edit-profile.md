@@ -44,7 +44,13 @@ Read `users/<name>/taste_profile.json` in full. Note the current:
 
 If the free-text feedback was provided in the invocation command (after the skill name), use that text directly.
 
-If not, ask: "Paste the user's free-text feedback about their interests."
+If not, suggest fetching it from the server and ask the operator to run this command and confirm when done:
+
+```
+scp root@116.203.255.222:/opt/arxiv-grader/users/<name>/pending_profile_update.txt users/<name>/pending_profile_update.txt
+```
+
+Then read `users/<name>/pending_profile_update.txt`. If the file doesn't exist on the server (scp fails), ask the operator to paste the feedback manually.
 
 The feedback is the digest user's own words about what they find interesting, what they want more or less of, or what has changed in their research. Treat it as the ground truth about their current interests.
 
@@ -140,6 +146,14 @@ On confirmation, write the patched JSON to `users/<name>/taste_profile.json`. Pr
 - All fields not touched by this update
 - Original key ordering
 - `liked_papers`, `evolved_interests`, delivery flags, `field`, `arxiv_categories`, `created_at`
+
+After writing, validate the file is valid JSON:
+
+```bash
+python -c "import json; json.load(open('users/<name>/taste_profile.json'))" && echo "Valid JSON"
+```
+
+If validation fails, fix the syntax error before proceeding. Common cause: unescaped double quotes inside string values (e.g. `"wet" biology` must be written as `'wet' biology` or `\"wet\" biology`).
 
 ---
 

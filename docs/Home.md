@@ -23,6 +23,7 @@
 - [[User Onboarding]] — web signup, process_pending.py, create_profile.py
 - [[Monthly Refiner]] — rating analysis, keyword/area grade changes, area management
 - [[Profile Edit Skill]] — free-text user feedback → manual profile patch (`.claude/skills/edit-profile.md`)
+- [[Check Log Skill]] — diagnose a failed daily run: download log, match known bugs, recommend recovery (`.claude/skills/check-log.md`)
 - [[Manage Profile]] — `/manage` self-service page: frequency toggles, interest feedback, email lookup
 - [[Paper Insights]] — opt-in deep-analysis feature (`paper_insights: true`)
 
@@ -33,6 +34,7 @@
 
 ### Run Notes
 - [[runs/2026-05-28]] — No-run bug: SystemExit from sys.exit() in run_pipeline.py propagated through except Exception, killing the process after triage
+- [[runs/2026-06-03]] — Full crash: invalid JSON in Yael's taste_profile.json (unescaped double quotes) crashed _user_field() before any user ran
 
 ---
 

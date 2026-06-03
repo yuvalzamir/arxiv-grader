@@ -231,6 +231,16 @@ New CLI flag: `--max-publisher-workers N` (default 8).
 | comparative-literature | 6 | openalex |
 | ai-speech | 2 | springer, ieee |
 
+### RSS Concurrency Limit
+
+`scrapers/sources.py` enforces a `threading.Semaphore(2)` around every `feedparser.parse()` call. This limits concurrent RSS fetches to 2 at a time across all publisher threads, preventing CDN burst-detection (Cloudflare).
+
+**Why:** With 8 parallel publisher workers, all RSS requests were firing simultaneously at `t=0`. OUP, Tandfonline, SAGE, Wiley, and PLOS all route through Cloudflare's CDN, which interpreted the burst as bot traffic and returned HTML block pages instead of XML — causing `feed parse error: not well-formed (invalid token)` on 37 journals simultaneously. Confirmed June 1–2 2026.
+
+**Scope:** Applies only to RSS fetches. Article-page scrapes and API calls (OpenAlex, S2, CORE) are unaffected — those publishers either return abstracts from RSS directly or use non-Cloudflare APIs.
+
+---
+
 ### Known slow publishers
 
 - **Elsevier** (`elsevier_general`) — article-level page scraping; Neural Networks journal historically ~77s

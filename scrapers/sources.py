@@ -13,6 +13,7 @@ Public entry point:
 
 import logging
 import re
+import threading
 from datetime import date, timedelta
 
 import feedparser
@@ -28,6 +29,9 @@ _OPENALEX_HEADERS     = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomin
 _CROSSREF_JOURNAL_URL = "https://api.crossref.org/journals/{issn}/works"
 _CROSSREF_HEADERS     = {"User-Agent": "arxiv-grader/1.0 (mailto:contact@incomingscience.xyz)"}
 _JATS_TAG_RE          = re.compile(r"</?jats:[^>]+>")
+
+# Limit concurrent RSS fetches to avoid triggering CDN burst-detection (Cloudflare).
+_RSS_SEMAPHORE = threading.Semaphore(2)
 
 
 # ---------------------------------------------------------------------------
@@ -133,11 +137,21 @@ def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dic
 
     scraper = scrapers[publisher]()
     log.info("Fetching RSS: %s (%s)", journal["name"], journal["url"])
-    feed = feedparser.parse(journal["url"], agent=HEADERS["User-Agent"])
+    _origin = "/".join(journal["url"].split("/")[:3]) + "/"
+    with _RSS_SEMAPHORE:
+        feed = feedparser.parse(
+            journal["url"],
+            agent=HEADERS["User-Agent"],
+            request_headers={
+                "Referer": _origin,
+                "Accept": "application/rss+xml, application/xml, text/xml, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+            },
+        )
 
     if feed.bozo and not feed.entries:
         log.warning("%s: feed parse error — %s", journal["name"], feed.bozo_exception)
-        return [], None
+        return [], None, None
 
     id_re = re.compile(journal["id_pattern"], re.IGNORECASE) if "id_pattern" in journal else None
     since_id: int = journal.get("since_id", 0)
