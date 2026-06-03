@@ -1775,6 +1775,17 @@
         "tag_filter": null
       }
     ],
+    "preprint_categories": {
+      "biorxiv": [
+        "systems-biology",
+        "bioinformatics",
+        "genetics",
+        "immunology",
+        "physiology",
+        "cell-biology"
+      ],
+      "medrxiv": []
+    },
     "tree_path": [
       "Natural Sciences",
       "Biology",
@@ -1985,7 +1996,8 @@
         "name": "JPubEcon",
         "url": "https://rss.sciencedirect.com/publication/science/00472727",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "LabourEcon",

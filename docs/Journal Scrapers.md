@@ -125,6 +125,8 @@ The `min(..., yesterday)` guard prevents watermarking today's papers away before
 
 **Override for re-runs:** `--since YYYY-MM-DD` overrides watermark without writing back. `--no-advance-watermark` re-scrapes but doesn't update watermarks.
 
+**Multi-field consistency rule:** A journal that appears in multiple fields must have **identical config** across all definitions — especially `id_pattern`. If one definition has `id_pattern` and another doesn't, the watermark type alternates between runs depending on field ordering, causing papers to re-appear in consecutive digests. See [[runs/2026-06-03-jpubEcon]].
+
 **Recovery:** A snapshot is saved at the start of every run to `data/DATE/journal_watermarks_snapshot.json`. If watermarks are advanced incorrectly:
 ```bash
 cp data/2026-04-14/journal_watermarks_snapshot.json journal_watermarks.json
