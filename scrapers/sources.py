@@ -182,6 +182,8 @@ def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dic
                 if entry_date is not None and entry_date <= since:
                     skipped_date += 1
                     continue
+                if entry_date is not None and entry_date >= date.today():
+                    continue  # skip today's papers; they'll be available in tomorrow's run
 
             if not scraper.editorial_filter(entry):
                 continue
@@ -275,6 +277,8 @@ def fetch_from_openalex(journal: dict, since: date) -> tuple[list[dict], date | 
             if not pub_date_str:
                 continue
             pub_date = date.fromisoformat(pub_date_str[:10])
+            if pub_date >= date.today():
+                continue  # skip today's papers; they'll be available in tomorrow's run
 
             title = (work.get("title") or "").strip()
             if not title:
@@ -358,6 +362,8 @@ def fetch_from_crossref(journal: dict, since: date) -> tuple[list[dict], date | 
                 date_parts[1] if len(date_parts) > 1 else 1,
                 date_parts[2] if len(date_parts) > 2 else 1,
             )
+            if pub_date >= date.today():
+                continue  # skip today's papers; they'll be available in tomorrow's run
             titles = item.get("title", [])
             title = titles[0].strip() if titles else ""
             if not title:

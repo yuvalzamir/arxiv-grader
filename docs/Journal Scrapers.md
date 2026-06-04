@@ -121,7 +121,7 @@ yesterday = date.today() - timedelta(days=1)
 watermarks[rss_url] = min(max_entry_date, yesterday)
 ```
 
-The `min(..., yesterday)` guard prevents watermarking today's papers away before tomorrow can pick them up (important for APS which publishes continuously).
+Papers dated today are skipped at fetch time in `scrapers/sources.py` (all three strategies: RSS, OpenAlex, CrossRef). This means `max_entry_date` is always ≤ yesterday in normal operation, making the `min(..., yesterday)` guard a no-op — but it remains in place as a safety net. This fixes PNAS same-day re-fetch: PNAS publishes papers dated today in its RSS, and without the fetch-time filter they would appear in two consecutive digests.
 
 **Override for re-runs:** `--since YYYY-MM-DD` overrides watermark without writing back. `--no-advance-watermark` re-scrapes but doesn't update watermarks.
 
