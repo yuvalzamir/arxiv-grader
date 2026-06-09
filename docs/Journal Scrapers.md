@@ -214,6 +214,7 @@ New CLI flag: `--max-publisher-workers N` (default 8).
 | systems-biology | 18 | cell, science, pnas, plos, nature |
 | cond-mat | 16 | aps, nature, science, pnas, acs |
 | quantum-info | 16 | aps, nature, plos, iop, science, acs |
+| quantum-optics | 24 | aps, nature, science, pnas, optica, iop, plos, acs |
 | quantum-phenomena | 15 | aps, nature, iop, acs, science, pnas |
 | astrophysics | 14 | aps, iop, oup, edp, nature, science |
 | econ-political | 13 | unknown, oup, wiley, elsevier_general, cambridge, plos, tandfonline |
