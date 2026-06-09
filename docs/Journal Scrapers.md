@@ -123,6 +123,8 @@ watermarks[rss_url] = min(max_entry_date, yesterday)
 
 Papers dated today are skipped at fetch time in `scrapers/sources.py` (all three strategies: RSS, OpenAlex, CrossRef). This means `max_entry_date` is always ≤ yesterday in normal operation, making the `min(..., yesterday)` guard a no-op — but it remains in place as a safety net. This fixes PNAS same-day re-fetch: PNAS publishes papers dated today in its RSS, and without the fetch-time filter they would appear in two consecutive digests.
 
+**Science Advances same-day re-fetch (pending fix):** `sciadv` papers (10.1126/sciadv.*) repeat in every user's digest for one extra day — ~37 papers per weekly issue. Confirmed across all ~25 users in server_backup_0602. Root cause: Science Advances RSS dates papers with the run date (today), so `skip_today` should suppress them, but the Science scraper may not be applying the same filter. Needs investigation in `scrapers/science.py`.
+
 **Override for re-runs:** `--since YYYY-MM-DD` overrides watermark without writing back. `--no-advance-watermark` re-scrapes but doesn't update watermarks.
 
 **Multi-field consistency rule:** A journal that appears in multiple fields must have **identical config** across all definitions — especially `id_pattern`. If one definition has `id_pattern` and another doesn't, the watermark type alternates between runs depending on field ordering, causing papers to re-appear in consecutive digests. See [[runs/2026-06-03-jpubEcon]].
@@ -138,14 +140,38 @@ Some feeds lack reliable date fields. These use sequential numeric IDs instead, 
 
 Add `id_pattern` to the `fields.json` entry with a regex whose first capture group extracts the numeric ID from the entry link URL. The system stores `max(id_seen)` and skips entries with `id <= stored_max` on subsequent runs.
 
-| Journal | id_pattern | ID source |
-|---------|------------|-----------|
-| Neural Networks | `/pii/S08936080(\d+)` | ScienceDirect PII suffix (year+sequence, monotonically increasing) |
-| ACM TOSEM | `10\.1145/(\d+)` | ACM DOI suffix (sequentially assigned) |
+**IMPORTANT — multi-field consistency:** A journal that appears in multiple fields (e.g. JPubEcon in both `econ-political` and `econ-education`) must have **identical `id_pattern`** in every definition. If one definition has `id_pattern` and another doesn't, the watermark type alternates between runs, causing papers to reappear.
+
+#### Fixed (id_pattern deployed)
+
+All ScienceDirect RSS feeds (`rss.sciencedirect.com`) share the same bug: no per-entry date fields, only a channel-level `lastBuildDate`. The watermark never advances; the full RSS window (~50–100 papers) is re-fetched every run. Fix: `"id_pattern": "pii/S(\\d+)"` captures the full PII numeric string from the entry link URL.
+
+ACM eTOC feeds have no date fields and a future `prism:coverDate` (set months ahead). Fix: `"id_pattern": "10\\.1145/(\\d+)"` captures the ACM DOI suffix.
+
+| Journal | Field(s) | id_pattern | Repeats/day (pre-fix) |
+|---------|----------|------------|----------------------|
+| Neural Networks | ml | `/pii/S08936080(\d+)` | ~100 |
+| JSS | soft-eng | `pii/S(\d+)` | ~56 |
+| IST | soft-eng | `pii/S(\d+)` | ~50 |
+| NLPJournal | nlp | `pii/S(\d+)` | ~13 |
+| NeuroImage | computational-neuroscience | `pii/S(\d+)` | ~47 |
+| WomensStudiesIntForum | gender-studies | `pii/S(\d+)` | ~54 |
+| EconEdReview | edu-policy, econ-education | `pii/S(\d+)` | ~25 |
+| TeachingTeacherEdu | edu-policy | `pii/S(\d+)` | ~18 |
+| EarlyChildhoodResQ | edu-policy | `pii/S(\d+)` | ~67 |
+| IntJEdDevelopment | edu-policy | `pii/S(\d+)` | ~58 |
+| ComputersEdu | edu-policy | `pii/S(\d+)` | ~17 |
+| LabourEcon | econ-education | `pii/S(\d+)` | ~35 |
+| JDevEcon | econ-education | `pii/S(\d+)` | ~85 |
+| JPubEcon | econ-political, econ-education | `pii/S(\d+)` | — |
+| ACM TOSEM | soft-eng | `10\.1145/(\d+)` | ~26 |
+| ACM TIST | nlp | `10\.1145/(\d+)` | ~16 |
+
+**Note on CL (Computational Linguistics, nlp):** `direct.mit.edu` RSS feed has proper `published_parsed` dates — no `id_pattern` needed. The 6/6 repeats seen in test files were from back-to-back test runs (5 min apart), not a production bug.
 
 **Why these journals need it:**
-- **Neural Networks** (ScienceDirect): RSS entries have no date fields whatsoever — only a channel-level `lastBuildDate`. Date-based watermark never advances; same 100 entries scraped every day.
-- **ACM TOSEM** (eTOC): `dc:date` gives the metadata creation date (correct), but `prism:coverDate` gives the future issue publication date. The `_entry_date()` `max()` picked the future date, stalling the watermark for the entire lifetime of the issue (~weeks).
+- **All ScienceDirect** (`rss.sciencedirect.com`): RSS entries have no date fields whatsoever — only a channel-level `lastBuildDate`. Date-based watermark never advances; same full RSS window scraped every run.
+- **ACM eTOC feeds**: `prism:coverDate` is set to the future issue publication date (months ahead), which was previously picked by `max()` in `_entry_date()`. Now `_entry_date()` ignores future cover dates, but id_pattern is still preferred to avoid any future-date edge cases.
 
 ### `_entry_date()` — date parsing fallback chain (`scrapers/sources.py`)
 

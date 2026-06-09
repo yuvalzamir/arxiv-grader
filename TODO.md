@@ -49,8 +49,15 @@ scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log
 ### Funding & sustainability
 - [ ] **Sponsorship / small grant** (#42) — Apply for small grants (Sloan Foundation, NSF CAREER supplements, EU Open Science) to fund the service as public scientific infrastructure. No billing complexity, keeps it free for users. One grant typically covers 1–2 years of operating costs.
 
+### Watermark bugs — journal re-fetch waste
+
+Confirmed by server_backup_0602 analysis (consecutive-run DOI overlap). See [[Journal Scrapers]] for full details.
+
+- [ ] **Science Advances same-day re-fetch** — ~37 `sciadv` papers per weekly issue repeat in all users' digests for one extra day. Same root cause as the PNAS bug (already fixed). Investigate `scrapers/science.py` — the skip-today filter may not be applied to Science Advances entries.
+
 ### Failure recovery
 - [ ] **Watermark auto-restore on total field failure** (#2) — If every user in a field failed triage, automatically restore `journal_watermarks.json` from the per-run snapshot. Currently requires manual `cp` command. Rare but high-stakes when it happens.
+- [ ] **Retry on truncated JSON in scoring** — On 2026-06-04 Yael's scoring failed because the Batch API returned truncated JSON mid-string in an `insights.relevance` field (output was 6153 tokens, well under the 16000 cap — transient API issue). `run_failed_users.py` auto-recovered. Consider adding a retry-on-parse-failure path in `run_pipeline.py`: if JSON parse fails and the response looks truncated (no closing `]`), retry once via direct API before giving up. Affects `paper_insights` users most (larger outputs).
 
 ### Adaptation speed
 - [ ] **Topic-aware liked-paper selection for scoring** (#32) — Make `_sample_liked_papers()` select papers most semantically similar to today's triage survivors (keyword overlap in Python, no embeddings). Scoring agent sees few-shot examples most relevant to today's batch.

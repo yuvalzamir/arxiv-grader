@@ -426,7 +426,7 @@
       "cond-mat.soft",
       "physics.bio-ph"
     ],
-    "description": "Soft matter physics \u00e2\u20ac\u201d polymers, colloids, active matter, and biological physics",
+    "description": "Soft matter physics â€” polymers, colloids, active matter, and biological physics",
     "journals": [
       {
         "name": "PRL",
@@ -632,7 +632,7 @@
       "hep-ex",
       "hep-lat"
     ],
-    "description": "High-energy physics \u00e2\u20ac\u201d particle physics, quantum field theory, and collider physics",
+    "description": "High-energy physics â€” particle physics, quantum field theory, and collider physics",
     "journals": [
       {
         "name": "PRL",
@@ -810,7 +810,7 @@
       "cs.LG",
       "eess.IV"
     ],
-    "description": "AI and computer vision \u00e2\u20ac\u201d deep learning, image processing, generative models, representation learning",
+    "description": "AI and computer vision â€” deep learning, image processing, generative models, representation learning",
     "journals": [
       {
         "name": "IEEE TPAMI",
@@ -1192,7 +1192,8 @@
         "name": "NLPJournal",
         "url": "https://rss.sciencedirect.com/publication/science/29497191",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "LRE",
@@ -1204,7 +1205,8 @@
         "name": "ACM TIST",
         "url": "https://dl.acm.org/action/showFeed?type=etoc&feed=rss&jc=tist",
         "publisher": "acm",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "10\\.1145/(\\d+)"
       }
     ],
     "tree_path": [
@@ -1220,7 +1222,7 @@
       "cs.AI",
       "stat.ML"
     ],
-    "description": "Machine learning \u00e2\u20ac\u201d learning theory, optimization, probabilistic models, representation learning, and generative models",
+    "description": "Machine learning â€” learning theory, optimization, probabilistic models, representation learning, and generative models",
     "journals": [
       {
         "name": "JMLR",
@@ -1290,13 +1292,15 @@
         "name": "JSS",
         "url": "https://rss.sciencedirect.com/publication/science/01641212",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "IST",
         "url": "https://rss.sciencedirect.com/publication/science/09505849",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "JSEP",
@@ -1424,7 +1428,7 @@
       "cond-mat.supr-con",
       "physics.atom-ph"
     ],
-    "description": "Quantum computing hardware \u00e2\u20ac\u201d superconducting qubits, optical tweezers, cold atoms, and photonic qubits",
+    "description": "Quantum computing hardware â€” superconducting qubits, optical tweezers, cold atoms, and photonic qubits",
     "journals": [
       {
         "name": "PRXQuantum",
@@ -1559,7 +1563,7 @@
       "q-bio.NC",
       "q-bio.QM"
     ],
-    "description": "Computational neuroscience \u00e2\u20ac\u201d neural circuits, brain-computer interfaces, MEA/ECoG recording, functional connectivity, and quantitative brain modeling",
+    "description": "Computational neuroscience â€” neural circuits, brain-computer interfaces, MEA/ECoG recording, functional connectivity, and quantitative brain modeling",
     "journals": [
       {
         "name": "JNeuralEng",
@@ -1601,7 +1605,8 @@
         "name": "NeuroImage",
         "url": "https://rss.sciencedirect.com/publication/science/10538119",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "JCompNeurosci",
@@ -1631,7 +1636,7 @@
   },
   "music-theory": {
     "arxiv_categories": [],
-    "description": "Music theory, computational musicology, and music cognition \u00e2\u20ac\u201d harmonic analysis, music perception, empirical musicology, and quantitative approaches to musical structure",
+    "description": "Music theory, computational musicology, and music cognition â€” harmonic analysis, music perception, empirical musicology, and quantitative approaches to musical structure",
     "journals": [
       {
         "name": "MusicPerception",
@@ -1679,7 +1684,7 @@
   },
   "comparative-literature": {
     "arxiv_categories": [],
-    "description": "Comparative literature, literary theory, and world literature \u00e2\u20ac\u201d cross-cultural literary analysis, narratology, literary history, and the theory and history of criticism",
+    "description": "Comparative literature, literary theory, and world literature â€” cross-cultural literary analysis, narratology, literary history, and the theory and history of criticism",
     "journals": [
       {
         "name": "ComparativeLiterature",
@@ -1727,7 +1732,7 @@
   },
   "gender-studies": {
     "arxiv_categories": [],
-    "description": "Gender studies, feminist theory, and women's studies \u00e2\u20ac\u201d intersectionality, feminist philosophy, queer theory, and the sociology of gender across cultural, political, and social contexts",
+    "description": "Gender studies, feminist theory, and women's studies â€” intersectionality, feminist philosophy, queer theory, and the sociology of gender across cultural, political, and social contexts",
     "journals": [
       {
         "name": "GenderSociety",
@@ -1745,7 +1750,8 @@
         "name": "WomensStudiesIntForum",
         "url": "https://rss.sciencedirect.com/publication/science/02775395",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "Hypatia",
@@ -1945,7 +1951,7 @@
   },
   "literature-and-culture": {
     "arxiv_categories": [],
-    "description": "Literary and cultural history \u00e2\u20ac\u201d 19th-century American literature, transcendentalism, confessional poetry, 20th-century Polish literature, interwar Polish history, narrative theory, cultural studies, secular Jewish identity",
+    "description": "Literary and cultural history â€” 19th-century American literature, transcendentalism, confessional poetry, 20th-century Polish literature, interwar Polish history, narrative theory, cultural studies, secular Jewish identity",
     "journals": [
       {
         "name": "AmericanLiterature",
@@ -2080,7 +2086,8 @@
         "name": "EconEdReview",
         "url": "https://rss.sciencedirect.com/publication/science/02727757",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "JHumanCapital",
@@ -2153,13 +2160,15 @@
         "name": "LabourEcon",
         "url": "https://rss.sciencedirect.com/publication/science/09275371",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "JDevEcon",
         "url": "https://rss.sciencedirect.com/publication/science/03043878",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "JEdWork",
@@ -2242,7 +2251,7 @@
   },
   "edu-policy": {
     "arxiv_categories": [],
-    "description": "Education policy, school governance, teacher workforce, equity and access, and evidence-based reform \u00e2\u20ac\u201d research for national and regional policymakers",
+    "description": "Education policy, school governance, teacher workforce, equity and access, and evidence-based reform â€” research for national and regional policymakers",
     "journals": [
       {
         "name": "EducationalPolicy",
@@ -2320,31 +2329,36 @@
         "name": "EconEdReview",
         "url": "https://rss.sciencedirect.com/publication/science/02727757",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "TeachingTeacherEdu",
         "url": "https://rss.sciencedirect.com/publication/science/0742051X",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "EarlyChildhoodResQ",
         "url": "https://rss.sciencedirect.com/publication/science/08852006",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "IntJEdDevelopment",
         "url": "https://rss.sciencedirect.com/publication/science/07380593",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "ComputersEdu",
         "url": "https://rss.sciencedirect.com/publication/science/03601315",
         "publisher": "elsevier_general",
-        "tag_filter": null
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
       },
       {
         "name": "BERJ",
@@ -2526,7 +2540,7 @@
       "cond-mat.str-el",
       "cond-mat.mes-hall"
     ],
-    "description": "Exotic and macroscopic quantum phenomena \u00e2\u20ac\u201d superconductivity, superfluidity, BEC, topological effects, quantum phase transitions, and many-body quantum effects",
+    "description": "Exotic and macroscopic quantum phenomena â€” superconductivity, superfluidity, BEC, topological effects, quantum phase transitions, and many-body quantum effects",
     "journals": [
       {
         "name": "PRL",
