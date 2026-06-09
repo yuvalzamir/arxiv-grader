@@ -1238,18 +1238,13 @@
         "name": "Neural Networks",
         "url": "https://rss.sciencedirect.com/publication/science/08936080",
         "publisher": "elsevier_general",
+        "id_pattern": "/pii/S08936080(\\d+)",
         "tag_filter": null
       },
       {
         "name": "IEEE TNNLS",
         "publisher": "ieee_rest",
         "ieee_pub_id": "5962385",
-        "tag_filter": null
-      },
-      {
-        "name": "IEEE TPAMI",
-        "url": "https://csdl-api.computer.org/api/rss/periodicals/trans/tp/rss.xml",
-        "publisher": "ieee",
         "tag_filter": null
       },
       {
@@ -1282,6 +1277,7 @@
         "name": "ACM TOSEM",
         "url": "https://dl.acm.org/action/showFeed?type=etoc&feed=rss&jc=tosem",
         "publisher": "acm",
+        "id_pattern": "10\\.1145/(\\d+)",
         "tag_filter": null
       },
       {
@@ -1306,12 +1302,6 @@
         "name": "JSEP",
         "url": "https://onlinelibrary.wiley.com/action/showFeed?jc=20477481&type=etoc",
         "publisher": "wiley",
-        "tag_filter": null
-      },
-      {
-        "name": "SCP",
-        "url": "https://rss.sciencedirect.com/publication/science/01676423",
-        "publisher": "elsevier_general",
         "tag_filter": null
       }
     ],

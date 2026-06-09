@@ -132,6 +132,32 @@ Papers dated today are skipped at fetch time in `scrapers/sources.py` (all three
 cp data/2026-04-14/journal_watermarks_snapshot.json journal_watermarks.json
 ```
 
+### ID-based watermarking for journals (`id_pattern`)
+
+Some feeds lack reliable date fields. These use sequential numeric IDs instead, stored in `preprint_watermarks.json` under the journal name key.
+
+Add `id_pattern` to the `fields.json` entry with a regex whose first capture group extracts the numeric ID from the entry link URL. The system stores `max(id_seen)` and skips entries with `id <= stored_max` on subsequent runs.
+
+| Journal | id_pattern | ID source |
+|---------|------------|-----------|
+| Neural Networks | `/pii/S08936080(\d+)` | ScienceDirect PII suffix (year+sequence, monotonically increasing) |
+| ACM TOSEM | `10\.1145/(\d+)` | ACM DOI suffix (sequentially assigned) |
+
+**Why these journals need it:**
+- **Neural Networks** (ScienceDirect): RSS entries have no date fields whatsoever — only a channel-level `lastBuildDate`. Date-based watermark never advances; same 100 entries scraped every day.
+- **ACM TOSEM** (eTOC): `dc:date` gives the metadata creation date (correct), but `prism:coverDate` gives the future issue publication date. The `_entry_date()` `max()` picked the future date, stalling the watermark for the entire lifetime of the issue (~weeks).
+
+### `_entry_date()` — date parsing fallback chain (`scrapers/sources.py`)
+
+`_entry_date()` extracts a publication date from an RSS entry with multiple fallbacks:
+
+1. `entry.published_parsed` / `entry.updated_parsed` — standard feedparser-parsed dates
+2. `entry.dc_date` raw string — ISO format, e.g. Wiley JSEP (`"2026-05-14T09:40:35-07:00"`)
+3. `entry.published` raw string — MM/DD/YYYY format (e.g. IEEE csdl-api feeds: `"05/20/2026 11:01 pm PST"`, non-standard, feedparser cannot auto-parse)
+4. `prism:coverDate` — used only when it is a **past** date; future cover dates are ignored
+
+The future-cover-date guard (step 4) prevents ACM eTOC feeds from stalling: TOSEM pre-sets `prism:coverDate` to the issue date months ahead, which was previously causing `_entry_date()` to return a future date → no entries ever filtered → watermark stuck.
+
 ---
 
 ## `filter_for_field()` — Pure Python, No HTTP
@@ -269,7 +295,7 @@ Publishers with a future unblock date are silently skipped (logged at INFO level
 ### Known slow publishers
 
 - **Elsevier** (`elsevier_general`) — article-level page scraping; Neural Networks journal historically ~77s
-- **IEEE** (`ieee`, `ieee_rest`) — TPAMI historically ~29s
+- **IEEE** (`ieee_rest`) — TNNLS historically ~20s
 - **Tandfonline / SAGE** — OpenAlex fallback chain adds latency (~5–15s per journal)
 
 Fields with the most parallelism benefit: `edu-policy`, `econ-education` (8 publishers each), `literature-and-culture` (5 publishers).

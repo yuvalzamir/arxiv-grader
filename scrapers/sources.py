@@ -41,16 +41,17 @@ _RSS_SEMAPHORE = threading.Semaphore(2)
 def _entry_date(entry) -> date | None:
     """Return the publication date of an RSS entry, or None if unavailable.
 
-    Some publishers (PNAS) carry both an online-first date (updated/published)
-    and a prism:coverDate (official issue date). The cover date is always the
-    later of the two for batch-released journals, so we take the maximum to
-    ensure the watermark advances to the issue date on first scrape.
+    Some publishers (PNAS, ACS) carry both an online-first date (updated/published)
+    and a prism:coverDate (official issue date). The cover date is used when it is
+    in the past and later than the online-first date, so the watermark advances to
+    the issue date on first scrape. Future cover dates (e.g. ACM eTOC feeds that
+    pre-set the issue date months ahead) are ignored to prevent watermark stalling.
     """
     parsed = getattr(entry, "published_parsed", None) or getattr(entry, "updated_parsed", None)
     if parsed:
         pub_date = date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday)
     else:
-        # Fallback: dc:date (e.g. Wiley JSEP) — feedparser exposes as raw string,
+        # Fallback 1: dc:date (e.g. Wiley JSEP) — feedparser exposes as raw string,
         # not parsed. Format: "2026-05-14T09:40:35-07:00" → take first 10 chars.
         dc_date_str = getattr(entry, "dc_date", None)
         if dc_date_str:
@@ -61,11 +62,27 @@ def _entry_date(entry) -> date | None:
         else:
             pub_date = None
 
+        # Fallback 2: entry.published raw string with MM/DD/YYYY format.
+        # IEEE csdl-api feeds use "05/20/2026 11:01 pm PST" — a non-standard format
+        # that feedparser cannot parse into published_parsed.
+        if pub_date is None:
+            from datetime import datetime as _dt
+            raw = getattr(entry, "published", None) or getattr(entry, "updated", None)
+            if raw:
+                try:
+                    pub_date = _dt.strptime(raw.strip()[:10], "%m/%d/%Y").date()
+                except ValueError:
+                    pass
+
     cover_date = None
     cover_str = getattr(entry, "prism_coverdate", None)
     if cover_str:
         try:
-            cover_date = date.fromisoformat(cover_str[:10])
+            cd = date.fromisoformat(cover_str[:10])
+            # Ignore future cover dates: ACM eTOC feeds pre-publish issue cover dates
+            # months ahead, and using max() would prevent the watermark from advancing.
+            if cd < date.today():
+                cover_date = cd
         except ValueError:
             pass
 
