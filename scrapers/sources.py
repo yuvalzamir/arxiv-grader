@@ -13,6 +13,7 @@ Public entry point:
 
 import logging
 import re
+import socket
 import threading
 from datetime import date, timedelta
 
@@ -156,15 +157,23 @@ def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dic
     log.info("Fetching RSS: %s (%s)", journal["name"], journal["url"])
     _origin = "/".join(journal["url"].split("/")[:3]) + "/"
     with _RSS_SEMAPHORE:
-        feed = feedparser.parse(
-            journal["url"],
-            agent=HEADERS["User-Agent"],
-            request_headers={
-                "Referer": _origin,
-                "Accept": "application/rss+xml, application/xml, text/xml, */*",
-                "Accept-Language": "en-US,en;q=0.9",
-            },
-        )
+        _prev_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(90)
+        try:
+            feed = feedparser.parse(
+                journal["url"],
+                agent=HEADERS["User-Agent"],
+                request_headers={
+                    "Referer": _origin,
+                    "Accept": "application/rss+xml, application/xml, text/xml, */*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                },
+            )
+        except OSError as exc:
+            log.warning("%s: RSS fetch timed out or failed — %s", journal["name"], exc)
+            return [], None
+        finally:
+            socket.setdefaulttimeout(_prev_timeout)
 
     if feed.bozo and not feed.entries:
         log.warning("%s: feed parse error — %s", journal["name"], feed.bozo_exception)

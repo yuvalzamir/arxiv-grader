@@ -32,11 +32,9 @@
 - [[Operations]] — monitoring, logs, common debugging commands
 - [[Cost Model]] — per-user cost, Batch API savings, caching multiplier
 
-### Run Notes
-- [[runs/2026-05-28]] — No-run bug: SystemExit from sys.exit() in run_pipeline.py propagated through except Exception, killing the process after triage
-- [[runs/2026-06-03]] — Full crash: invalid JSON in Yael's taste_profile.json (unescaped double quotes) crashed _user_field() before any user ran
-- [[runs/2026-06-03-jpubEcon]] — JPubEcon duplicate papers: same journal in two fields with inconsistent id_pattern caused watermark type to alternate between runs
-- [[runs/2026-06-03-cloudflare]] — Cloudflare IP block: 37 journals (OUP, Tandfonline, SAGE, Wiley, PLOS) hard-blocked after parallel scraper burst; publisher_blocklist.json added; blocked until 2026-06-10
+### Quality & Debugging
+- [[Hidden Bug Audit]] — 6 silent quality degraders identified 2026-06-09 (no errors thrown)
+
 
 ---
 
