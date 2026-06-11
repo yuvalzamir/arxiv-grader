@@ -302,7 +302,7 @@ New CLI flag: `--max-publisher-workers N` (default 8).
 
 Publishers with a future unblock date are silently skipped (logged at INFO level). Once `date.today() >= unblock_date`, they re-enable automatically — no code change needed.
 
-**Current block (set 2026-06-03):** tandfonline, sage, oup, wiley, plos — confirmed Cloudflare managed-challenge IP block (`cType: 'managed'`). The parallel scraper burst (introduced 2026-05-28) triggered the initial flag; daily scraping refreshed it. Blocked until 2026-06-10 to allow IP reputation recovery. See [[runs/2026-06-03-cloudflare]].
+**Block lifted 2026-06-10:** tandfonline, sage, oup, wiley, plos were blocked from 2026-06-03 (Cloudflare managed-challenge IP block, `cType: 'managed'`). The unblock date auto-expired 2026-06-10. Tandfonline, Sage, Wiley, and Chicago are now handled permanently via FlareSolverr (see Cloudflare Bypass section above) — the blocklist is no longer needed for them. See [[runs/2026-06-03-cloudflare]].
 
 **To extend or remove the block:** edit `publisher_blocklist.json` on the server. To unblock immediately, delete the publisher entry or set the date to today.
 
@@ -314,7 +314,47 @@ Publishers with a future unblock date are silently skipped (logged at INFO level
 
 **Why:** With 8 parallel publisher workers, all RSS requests were firing simultaneously at `t=0`. OUP, Tandfonline, SAGE, Wiley, and PLOS all route through Cloudflare's CDN, which interpreted the burst as bot traffic and returned HTML block pages instead of XML — causing `feed parse error: not well-formed (invalid token)` on 37 journals simultaneously. Confirmed June 1–2 2026.
 
-**Scope:** Applies only to RSS fetches. Article-page scrapes and API calls (OpenAlex, S2, CORE) are unaffected — those publishers either return abstracts from RSS directly or use non-Cloudflare APIs.
+**Scope:** Applies only to non-Cloudflare RSS fetches. The Cloudflare-blocked publishers (Tandfonline, Sage, Wiley, Chicago) bypass this semaphore entirely — they go through FlareSolverr instead (see below).
+
+---
+
+### Cloudflare Bypass — FlareSolverr
+
+**Problem (confirmed 2026-06-11):** Tandfonline, Sage, Wiley, and Chicago Journals RSS feeds return Cloudflare JS challenge pages (HTTP 403 / "Just a moment...") when fetched from the Hetzner VPS datacenter IP. `feedparser` cannot parse the HTML challenge page and logs `feed parse error — not well-formed (invalid token)`. Yield from these publishers was 0 since first deployment.
+
+**Affected publishers and fields:**
+
+| Publisher | Hostname | Fields |
+|-----------|----------|--------|
+| Tandfonline | `www.tandfonline.com` | econ-political, econ-education, edu-policy, gender-studies, literature-and-culture, demography |
+| Sage | `journals.sagepub.com` | gender-studies, edu-policy, econ-education, demography |
+| Wiley | `onlinelibrary.wiley.com` | econ-political, edu-policy, econ-education, soft-eng, quantum-sensing, demography |
+| Chicago Journals | `www.journals.uchicago.edu` | econ-political, econ-education, gender-studies, literature-and-culture |
+
+**Solution:** FlareSolverr Docker container running on `localhost:8191`. See [[Infrastructure]] for setup.
+
+**How it works (`scrapers/sources.py`):**
+
+1. `_CLOUDFLARE_HOSTS` frozenset contains the 4 blocked hostnames.
+2. In `fetch_from_rss()`, if `urlparse(url).hostname in _CLOUDFLARE_HOSTS`, skip feedparser entirely and call `_fetch_rss_via_flaresolverr()` directly.
+3. FlareSolverr POSTs to `localhost:8191/v1`, headless Chrome solves the JS challenge and fetches the URL.
+4. Chrome wraps XML/RSS in its built-in viewer (`<html>` with a hidden `<div id="webkit-xml-viewer-source-xml">` containing the raw XML as HTML-escaped entities).
+5. Regex extracts the div content; `html.unescape()` recovers valid RSS XML.
+6. `feedparser.parse(content)` processes it normally.
+
+**Serialization:** A `_FLARESOLVERR_SEMAPHORE(1)` ensures only one FlareSolverr request runs at a time — it can only run one Chrome session at a time, and concurrent calls produce `status=error`.
+
+**What didn't work:**
+- Using `solution.cookies` + `requests.get()` → still 403 (Cloudflare ties `cf_clearance` to Chrome's TLS fingerprint; `requests` has a different fingerprint)
+- `BeautifulSoup.get_text()` on the hidden div → strips XML tags, returns plain text only
+
+**Adding a new blocked domain:** Add its hostname to `_CLOUDFLARE_HOSTS` in `scrapers/sources.py` and redeploy. No `fields.json` changes needed.
+
+**Graceful degradation:** If FlareSolverr is down, `_fetch_rss_via_flaresolverr()` returns `None`, and `fetch_from_rss()` returns 0 papers (same behavior as before the fix).
+
+**Timing:** FlareSolverr solves one challenge at a time (~10–60s each). With ~30 blocked journals across 4 domains, Chrome reuses its session cookies per domain — in practice Cloudflare challenges only need solving once per domain per run. Adds ~2–5 min to the journal scrape phase.
+
+Full implementation notes: `docs/flaresolverr_plan.md`.
 
 ---
 

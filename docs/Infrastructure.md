@@ -17,6 +17,7 @@ Server access policy: `server_access.md`
 | Email | Shared SMTP (Gmail app password) via root `.env` |
 | LLM (triage) | Anthropic API — Haiku, cached, shared per-field key |
 | LLM (scoring) | Anthropic API — Sonnet, Batch API, per-user key |
+| Cloudflare bypass | FlareSolverr Docker container, `localhost:8191` (bound to loopback only) |
 
 ---
 
@@ -55,6 +56,40 @@ scp server.py run_all_users.py run_pipeline.py root@116.203.255.222:/opt/arxiv-g
 ```
 
 **Never SSH into the server to run the pipeline** — always provide commands for the user to run themselves.
+
+---
+
+## FlareSolverr
+
+Runs as a Docker container on the VPS (installed 2026-06-11). Bypasses Cloudflare bot protection for Tandfonline, Sage, Wiley, and Chicago Journals RSS feeds. See [[Journal Scrapers]] for full details of the bypass mechanism.
+
+**Bound to loopback only** — not exposed externally.
+
+```bash
+# Check status
+docker ps --filter name=flaresolverr
+curl -s http://localhost:8191/health   # → {"status":"ok"}
+
+# View logs
+docker logs flaresolverr --tail 50
+
+# Restart if needed
+docker restart flaresolverr
+
+# Initial install (already done)
+docker run -d \
+  --name=flaresolverr \
+  -p 127.0.0.1:8191:8191 \
+  -e LOG_LEVEL=info \
+  --restart unless-stopped \
+  ghcr.io/flaresolverr/flaresolverr:latest
+```
+
+**Resource footprint:** ~300–500 MB RAM idle (headless Chrome). CX23 has 4 GB — fine.
+
+**`--restart unless-stopped`** handles VPS reboots automatically.
+
+**`FLARESOLVERR_URL` env var:** defaults to `http://localhost:8191/v1`. Override only if port changes.
 
 ---
 

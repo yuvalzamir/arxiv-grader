@@ -12,10 +12,12 @@ Public entry point:
 """
 
 import logging
+import os
 import re
 import socket
 import threading
 from datetime import date, timedelta
+from urllib.parse import urlparse
 
 import feedparser
 import requests
@@ -33,6 +35,67 @@ _JATS_TAG_RE          = re.compile(r"</?jats:[^>]+>")
 
 # Limit concurrent RSS fetches to avoid triggering CDN burst-detection (Cloudflare).
 _RSS_SEMAPHORE = threading.Semaphore(2)
+
+# Domains known to block datacenter IPs with Cloudflare bot protection.
+# FlareSolverr is used ONLY for URLs whose hostname is in this set.
+_CLOUDFLARE_HOSTS = frozenset({
+    "www.tandfonline.com",
+    "journals.sagepub.com",
+    "onlinelibrary.wiley.com",
+    "www.journals.uchicago.edu",
+})
+
+_FLARESOLVERR_URL = os.environ.get("FLARESOLVERR_URL", "http://localhost:8191/v1")
+
+# FlareSolverr runs one headless Chrome session at a time — serialise calls.
+_FLARESOLVERR_SEMAPHORE = threading.Semaphore(1)
+
+
+def _fetch_rss_via_flaresolverr(url: str) -> str | None:
+    """
+    Bypass Cloudflare bot protection via FlareSolverr (localhost:8191).
+
+    FlareSolverr uses headless Chrome to solve the JS challenge, then returns
+    the page source in solution.response. We use that body directly — a second
+    requests.get() with cookies fails because Cloudflare ties cf_clearance to
+    Chrome's TLS fingerprint.
+
+    Returns raw XML string, or None on any failure (graceful degradation).
+    """
+    with _FLARESOLVERR_SEMAPHORE:
+        try:
+            resp = requests.post(
+                _FLARESOLVERR_URL,
+                json={"cmd": "request.get", "url": url, "maxTimeout": 60000},
+                timeout=75,
+            )
+            data = resp.json()
+            if data.get("status") != "ok":
+                log.warning("FlareSolverr status=%s for %s", data.get("status"), url)
+                return None
+            content = data["solution"].get("response", "")
+            if not content:
+                log.warning("FlareSolverr returned empty response for %s", url)
+                return None
+        except Exception as exc:
+            log.warning("FlareSolverr unavailable: %s", exc)
+            return None
+
+    # Chrome's XML viewer wraps the feed in an HTML page and stashes the raw
+    # XML in a hidden <div id="webkit-xml-viewer-source-xml"> as HTML-escaped
+    # entities (&lt;rss&gt;...). Use regex on the raw string to avoid an HTML
+    # parser re-interpreting the escaped tags, then unescape to real XML.
+    if "webkit-xml-viewer-source-xml" in content:
+        import html as _html
+        m = re.search(
+            r'<div[^>]+id="webkit-xml-viewer-source-xml"[^>]*>(.*?)</div>',
+            content, re.DOTALL,
+        )
+        if m:
+            return _html.unescape(m.group(1))
+
+    # If not wrapped (e.g. future FlareSolverr version returns raw XML), use as-is.
+    return content
 
 
 # ---------------------------------------------------------------------------
@@ -155,25 +218,32 @@ def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dic
 
     scraper = scrapers[publisher]()
     log.info("Fetching RSS: %s (%s)", journal["name"], journal["url"])
-    _origin = "/".join(journal["url"].split("/")[:3]) + "/"
-    with _RSS_SEMAPHORE:
-        _prev_timeout = socket.getdefaulttimeout()
-        socket.setdefaulttimeout(90)
-        try:
-            feed = feedparser.parse(
-                journal["url"],
-                agent=HEADERS["User-Agent"],
-                request_headers={
-                    "Referer": _origin,
-                    "Accept": "application/rss+xml, application/xml, text/xml, */*",
-                    "Accept-Language": "en-US,en;q=0.9",
-                },
-            )
-        except OSError as exc:
-            log.warning("%s: RSS fetch timed out or failed — %s", journal["name"], exc)
-            return [], None
-        finally:
-            socket.setdefaulttimeout(_prev_timeout)
+
+    if urlparse(journal["url"]).hostname in _CLOUDFLARE_HOSTS:
+        content = _fetch_rss_via_flaresolverr(journal["url"])
+        if not content:
+            return [], None, None
+        feed = feedparser.parse(content)
+    else:
+        _origin = "/".join(journal["url"].split("/")[:3]) + "/"
+        with _RSS_SEMAPHORE:
+            _prev_timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(90)
+            try:
+                feed = feedparser.parse(
+                    journal["url"],
+                    agent=HEADERS["User-Agent"],
+                    request_headers={
+                        "Referer": _origin,
+                        "Accept": "application/rss+xml, application/xml, text/xml, */*",
+                        "Accept-Language": "en-US,en;q=0.9",
+                    },
+                )
+            except OSError as exc:
+                log.warning("%s: RSS fetch timed out or failed — %s", journal["name"], exc)
+                return [], None
+            finally:
+                socket.setdefaulttimeout(_prev_timeout)
 
     if feed.bozo and not feed.entries:
         log.warning("%s: feed parse error — %s", journal["name"], feed.bozo_exception)

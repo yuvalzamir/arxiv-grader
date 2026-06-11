@@ -103,6 +103,7 @@ Journals ───┘                                              │
 - `server_access.md` — server access rules, deploy procedure
 - `scaling_analysis.md` — cost/user scaling analysis
 - `journal_triage_tuning.md` — triage cap tuning
+- `flaresolverr_plan.md` — Cloudflare bypass via FlareSolverr (Tandfonline, Sage, Wiley, Chicago; implemented 2026-06-11)
 
 **User Experience:**
 - `website_onboarding.md` — onboarding web pages, state management
