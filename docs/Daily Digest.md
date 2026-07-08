@@ -28,6 +28,8 @@ Unscored section (remaining papers):
 
 Within each section, **journal papers come first**, then arXiv papers.
 
+**Author line truncation:** lists of more than 8 authors show the first 8, then `... <last author>` — the last author is always shown rather than being dropped behind a generic "et al." (`author_table()` in `build_digest_pdf.py`).
+
 **Color palette:**
 - Score 8–10: sage green badge
 - Score 5–7: amber badge

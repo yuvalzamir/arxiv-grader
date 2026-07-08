@@ -320,7 +320,7 @@ def author_table(paper: dict, styles: dict) -> Table:
     """Lighter beige author band with source label (journal name or arXiv subcategory)."""
     authors = paper.get("authors", [])
     if len(authors) > 8:
-        authors_text = safe(", ".join(authors[:8]) + " et al.")
+        authors_text = safe(", ".join(authors[:8]) + ", ... " + authors[-1])
     else:
         authors_text = safe(", ".join(authors) or "Unknown authors")
 
