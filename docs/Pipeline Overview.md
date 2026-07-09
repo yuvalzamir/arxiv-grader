@@ -1,6 +1,6 @@
 # Pipeline Overview
 
-[[Home]] | [[AI Pipeline]] | [[Journal Scrapers]] | [[Daily Digest]]
+[[Home]] | [[AI Pipeline]] | [[Journal Scrapers]] | [[Preprint Sources]] | [[Daily Digest]]
 
 ---
 
@@ -10,22 +10,28 @@
 
 ```
 1.  Discover user directories (users/<name>/taste_profile.json)
-2.  fetch_journals.py — scrape all journals once (all fields)
+2.  For each field:
+      fetch_papers.py — fetch arXiv RSS
+          writes: data/YYYY-MM-DD/{field}_arxiv_papers.json
+3.  Exit cleanly if all fields are empty (holiday / arXiv off-day)
+      → journal + preprint watermarks NOT advanced on holidays
+4.  fetch_preprints.py — fetch bioRxiv/medRxiv + NBER/CEPR preprints per field
+          writes: data/YYYY-MM-DD/{field}_preprints.json
+          updates: preprint_watermarks.json
+5.  fetch_journals.py — scrape all journals once (all fields)
           writes: data/YYYY-MM-DD/scraped_journals.json
           updates: journal_watermarks.json
-3.  For each field:
-      fetch_papers.py — fetch arXiv RSS
-      filter_for_field() — filter journal papers for this field
-      Merge arXiv + journals → data/YYYY-MM-DD/{field}_today_papers.json
-4.  Exit cleanly if all fields are empty (holiday / arXiv off-day)
-5.  Snapshot journal_watermarks.json → watermarks_snapshot.json (recovery)
-6.  Centralized triage per field (staggered, parallel within field)
+      filter_for_field() — filter journal papers per field
+          writes: data/YYYY-MM-DD/{field}_journals.json
+6.  Snapshot journal_watermarks.json → watermarks_snapshot.json (recovery)
+7.  For each field: merge arXiv + preprints + journals → {field}_today_papers.json
+8.  Centralized triage per field (staggered, parallel within field)
           writes: users/<name>/data/DATE/filtered_papers.json
-7.  [ThreadPoolExecutor] Per-user: scoring → PDF → daily email
-8.  Cleanup shared data/ folders older than 3 days
-9.  Send batch-fallback alert email if any scoring job timed out
-10. Send operator run-summary email (OK/FAILED table)
-11. Weekly digest phase — send weekly emails for users whose weekly_day = today
+9.  [ThreadPoolExecutor] Per-user: scoring → PDF → daily email
+10. Cleanup shared data/ folders older than 3 days
+11. Send batch-fallback alert email if any scoring job timed out
+12. Send operator run-summary email (OK/FAILED table)
+13. Weekly digest phase — send weekly emails for users whose weekly_day = today
 ```
 
 **Per-user steps** (`run_daily.py`):
@@ -46,6 +52,8 @@ Users are grouped by **field** (value of `"field"` in `taste_profile.json`). All
 - One arXiv RSS fetch
 - One journal scrape (filtered per-field)
 - One triage cache (papers block is identical for all users)
+
+One preprint fetch (bioRxiv/medRxiv categories per field, deduplicated by DOI)
 
 Each user gets their own:
 - Triage result (profile-block suffix varies per user)
@@ -68,8 +76,9 @@ Each user gets their own:
 **Shared** (`data/YYYY-MM-DD/`):
 - `scraped_journals.json` — all journals across all fields
 - `{field}_arxiv_papers.json` — arXiv papers per field
-- `{field}_today_papers.json` — merged arXiv + journals per field
+- `{field}_preprints.json` — bioRxiv/medRxiv + NBER/CEPR preprints per field
 - `{field}_journals.json` — filtered journal papers per field
+- `{field}_today_papers.json` — merged arXiv + preprints + journals per field
 - `journal_watermarks_snapshot.json` — watermark recovery backup
 
 **Per-user** (`users/<name>/data/YYYY-MM-DD/`):
@@ -115,3 +124,15 @@ python run_weekly_only.py   # Sat/Sun 01:30 ET
 This skips arXiv fetch, journal scraping, triage, and scoring — only runs the weekly digest phase for users whose `weekly_day` matches today.
 
 → See [[Weekly Digest]] for full design.
+
+---
+
+## Threading Gotcha — SystemExit Propagation
+
+`ThreadPoolExecutor` catches `Exception` but NOT `BaseException`. `sys.exit()` raises `SystemExit` (a `BaseException`), so any `sys.exit()` call inside a thread propagates silently through `except Exception` handlers, hits `ThreadPoolExecutor.__exit__` (which calls `shutdown(wait=True)`, waiting for all running threads to finish), then kills the process.
+
+**Fixed (2026-05-28):** Both `except Exception` catches in `run_all_users.py` triage code changed to `except BaseException` — `_triage_one` (per-user triage worker) and the outer field triage loop. This ensures a `sys.exit()` in `run_pipeline.py` is caught and treated as a per-user failure rather than killing the entire run.
+
+Root cause of the original bug: `run_pipeline.py` calls `sys.exit(1)` in several error paths (JSON parse failure, batch API errors, no-parseable-labels). Safe to call from `__main__` but dangerous when called from a thread.
+
+→ See [[runs/2026-05-28]] for the full incident analysis.

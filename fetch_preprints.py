@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
 """
-fetch_preprints.py — Fetch working papers from preprint repositories (NBER, CEPR, etc.).
+fetch_preprints.py — Fetch working papers from preprint repositories.
 
-Reads fields.json for 'preprints' config in each requested field.
-Uses sequential numeric ID watermarking (preprint_watermarks.json) to avoid
-re-fetching papers already seen, since NBER RSS has no reliable pubDate.
-
-Each source entry in fields.json must have:
-  - name: source label (e.g. "NBER")
-  - url: RSS feed URL
-  - id_pattern: regex with one capture group extracting the numeric ID from the entry link
+Handles two types of preprint sources:
+  1. NBER/CEPR-style (fields.json 'preprints' list): sequential numeric ID watermarking.
+  2. bioRxiv/medRxiv (fields.json 'preprint_categories' dict): date-based watermarking.
 
 Output: one JSON file per field at {output_dir}/{field}_preprints.json
-Papers use 'preprint_source' (not 'source') so they join the arXiv triage pool.
+NBER/CEPR papers use 'preprint_source' so they join the arXiv triage pool.
+bioRxiv/medRxiv papers use 'source' = "bioRxiv"/"medRxiv" (routed to arXiv pool in run_pipeline.py).
 
 Usage:
     python fetch_preprints.py --fields econ-political --output-dir data/2026-05-05
-    python fetch_preprints.py --fields econ-political --output-dir data/... --no-advance-watermark
+    python fetch_preprints.py --fields systems-biology --output-dir data/2026-05-25
+    python fetch_preprints.py --fields systems-biology --output-dir data/... --no-advance-watermark
 """
 
 import argparse
@@ -33,6 +30,9 @@ log = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).parent
 WATERMARKS_FILE = BASE_DIR / "preprint_watermarks.json"
 FIELDS_FILE = BASE_DIR / "fields.json"
+
+BIORXIV_FEED = "https://connect.biorxiv.org/biorxiv_xml.php?subject={subject}"
+MEDRXIV_FEED = "https://connect.medrxiv.org/medrxiv_xml.php?subject={subject}"
 
 
 def _configure_logging():
@@ -130,6 +130,108 @@ def fetch_field_preprints(field: str, field_config: dict, watermarks: dict) -> l
     return all_papers
 
 
+def parse_biorxiv_authors(creator: str) -> list[str]:
+    """
+    Parse bioRxiv dc:creator field: "Bankole, K., McIntyre, L. M., Morse, A. M."
+    Splits at ", " where the next token starts with a capital + lowercase (= last name).
+    Returns names like ["Bankole K", "McIntyre L M"].
+    """
+    if not creator:
+        return []
+    parts = re.split(r",\s+(?=[A-Z][a-z])", creator)
+    authors = []
+    for part in parts:
+        # Remove trailing periods, replace ", " separator between last/first with space
+        cleaned = part.replace(".", "").replace(", ", " ").strip()
+        if cleaned:
+            authors.append(cleaned)
+    return authors
+
+
+def fetch_bio_preprints(field: str, field_config: dict, watermarks: dict) -> list[dict]:
+    """
+    Fetch bioRxiv/medRxiv preprints for a field using date-based watermarking.
+    Reads 'preprint_categories' dict from field_config: {"biorxiv": [...], "medrxiv": [...]}.
+    Deduplicates across subjects by DOI.
+    Watermark keys: "{server}:{subject}" → "YYYY-MM-DD" last date seen.
+    """
+    preprint_categories = field_config.get("preprint_categories", {})
+    if not preprint_categories:
+        return []
+
+    server_urls = {"biorxiv": BIORXIV_FEED, "medrxiv": MEDRXIV_FEED}
+    seen_dois: set[str] = set()
+    all_papers: list[dict] = []
+
+    for server, subjects in preprint_categories.items():
+        url_template = server_urls.get(server)
+        if not url_template or not subjects:
+            continue
+        source_name = "bioRxiv" if server == "biorxiv" else "medRxiv"
+
+        for subject in subjects:
+            wm_key = f"{server}:{subject}"
+            since_date = watermarks.get(wm_key, "2000-01-01")
+            url = url_template.format(subject=subject)
+
+            log.info("Fetching %s/%s from %s (since: %s)...", server, subject, url, since_date)
+            try:
+                feed = feedparser.parse(url)
+            except Exception as e:
+                log.warning("%s/%s: feed parse error: %s", server, subject, e)
+                continue
+
+            if not feed.entries:
+                log.info("%s/%s: no entries in feed.", server, subject)
+                continue
+
+            new_max_date = since_date
+            new_papers: list[dict] = []
+
+            for entry in feed.entries:
+                # Date: try dc_date then date_parsed
+                dc_date = getattr(entry, "dc_date", None) or getattr(entry, "date", None) or ""
+                if dc_date:
+                    dc_date = dc_date[:10]  # keep YYYY-MM-DD
+                if not dc_date or dc_date <= since_date:
+                    continue
+
+                # DOI: try dc_identifier then link
+                doi = getattr(entry, "dc_identifier", None) or ""
+                doi = doi.replace("doi:", "").strip()
+                if not doi:
+                    doi = getattr(entry, "link", "") or ""
+                if not doi or doi in seen_dois:
+                    continue
+                seen_dois.add(doi)
+
+                title = re.sub(r"\s+", " ", getattr(entry, "title", "").strip())
+                raw_abstract = getattr(entry, "summary", "") or ""
+                abstract = re.sub(r"<[^>]+>", "", raw_abstract)
+                abstract = re.sub(r"\s+", " ", abstract).strip()
+                creator = getattr(entry, "author", "") or ""
+                authors = parse_biorxiv_authors(creator)
+
+                new_papers.append({
+                    "arxiv_id": doi,
+                    "title": title,
+                    "abstract": abstract,
+                    "authors": authors,
+                    "subcategories": [],
+                    "source": source_name,
+                    "preprint_date": dc_date,
+                })
+                if dc_date > new_max_date:
+                    new_max_date = dc_date
+
+            log.info("%s/%s: %d new papers (watermark %s → %s).",
+                     server, subject, len(new_papers), since_date, new_max_date)
+            watermarks[wm_key] = new_max_date
+            all_papers.extend(new_papers)
+
+    return all_papers
+
+
 def main():
     _configure_logging()
 
@@ -149,11 +251,17 @@ def main():
     any_error = False
     for field in args.fields:
         field_config = fields_data.get(field, {})
-        if not field_config.get("preprints"):
+        has_nber = bool(field_config.get("preprints"))
+        has_bio = bool(field_config.get("preprint_categories"))
+        if not has_nber and not has_bio:
             log.info("Field '%s': no preprints configured — skipping.", field)
             continue
 
-        papers = fetch_field_preprints(field, field_config, watermarks)
+        papers: list[dict] = []
+        if has_nber:
+            papers.extend(fetch_field_preprints(field, field_config, watermarks))
+        if has_bio:
+            papers.extend(fetch_bio_preprints(field, field_config, watermarks))
 
         out_path = output_dir / f"{field}_preprints.json"
         out_path.write_text(json.dumps(papers, indent=2, ensure_ascii=False), encoding="utf-8")

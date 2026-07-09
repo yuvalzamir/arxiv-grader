@@ -229,7 +229,10 @@ def run_preprint_scrape(date_str: str, active_fields: list[str], shared_data_dir
     Run fetch_preprints.py for all active fields that have a 'preprints' config.
     Writes {field}_preprints.json into shared_data_dir.
     """
-    fields_with_preprints = [f for f in active_fields if fields_data.get(f, {}).get("preprints")]
+    fields_with_preprints = [
+        f for f in active_fields
+        if fields_data.get(f, {}).get("preprints") or fields_data.get(f, {}).get("preprint_categories")
+    ]
     if not fields_with_preprints:
         return
     cmd = [
@@ -439,7 +442,7 @@ def run_centralized_triage(
                 json.dump(filtered, f, indent=2, ensure_ascii=False)
             log.info("--- [%s] Triage done: %d papers passed ---", user_dir.name, len(filtered))
             return user_dir.name, True
-        except Exception as e:
+        except BaseException as e:
             log.error("--- [%s] Triage FAILED: %s ---", user_dir.name, e)
             if i == 0:
                 cache_ready.set()  # unblock user 1 even on failure
@@ -941,7 +944,7 @@ def main():
                             no_papers_today.add(user_name)
                         elif not ok:
                             triage_failed.add(user_name)
-                except Exception as e:
+                except BaseException as e:
                     log.error("Field '%s' triage FAILED: %s", field, e)
                     triage_failed.update(u.name for u in users if user_fields[u.name] == field)
 

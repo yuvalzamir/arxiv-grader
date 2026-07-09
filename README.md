@@ -6,7 +6,7 @@ Incoming Science is a production AI system that delivers personalized daily scie
 
 **What makes it work:**
 - **Two-stage AI pipeline:** Claude Haiku (cheap, fast) triages ~200–400 papers per field down to ~30 candidates; Claude Sonnet (more capable) scores each 1–10 with a one-line justification. Triage is shared across users in the same field with prompt caching — the paper list is cached and each user only pays for their profile.
-- **Multi-source ingestion:** arXiv RSS feeds + publisher-specific scrapers for APS, Nature, Science, ACS, Wiley, Elsevier, IOP, OUP, Optica, Cell, PLOS, PNAS, SciPost, Project MUSE, and others — configured per research field in `fields.json`.
+- **Multi-source ingestion:** arXiv RSS feeds + bioRxiv/medRxiv preprint feeds + publisher-specific scrapers for APS, Nature, Science, ACS, Wiley, Elsevier, IOP, OUP, Optica, Cell, PLOS, PNAS, SciPost, Project MUSE, and others — configured per research field in `fields.json`.
 - **Closed feedback loop:** Excellent / Good / Irrelevant ratings in the PDF hit a Flask endpoint, accumulate in a per-user archive, and feed a monthly Claude Sonnet refiner that adjusts keyword and area grades.
 - **Cost:** ~$0.05/user/day. Prompt caching and the Batch API (50% discount) keep it economical at scale.
 - **Infrastructure:** A single Linux VPS, cron-scheduled, ~37 active users across physics, ML, economics, biology, and humanities fields.
@@ -32,9 +32,11 @@ A personal arXiv digest tool for researchers. Every day it fetches the latest pa
 
 ## Architecture
 
-### 1. Data ingestion — `fetch_papers.py` + `fetch_journals.py`
+### 1. Data ingestion — `fetch_papers.py` + `fetch_preprints.py` + `fetch_journals.py`
 
 **arXiv (`fetch_papers.py`):** Pulls the arXiv RSS feed, filters to new submissions only (no cross-listings, no replacements). Supports `--category` for field filtering (e.g. `cond-mat`). If the feed is empty (holiday or off-day), the pipeline exits cleanly. Fetched once per field, shared across all users in that field.
+
+**Preprints (`fetch_preprints.py`):** Fetches preprints from two types of sources. (1) NBER/CEPR-style sources — sequential numeric ID watermarking, configured via `preprints` list in `fields.json`. (2) bioRxiv/medRxiv — date-based watermarking per subject category, configured via `preprint_categories` dict in `fields.json`. bioRxiv/medRxiv preprints are routed to the arXiv triage pool (not the journal pool) — they match on keywords, authors, and title only (no subcategory filter). Watermarks stored in `preprint_watermarks.json`. Run with `--no-advance-watermark` for safe re-runs.
 
 **Journals (`fetch_journals.py`):** Scrapes journals via RSS/eTOC feeds. Publisher-specific scraper classes live under `scrapers/` (APS, Nature, Science, ACS, Wiley, Optica, Cell, PLOS, PNAS). Field configuration — which journals to monitor and tag filters for multi-discipline journals — is defined in `fields.json`. A per-journal watermark (`journal_watermarks.json`) prevents re-fetching papers already seen. Fetched once per run, filtered per field, shared across all users. Use `--since YYYY-MM-DD` to override the watermark for a manual re-run without advancing it.
 
@@ -50,7 +52,7 @@ Each scraped paper is tagged with `feed_url` (the RSS URL it came from). `filter
 - **quantum-sensing:** ACS Nano, ACS Photonics, ACS Sensors, Nano Letters, Small, Nanophotonics, Nature, Nature Photonics, Nature Nanotechnology, Nature Materials, Nature Communications, PNAS (physics), Science
 - **optics:** PRL (AMO section), PRA (quantum optics, quantum information, fundamental concepts sections), Nature, Nature Physics, Nature Photonics, Nature Communications (physics + optics-and-photonics feeds), PNAS (physics), Science, Optica, Optics Letters, Optics Express, ACS Photonics
 - **fluid-dynamics:** PRL (Nonlinear Dynamics/Fluid Dynamics section), PRE, PRX, Physical Review Fluids, Nature, Nature Physics, Nature Communications (fluid-dynamics feed), Science, Science Advances, Journal of Fluid Mechanics, Philosophical Transactions A, Physics of Fluids
-- **systems-biology:** Cell, PLOS Biology, PNAS (biophysics/immunology/cell-biology/microbiology feeds), Science, Science Immunology, Science Advances, Nature, Nature Communications, eLife
+- **systems-biology:** Cell, PLOS Biology, PNAS (biophysics/immunology/cell-biology/microbiology feeds), Science, Science Immunology, Science Advances, Nature, Nature Communications, eLife + bioRxiv (systems-biology, bioinformatics, genetics, immunology, physiology, cell-biology categories)
 
 **Output schema per paper:**
 - arXiv ID (or DOI for journal papers), title, abstract, authors, subcategories
@@ -165,17 +167,18 @@ Tapping opens the browser briefly, the server records the rating, and returns a 
 
 **Master orchestrator steps (`run_all_users.py`):**
 1. Discover all user directories under `users/`
-2. Scrape journals once (`fetch_journals.py`) → filter per field
-3. Fetch arXiv papers once per field (`fetch_papers.py`)
-4. Merge arXiv + journals per field → `{field}_today_papers.json`
-5. Exit cleanly for any field with no papers today
-6. Snapshot `journal_watermarks.json` → `data/DATE/journal_watermarks_snapshot.json` (recovery aid)
-7. Run centralized triage per field — users triaged in parallel with staggered 61s launches
-8. Dispatch per-user scoring + PDF + daily email in parallel (`ThreadPoolExecutor`)
-9. Clean up shared data folders older than 3 days
-10. Send batch fallback alert email if any scoring job timed out
-11. Send run summary email — per-user OK/FAILED table to the operator (skipped for `--user` and `--no-email` runs)
-12. Weekly digest phase — for any user with `weekly_digest: true` whose chosen weekday matches today, send their weekly email (runs after all daily work is complete)
+2. Fetch arXiv papers once per field (`fetch_papers.py`)
+3. Fetch bioRxiv/medRxiv preprints per field (`fetch_preprints.py`) — skipped on holiday (no arXiv papers)
+4. Scrape journals once (`fetch_journals.py`) → filter per field
+5. Merge arXiv + preprints + journals per field → `{field}_today_papers.json`
+6. Exit cleanly for any field with no papers today
+7. Snapshot `journal_watermarks.json` → `data/DATE/journal_watermarks_snapshot.json` (recovery aid)
+8. Run centralized triage per field — users triaged in parallel with staggered 61s launches
+9. Dispatch per-user scoring + PDF + daily email in parallel (`ThreadPoolExecutor`)
+10. Clean up shared data folders older than 3 days
+11. Send batch fallback alert email if any scoring job timed out
+12. Send run summary email — per-user OK/FAILED table to the operator (skipped for `--user` and `--no-email` runs)
+13. Weekly digest phase — for any user with `weekly_digest: true` whose chosen weekday matches today, send their weekly email (runs after all daily work is complete)
 
 **Per-user steps (`run_daily.py`):**
 1. Deduplicate yesterday's ratings (`deduplicate_ratings.py`)
@@ -294,6 +297,7 @@ Excellent / Good / Irrelevant provides richer signal than a binary like. "Excell
 | File | Purpose |
 |------|---------|
 | `fetch_papers.py` | Daily arXiv RSS fetch and parse (once per field) |
+| `fetch_preprints.py` | bioRxiv/medRxiv preprint fetch (date watermarked, per subject) + NBER/CEPR working papers (ID watermarked) |
 | `fetch_journals.py` | Journal scraping — journals across all fields via RSS/eTOC (once per run) |
 | `scrapers/aps.py` | APS publisher scraper (PRL, PRB, PRX, PRXQuantum) — full abstract via harvest.aps.org API |
 | `scrapers/nature.py` | Nature publisher scraper — full abstract + subject tags from article page |
