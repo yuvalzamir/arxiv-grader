@@ -1,6 +1,6 @@
 # Monthly Profile Refiner
 
-[[Home]] | [[Taste Profile]] | [[AI Pipeline]]
+[[Home]] | [[Taste Profile]] | [[Profile Edit Skill]] | [[AI Pipeline]]
 
 Full design: `refiner_v2_design.md`
 

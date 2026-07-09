@@ -1,6 +1,6 @@
 # Taste Profile
 
-[[Home]] | [[User Onboarding]] | [[Monthly Refiner]] | [[AI Pipeline]]
+[[Home]] | [[User Onboarding]] | [[Monthly Refiner]] | [[Profile Edit Skill]] | [[AI Pipeline]]
 
 Full schema and logic: `create_profile_logic.md`
 
