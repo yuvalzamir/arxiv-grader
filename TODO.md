@@ -2,6 +2,40 @@
 
 ---
 
+## Bug backlog — 2026-07-20 audit (details + line numbers in `docs/hidden_bugs_audit.md`, second round)
+
+Three high-severity bugs from this audit were fixed 2026-07-20 (Friday-ratings archiving, malformed-profile crash, archive corruption wipe). Remaining, in priority order:
+
+**Needs a decision first:**
+- [ ] **`paper_insights` opt-in doesn't exist in code** — `run_pipeline.py:776` hardcodes the insights prompt for every user; no `.py` references the flag. Decide: full rollout (fix CLAUDE.md + vault) or restore the opt-in (fix code).
+- [ ] **Triage caps 10+10 in code vs 15+15 in all docs** (`run_pipeline.py:35-36`). Decide which is right, fix the other.
+
+**Crash-proofing (small fixes):**
+- [ ] Scoring join: `item["arxiv_id"]` KeyError on one malformed model entry kills the run post-billing (`run_pipeline.py:688`) — use `.get()` + warning.
+- [ ] `feedparser.parse()` timeout fix never landed in `fetch_papers.py:138` / `fetch_preprints.py:106,179` — still can hang the pipeline.
+- [ ] PDF build crashes on null insights value (`build_digest_pdf.py:406` `.strip()` on None) and on tags containing `&`/`<` (line 425, unescaped).
+
+**Recovery-run correctness:**
+- [ ] `build_digest_pdf.py` has no `--date` — rebuilt digests stamp rating URLs with today's date (wrong folder for ratings).
+- [ ] `run_daily.py:180-189` cleanup uses `date.today()` (ignores `--date`) + raw string compare — `--date` rebuilds delete the folder they just created.
+- [ ] Retry runs overwrite `journal_watermarks_snapshot.json` with post-advance watermarks (`run_all_users.py` snapshot block) — gate it on a fresh (non-retry) run.
+- [ ] Weekly phase re-triggers on retry runs → duplicate weekly digest emails (`run_all_users.py` weekly block).
+
+**Fallback robustness:**
+- [ ] Triage fallbacks never write `batch_fallback.json` → no alert email for triage 2x-cost days (`run_pipeline.py:479-513`).
+- [ ] Scoring falls back to direct API only on timeout; an `errored`/`expired` batch exits instead (`run_pipeline.py:403-416`).
+
+**Quality / minor:**
+- [ ] Liked-papers sampler joins archive on `arxiv_id` but archive stores `paper_id` (`run_pipeline.py:207,227`) — broken dedup, arXiv papers labeled `[journal]`.
+- [ ] Preprints (bioRxiv/medRxiv) sent to scoring as `source: journal` → prompt treats them as peer-reviewed (`run_pipeline.py:108-109`).
+- [ ] Per-article scrape errors are skipped but the watermark advances past them — permanent paper loss (`scrapers/sources.py:331-334`).
+- [ ] Quiet days on journals-only fields exit 1 while summary email says all-OK (`run_all_users.py` exit logic; NO-RUN/None is falsy).
+- [ ] Undated feed entries bypass watermark + same-day skip → repeat in consecutive digests (`scrapers/sources.py:279-283`).
+- [ ] `run_failed_users.py:114-116` doesn't apply the `cond-mat` field default → legacy profiles unretryable; weekly-send failures invisible to it as well.
+- [ ] Evening manual runs without `--date` straddle midnight (parent vs child recompute); `--date` reruns >3 days old get their shared folder cleaned up at end of run; best-effort batch cancel can double-bill.
+
+---
+
 ## Monitoring — how to check the logs
 
 **Daily pipeline:**

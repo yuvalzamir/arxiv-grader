@@ -12,6 +12,8 @@ Usage:
 
 import json
 import argparse
+import os
+import sys
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -25,8 +27,17 @@ def load_archive(archive_path: Path) -> list[dict]:
     except FileNotFoundError:
         return []
     except json.JSONDecodeError as exc:
-        print(f"WARNING: archive.json is malformed ({exc}). Starting fresh.")
-        return []
+        # Never "start fresh" over a corrupt archive — that would overwrite the
+        # user's permanent ratings history with a single day of data. Preserve
+        # the corrupt file and fail loudly so the run shows FAILED.
+        backup = archive_path.with_suffix(".json.corrupt")
+        if not backup.exists():
+            backup.write_bytes(archive_path.read_bytes())
+        print(
+            f"ERROR: {archive_path} is malformed ({exc}). "
+            f"Corrupt copy saved to {backup} — fix or restore it manually. Aborting.",
+        )
+        sys.exit(1)
 
 
 def archive_date(
@@ -74,10 +85,13 @@ def archive_date(
             added += 1
 
     if added:
-        archive_path.write_text(
+        # Atomic write: a crash mid-write must not leave a corrupt archive.json.
+        tmp_path = archive_path.with_suffix(".json.tmp")
+        tmp_path.write_text(
             json.dumps(existing, indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
+        os.replace(tmp_path, archive_path)
 
     print(f"{date_str}: added {added} new rating(s) to archive"
           + (f" ({skipped} already present)." if skipped else "."))

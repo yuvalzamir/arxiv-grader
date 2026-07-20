@@ -169,10 +169,22 @@ def discover_users(only: list[str] | None = None) -> list[Path]:
     return users
 
 
-def _user_field(user_dir: Path) -> str:
-    """Return the field name from a user's taste_profile.json, defaulting to 'cond-mat'."""
-    with open(user_dir / "taste_profile.json") as f:
-        return json.load(f).get("field", "cond-mat")
+def _load_profile_safe(user_dir: Path) -> dict | None:
+    """Load a user's taste_profile.json, or return None (with an error log) if unreadable.
+
+    A malformed profile must never abort the run for every other user.
+    """
+    try:
+        return json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        log.error("[%s] Unreadable taste_profile.json — skipping user this run: %s", user_dir.name, e)
+        return None
+
+
+def _user_field(user_dir: Path) -> str | None:
+    """Return the field name from a user's taste_profile.json (default 'cond-mat'), or None if unreadable."""
+    profile = _load_profile_safe(user_dir)
+    return None if profile is None else profile.get("field", "cond-mat")
 
 
 def filter_for_field(scraped_papers: list[dict], field_config: dict) -> list[dict]:
@@ -734,7 +746,9 @@ def main():
 
         eligible = []
         for user_dir in users:
-            profile = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
+            profile = _load_profile_safe(user_dir)
+            if profile is None:
+                continue
             if not profile.get("daily_digest", True):
                 continue
             created_at = profile.get("created_at", "")
@@ -773,6 +787,7 @@ def main():
     user_papers: dict[str, Path | None] = {u.name: None for u in users}
     triage_failed: set[str] = set()
     no_papers_today: set[str] = set()
+    bad_profile_users: list[str] = []
     shared_data_dir: Path | None = None
 
     if not args.refine:
@@ -789,6 +804,14 @@ def main():
             shutil.copy2(watermarks_src, shared_data_dir / "journal_watermarks_snapshot.json")
 
         user_fields  = {u.name: _user_field(u) for u in users}
+        bad_profile_users = sorted(n for n, f in user_fields.items() if f is None)
+        if bad_profile_users:
+            log.error(
+                "Excluding %d user(s) with unreadable taste_profile.json: %s",
+                len(bad_profile_users), bad_profile_users,
+            )
+            users = [u for u in users if user_fields[u.name] is not None]
+            user_fields = {n: f for n, f in user_fields.items() if f is not None}
         active_fields = sorted(set(user_fields.values()))
         fields_data   = json.loads((BASE_DIR / "fields.json").read_text())
         log.info("Active fields: %s", active_fields)
@@ -995,7 +1018,9 @@ def main():
         new_user_cutoff = (date.today() - timedelta(days=56)).isoformat()
         refine_users = []
         for u in users:
-            profile = json.loads((u / "taste_profile.json").read_text(encoding="utf-8"))
+            profile = _load_profile_safe(u)
+            if profile is None:
+                continue
             created_at = profile.get("created_at", "")
             if created_at and created_at > new_user_cutoff and profile.get("daily_digest", True):
                 log.info("[%s] Skipped biweekly refiner — new user on weekly track (created %s).", u.name, created_at)
@@ -1004,6 +1029,8 @@ def main():
         users = refine_users
 
     results: dict[str, bool] = {}
+    for name in bad_profile_users:
+        results[name] = False
     with ThreadPoolExecutor(max_workers=max(len(users), 1)) as executor:
         futures = {}
         for user_dir in users:
@@ -1046,7 +1073,9 @@ def main():
         today_weekday = (date.fromisoformat(args.date) if args.date else date.today()).strftime("%A").lower()
         weekly_users = []
         for user_dir in users:
-            profile_data = json.loads((user_dir / "taste_profile.json").read_text(encoding="utf-8"))
+            profile_data = _load_profile_safe(user_dir)
+            if profile_data is None:
+                continue
             if not profile_data.get("weekly_digest", False):
                 continue
             if profile_data.get("weekly_day", "friday") != today_weekday:

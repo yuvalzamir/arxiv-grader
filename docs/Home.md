@@ -33,7 +33,10 @@
 - [[Cost Model]] — per-user cost, Batch API savings, caching multiplier
 
 ### Quality & Debugging
-- [[Hidden Bug Audit]] — 6 silent quality degraders identified 2026-06-09 (no errors thrown)
+- [[Hidden Bug Audit]] — silent quality degraders: 6 found 2026-06-09; second round 2026-07-20 added 22 findings (3 high-severity fixed same day, rest in TODO backlog)
+
+### Compliance
+- [[Licensing Audit]] — per-publisher/database AI-input license survey 2026-07-17 (who prohibits uploading content to LLMs, who allows it)
 
 
 ---

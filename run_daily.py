@@ -254,8 +254,12 @@ def main():
     data_dir  = user_dir / "data"
     profile   = user_dir / "taste_profile.json"
 
-    today_str     = args.date or date.today().isoformat()
-    yesterday_str = (datetime.strptime(today_str, "%Y-%m-%d").date() - timedelta(days=1)).isoformat()
+    today_str = args.date or date.today().isoformat()
+    _today    = datetime.strptime(today_str, "%Y-%m-%d").date()
+    # Sweep the last 3 days, not just yesterday: cron runs Mon-Fri, so Monday
+    # must archive Friday's ratings (clicked Fri-Sun); missing folders are
+    # no-ops and archiving is idempotent, so the extra dates are safe.
+    recent_dates = [(_today - timedelta(days=n)).isoformat() for n in (3, 2, 1)]
 
     today_dir = data_dir / today_str
     today_dir.mkdir(parents=True, exist_ok=True)
@@ -280,26 +284,28 @@ def main():
             sys.exit(1)
     else:
         # ------------------------------------------------------------------
-        # Step 1: Deduplicate yesterday's ratings
+        # Step 1: Deduplicate recent ratings (last 3 days — see recent_dates)
         # ------------------------------------------------------------------
         if not args.skip_dedup:
-            run(
-                [sys.executable, "deduplicate_ratings.py",
-                 "--date", yesterday_str, "--user-dir", str(user_dir)],
-                step="dedup",
-            )
+            for d in recent_dates:
+                run(
+                    [sys.executable, "deduplicate_ratings.py",
+                     "--date", d, "--user-dir", str(user_dir)],
+                    step="dedup",
+                )
         else:
             log.info("[dedup] Skipped.")
 
         # ------------------------------------------------------------------
-        # Step 2: Archive yesterday's ratings
+        # Step 2: Archive recent ratings (last 3 days)
         # ------------------------------------------------------------------
         if not args.skip_archive:
-            run(
-                [sys.executable, "archive.py",
-                 "--date", yesterday_str, "--user-dir", str(user_dir)],
-                step="archive",
-            )
+            for d in recent_dates:
+                run(
+                    [sys.executable, "archive.py",
+                     "--date", d, "--user-dir", str(user_dir)],
+                    step="archive",
+                )
         else:
             log.info("[archive] Skipped.")
 
