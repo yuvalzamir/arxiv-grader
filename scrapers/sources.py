@@ -43,6 +43,7 @@ _CLOUDFLARE_HOSTS = frozenset({
     "journals.sagepub.com",
     "onlinelibrary.wiley.com",
     "www.journals.uchicago.edu",
+    "pubs.acs.org",
 })
 
 _FLARESOLVERR_URL = os.environ.get("FLARESOLVERR_URL", "http://localhost:8191/v1")
@@ -204,7 +205,7 @@ def _reconstruct_abstract(inverted_index: dict) -> str:
 # Fetch strategies
 # ---------------------------------------------------------------------------
 
-def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dict], date | None]:
+def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dict], date | None, int | None]:
     """
     Fetch one journal's RSS feed and scrape all articles published after `since`.
 
@@ -214,7 +215,7 @@ def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dic
     publisher = journal["publisher"]
     if publisher not in scrapers:
         log.warning("No scraper for publisher '%s' (journal: %s) — skipping.", publisher, journal["name"])
-        return [], None
+        return [], None, None
 
     scraper = scrapers[publisher]()
     log.info("Fetching RSS: %s (%s)", journal["name"], journal["url"])
@@ -241,7 +242,7 @@ def fetch_from_rss(journal: dict, since: date, scrapers: dict) -> tuple[list[dic
                 )
             except OSError as exc:
                 log.warning("%s: RSS fetch timed out or failed — %s", journal["name"], exc)
-                return [], None
+                return [], None, None
             finally:
                 socket.setdefaulttimeout(_prev_timeout)
 

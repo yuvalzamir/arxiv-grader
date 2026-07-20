@@ -330,6 +330,7 @@ Publishers with a future unblock date are silently skipped (logged at INFO level
 | Sage | `journals.sagepub.com` | gender-studies, edu-policy, econ-education, demography |
 | Wiley | `onlinelibrary.wiley.com` | econ-political, edu-policy, econ-education, soft-eng, quantum-sensing, demography |
 | Chicago Journals | `www.journals.uchicago.edu` | econ-political, econ-education, gender-studies, literature-and-culture |
+| ACS (added 2026-07-20) | `pubs.acs.org` | cond-mat, cond-mat-optics, quantum-computing, quantum-info, quantum-optics, quantum-phenomena, optics, soft-matter, quantum-sensing |
 
 **Solution:** FlareSolverr Docker container running on `localhost:8191`. See [[Infrastructure]] for setup.
 
@@ -355,6 +356,10 @@ Publishers with a future unblock date are silently skipped (logged at INFO level
 **Timing:** FlareSolverr solves one challenge at a time (~10–60s each). With ~30 blocked journals across 4 domains, Chrome reuses its session cookies per domain — in practice Cloudflare challenges only need solving once per domain per run. Adds ~2–5 min to the journal scrape phase.
 
 Full implementation notes: `docs/flaresolverr_plan.md`.
+
+**ACS blocked (discovered 2026-07-20):** `pubs.acs.org` now returns HTTP 403 to all non-browser clients — confirmed even from a residential IP with a browser User-Agent string (block is TLS-fingerprint-based, site-wide including RSS feeds and homepage). ACS worked normally through at least 2026-06-12 (NanoLett 1–5 papers/day); yuval's week of 2026-07-13→17 had zero ACS papers (see [[runs/2026-07-20]]). Affected fields: cond-mat, cond-mat-optics, quantum-computing, quantum-info, quantum-optics, quantum-phenomena, optics, soft-matter, quantum-sensing. **Resolution (2026-07-20, user-approved):** `pubs.acs.org` added to `_CLOUDFLARE_HOSTS` — abstracts already come from OpenAlex, so only the feed fetch needs the bypass. Note [[Licensing Audit]]: ACS prohibits TDM outright; continuing via bot-protection bypass was a deliberate user decision. Watermarks were last advanced ~2026-06-12, so the first post-deploy run will backfill everything newer that's still in the RSS window.
+
+Also fixed in the same change: `fetch_from_rss()` returned 2-tuples on two failure paths (no-scraper and OSError-timeout) but 3-tuples everywhere else — the caller unpacks 3 values, so those paths raised `ValueError` instead of degrading gracefully. All paths now return `(papers, max_date, max_id)`.
 
 ---
 
