@@ -4,7 +4,9 @@ scrapers/sources.py — Journal-level paper-list fetching.
 Three strategies, all returning (papers: list[dict], max_date: date | None):
   fetch_from_rss(journal, since, scrapers)   — RSS feed + publisher scraper
   fetch_from_openalex(journal, since)        — OpenAlex API by journal ISSN
-  fetch_from_crossref(journal, since)        — CrossRef API by journal ISSN
+  fetch_from_crossref(journal, since, scrapers) — CrossRef API by journal ISSN;
+      if the journal has a publisher scraper, it is used for the editorial
+      filter and to fill missing abstracts (CrossRef has none for e.g. ACS)
 
 Public entry point:
   fetch_journal(journal, since, scrapers)    — dispatches to the right strategy
@@ -17,6 +19,7 @@ import re
 import socket
 import threading
 from datetime import date, timedelta
+from types import SimpleNamespace
 from urllib.parse import urlparse
 
 import feedparser
@@ -423,12 +426,19 @@ def fetch_from_openalex(journal: dict, since: date) -> tuple[list[dict], date | 
     return papers, max_date
 
 
-def fetch_from_crossref(journal: dict, since: date) -> tuple[list[dict], date | None]:
+def fetch_from_crossref(journal: dict, since: date, scrapers: dict | None = None) -> tuple[list[dict], date | None]:
     """
     Fetch recent papers from CrossRef by journal ISSN.
-    Used for journals where CrossRef has good abstract coverage (AER, AEJ series).
+
+    Used for journals where CrossRef has good abstract coverage (AER, AEJ series),
+    and for publishers whose RSS feeds are unavailable (ACS post-Silverchair):
+    when the journal has a "publisher" with a registered scraper, the scraper's
+    editorial_filter is applied and missing abstracts are filled via
+    scrape_article (e.g. ACS → Europe PMC / OpenAlex).
     """
     issn = journal["crossref_issn"]
+    publisher = journal.get("publisher")
+    scraper = scrapers[publisher]() if scrapers and publisher in scrapers else None
     fetch_from = (since + timedelta(days=1)).isoformat()
     params = {
         "filter": f"from-pub-date:{fetch_from}",
@@ -462,15 +472,26 @@ def fetch_from_crossref(journal: dict, since: date) -> tuple[list[dict], date | 
             if pub_date >= date.today():
                 continue  # skip today's papers; they'll be available in tomorrow's run
             titles = item.get("title", [])
-            title = titles[0].strip() if titles else ""
+            title = re.sub(r"\s+", " ", titles[0]).strip() if titles else ""
             if not title:
                 continue
+            if scraper is not None and not scraper.editorial_filter(SimpleNamespace(title=title)):
+                continue
             doi = item.get("DOI", "")
-            abstract = _JATS_TAG_RE.sub("", item.get("abstract", "") or "").strip()
+            # JATS abstracts arrive with hard line breaks and a leading
+            # <jats:title>Abstract</jats:title> heading — normalize both.
+            abstract = _JATS_TAG_RE.sub("", item.get("abstract", "") or "")
+            abstract = re.sub(r"\s+", " ", abstract).strip()
+            abstract = re.sub(r"^Abstract\s+", "", abstract)
             authors = [
                 " ".join(filter(None, [a.get("given", ""), a.get("family", "")]))
                 for a in item.get("author", [])
             ]
+            subject_tags = []
+            if not abstract and scraper is not None and doi:
+                result = scraper.scrape_article(f"https://doi.org/{doi}") or {}
+                abstract = (result.get("abstract") or "").strip()
+                subject_tags = result.get("subject_tags") or []
             abstract_quality = "missing" if not abstract else ("truncated" if len(abstract) < 400 else "full")
             papers.append({
                 "arxiv_id":         doi or f"crossref:{issn}:{title[:50]}",
@@ -481,7 +502,7 @@ def fetch_from_crossref(journal: dict, since: date) -> tuple[list[dict], date | 
                 "subcategories":    [],
                 "source":           journal["name"],
                 "feed_url":         f"crossref:{issn}",
-                "subject_tags":     [],
+                "subject_tags":     subject_tags,
             })
             if max_date is None or pub_date > max_date:
                 max_date = pub_date
@@ -661,7 +682,7 @@ def fetch_journal(journal: dict, since: date, scrapers: dict) -> tuple[list[dict
         since_id = journal.get("since_id", 0)
         return fetch_from_ieee_rest(journal, since_id, since=since)
     if "crossref_issn" in journal:
-        papers, max_date = fetch_from_crossref(journal, since)
+        papers, max_date = fetch_from_crossref(journal, since, scrapers)
         return papers, max_date, None
     papers, max_date = fetch_from_openalex(journal, since)
     return papers, max_date, None

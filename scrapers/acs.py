@@ -5,17 +5,22 @@ Covers: ACS Nano, ACS Photonics, ACS Sensors, Nano Letters, Langmuir,
 Macromolecules, Biomacromolecules, and any future ACS journal added to
 fields.json with publisher="acs".
 
-Abstract coverage: Europe PMC API with OpenAlex fallback.
-  - Article pages: Cloudflare-protected (403) from server IPs.
+Article enumeration: CrossRef by ISSN (crossref_issn in fields.json) since
+2026-08-14 — ACS killed its Atypon RSS feeds in the Silverchair platform
+migration of 2026-07-24 (`action/showFeed` returns 404; new-platform RSS
+"coming weeks" per their migration page).
+
+Abstract coverage:
+  - CrossRef: since the Silverchair migration ACS deposits JATS abstracts
+    for most papers (~75-100% in testing) — primary source, arrives with
+    the article list for free.
+  - Europe PMC: fallback, queried by DOI via scrape_article; high hit rate
+    for NanoLett, ACSNano, ACSSensors, Langmuir, Biomacromolecules.
+    ACSPhotonics not indexed.
+  - OpenAlex: second fallback. Covers journals not indexed by Europe PMC
+    (e.g. Macromolecules), with a few-week indexing lag for recent papers.
+  - Article pages: Cloudflare-protected (403) from server IPs — never used.
   - Semantic Scholar: no ACS abstracts (ACS licensing restriction).
-  - CrossRef: no abstracts deposited by ACS.
-  - RSS feed: description contains only a TOC graphic URL and DOI text —
-    skip_rss_fallback=True prevents fetch_journals.py from using it.
-  - Europe PMC: queried by DOI; high hit rate for NanoLett, ACSNano,
-    ACSSensors, Langmuir, Biomacromolecules. ACSPhotonics not indexed.
-  - OpenAlex: fallback when Europe PMC returns nothing. Covers journals
-    not indexed by Europe PMC (e.g. Macromolecules), with a few-week
-    indexing lag for very recent papers.
 
 Subject tags: not available → always []
 """

@@ -79,13 +79,13 @@
       },
       {
         "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "crossref_issn": "1530-6992",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "ACSNano",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "crossref_issn": "1936-086X",
         "publisher": "acs",
         "tag_filter": null
       },
@@ -190,13 +190,13 @@
       },
       {
         "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "crossref_issn": "1530-6992",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "ACSNano",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "crossref_issn": "1936-086X",
         "publisher": "acs",
         "tag_filter": null
       },
@@ -227,25 +227,25 @@
     "journals": [
       {
         "name": "ACSNano",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "crossref_issn": "1936-086X",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "ACSPhotonics",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=apchd5",
+        "crossref_issn": "2330-4022",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "ACSSensors",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ascefj",
+        "crossref_issn": "2379-3694",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "crossref_issn": "1530-6992",
         "publisher": "acs",
         "tag_filter": null
       },
@@ -391,7 +391,7 @@
       },
       {
         "name": "ACSPhotonics",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=apchd5",
+        "crossref_issn": "2330-4022",
         "publisher": "acs",
         "tag_filter": null
       },
@@ -403,13 +403,13 @@
       },
       {
         "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "crossref_issn": "1530-6992",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "ACSNano",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "crossref_issn": "1936-086X",
         "publisher": "acs",
         "tag_filter": null
       }
@@ -442,19 +442,19 @@
       },
       {
         "name": "Langmuir",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=langd5",
+        "crossref_issn": "1520-5827",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "Macromolecules",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=mamobx",
+        "crossref_issn": "1520-5835",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "Biomacromolecules",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=bomaf6",
+        "crossref_issn": "1526-4602",
         "publisher": "acs",
         "tag_filter": null
       },
@@ -980,13 +980,13 @@
       },
       {
         "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "crossref_issn": "1530-6992",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "ACSNano",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "crossref_issn": "1936-086X",
         "publisher": "acs",
         "tag_filter": null
       }
@@ -1134,19 +1134,19 @@
       },
       {
         "name": "ACSPhotonics",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=apchd5",
+        "crossref_issn": "2330-4022",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "crossref_issn": "1530-6992",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "ACSNano",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "crossref_issn": "1936-086X",
         "publisher": "acs",
         "tag_filter": null
       }
@@ -1540,13 +1540,13 @@
       },
       {
         "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "crossref_issn": "1530-6992",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "ACSNano",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "crossref_issn": "1936-086X",
         "publisher": "acs",
         "tag_filter": null
       }
@@ -2604,13 +2604,13 @@
       },
       {
         "name": "NanoLett",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=nalefd",
+        "crossref_issn": "1530-6992",
         "publisher": "acs",
         "tag_filter": null
       },
       {
         "name": "ACSNano",
-        "url": "https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=ancac3",
+        "crossref_issn": "1936-086X",
         "publisher": "acs",
         "tag_filter": null
       },

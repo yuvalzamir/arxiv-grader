@@ -80,12 +80,19 @@ scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log
 
 ## Backlog
 
+### New fields
+- [ ] **Review library-science field plan** — full plan drafted 2026-07-28 in `docs/plan_library_science_field.md`: 22 journals (academic librarianship, LIS research, cataloging/metadata/scholarly-comm, archival studies), arXiv `cs.DL`, no new scrapers needed (OJS journals reuse `plos`, Emerald via `openalex` ISSN, Cloudflare hosts via existing FlareSolverr). Open items before implementation: resolve Library Trends' MUSE jid; verify OJS gateway feeds (EBLIP, JMLA, Archivaria) and OpenAlex ISSNs in the Step-10 test run; provide `ANTHROPIC_API_KEY_LIBRARY_SCIENCE`.
+
 ### Funding & sustainability
 - [ ] **Sponsorship / small grant** (#42) — Apply for small grants (Sloan Foundation, NSF CAREER supplements, EU Open Science) to fund the service as public scientific infrastructure. No billing complexity, keeps it free for users. One grant typically covers 1–2 years of operating costs.
 
 ### Failure recovery
+- [ ] **ACS → CrossRef switch: watch Monday's run** — Deployed + server-tested 2026-08-14 (83 papers/7 journals, 81 full abstracts). Confirm `Publisher 'acs': N>0 paper(s) collected` in Monday 2026-08-17's daily log (next cron run; Mon–Fri schedule), then delete this entry. Background: ACS killed Atypon RSS in the 2026-07-24 Silverchair migration; see [[Journal Scrapers]].
+- [ ] **ACM TOSEM feed parse error daily** — `dl.acm.org` not in `_CLOUDFLARE_HOSTS`; try adding it so TOSEM goes through FlareSolverr.
+- [ ] **IEEE SPL/TSE: 0 papers all week, whole feed "skipped at or before watermark"** — SPL's watermark advances daily while every entry is skipped, which is contradictory; suspect feed entries carry a feed-build date so nothing is ever "new". Investigate `fetch_from_rss` date handling for IEEE feeds.
+- [ ] **Retry SMTP 421 in send_email** — Gmail throws transient `421 Temporary System Problem` when 54 parallel users burst-connect to smtp.gmail.com; ~17 send failures in the week of Aug 10–14 (see `docs/runs/2026-08-14.md`). Daily sends auto-recover via the retry pass, but weekly-only send failures don't (see next item's sibling bug in the audit backlog). Add retry-with-backoff (e.g. 3 attempts, 30s apart) around `server.sendmail()` in `run_daily.py` and `run_weekly_digest.py`.
 - [ ] **Watermark auto-restore on total field failure** (#2) — If every user in a field failed triage, automatically restore `journal_watermarks.json` from the per-run snapshot. Currently requires manual `cp` command. Rare but high-stakes when it happens.
-- [ ] **Retry on truncated JSON in scoring** — On 2026-06-04 Yael's scoring failed because the Batch API returned truncated JSON mid-string in an `insights.relevance` field (output was 6153 tokens, well under the 16000 cap — transient API issue). `run_failed_users.py` auto-recovered. Consider adding a retry-on-parse-failure path in `run_pipeline.py`: if JSON parse fails and the response looks truncated (no closing `]`), retry once via direct API before giving up. Affects `paper_insights` users most (larger outputs).
+- [ ] **Retry on truncated JSON in scoring** — On 2026-06-04 Yael's scoring failed because the Batch API returned truncated JSON mid-string in an `insights.relevance` field (output was 6153 tokens, well under the 16000 cap — transient API issue). `run_failed_users.py` auto-recovered. Recurred 3× in the week of Aug 10–14 (Yael, sudha, nadav — all insights users, same truncated-mid-string signature, auto-recovered at 2× cost). Consider adding a retry-on-parse-failure path in `run_pipeline.py`: if JSON parse fails and the response looks truncated (no closing `]`), retry once via direct API before giving up. Affects `paper_insights` users most (larger outputs).
 
 ### Adaptation speed
 - [ ] **Topic-aware liked-paper selection for scoring** (#32) — Make `_sample_liked_papers()` select papers most semantically similar to today's triage survivors (keyword overlap in Python, no embeddings). Scoring agent sees few-shot examples most relevant to today's batch.

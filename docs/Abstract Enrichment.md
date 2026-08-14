@@ -6,7 +6,7 @@
 
 ## Why Abstracts Matter
 
-Both triage and scoring agents receive the abstract to make their judgments. A missing or truncated abstract degrades quality significantly. For ACS (Cloudflare-blocked), papers go to triage with title + authors only — then abstracts are back-filled via S2 before scoring.
+Both triage and scoring agents receive the abstract to make their judgments. A missing or truncated abstract degrades quality significantly.
 
 ---
 
@@ -52,19 +52,15 @@ Fallback: RSS `<summary>`.
 
 ---
 
-### ACS (ACS Nano, ACS Photonics, ACS Sensors, Nano Letters)
+### ACS (ACS Nano, ACS Photonics, ACS Sensors, Nano Letters, Langmuir, Macromolecules, Biomacromolecules)
 
-**Primary source is unavailable** — ACS article pages are Cloudflare-blocked. No free API provides ACS abstracts.
+Since 2026-08-14, article lists come from **CrossRef enumeration** (`crossref_issn` in `fields.json` — ACS killed its RSS feeds in the 2026-07-24 Silverchair migration, see [[Journal Scrapers]]), and the abstract chain is:
 
-Instead:
-1. **Triage runs on title + authors only** (no abstract)
-2. **Post-triage S2 batch enrichment** fills ~50% of abstracts before scoring
+1. **CrossRef JATS abstract** — deposited by ACS since the Silverchair migration; ~75–100% full at fetch time, arrives with the article list for free
+2. **Europe PMC by DOI** (`ACSScraper.scrape_article`) — high hit rate for NanoLett, ACSNano, ACSSensors, Langmuir, Biomacromolecules; ACSPhotonics not indexed
+3. **OpenAlex by DOI** — covers journals Europe PMC misses (e.g. Macromolecules), few-week lag on very recent papers
 
-The S2 batch call submits all filtered paper DOIs at once:
-```
-POST https://api.semanticscholar.org/graph/v1/paper/batch
-Body: {"ids": ["DOI:10.1021/...", ...], "fields": "title,abstract"}
-```
+Not usable: ACS article pages (Cloudflare 403 from server IPs), Semantic Scholar (no ACS abstracts — licensing restriction).
 
 ---
 
