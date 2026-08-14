@@ -59,6 +59,8 @@ This means any email address that receives digests for a user (including CC reci
 
 Flask writes directly to `taste_profile.json` under `_write_lock`. No separate script. Validates `weekly_day` against a known set.
 
+**`.env` sync (added 2026-08-14):** signup only writes the `EMAIL_TO_DAILY` / `EMAIL_TO_WEEKLY` vars for the frequencies chosen at signup, so enabling a *new* frequency here used to leave the sender with no address — it failed every run (observed: anton-sv, weekly-only with only `EMAIL_TO_DAILY`, delivered nothing; see [[runs/2026-08-14]]). The endpoint now calls `_ensure_email_env_var()` for each enabled frequency: if the var is missing, it copies the address list from an existing `EMAIL_TO*` var (falling back to the identifying email), appending to `.env` without touching existing values. Disabling a frequency deliberately leaves its var in place for painless re-enabling.
+
 ### Feedback submission
 
 - Rate limit: 1 submission per 24h. Enforced by parsing the last `[YYYY-MM-DDTHH:MM:SSZ]` timestamp in `pending_profile_update.txt`.

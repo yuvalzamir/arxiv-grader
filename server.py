@@ -570,6 +570,45 @@ def _find_user_by_email(email: str) -> tuple[str, Path] | None:
     return None
 
 
+def _ensure_email_env_var(user_dir: Path, var: str, fallback_email: str) -> None:
+    """Ensure `var` (EMAIL_TO_DAILY / EMAIL_TO_WEEKLY) exists in the user's .env.
+
+    A frequency enabled via /manage after signup has no matching env var —
+    signup only writes vars for the frequencies chosen at the time — so the
+    sender would find no address and fail (observed: anton-sv, weekly-only
+    with only EMAIL_TO_DAILY, zero digests delivered). Copies the address
+    list from an existing EMAIL_TO* var, else uses the identifying email.
+    Never overwrites an existing non-empty value.
+    """
+    env_path = user_dir / ".env"
+    if not env_path.exists():
+        app.logger.warning("ensure_email_env_var: no .env for %s — skipped", user_dir.name)
+        return
+
+    content = env_path.read_text(encoding="utf-8")
+    existing = {}
+    for line in content.splitlines():
+        if "=" in line and not line.lstrip().startswith("#"):
+            k, v = line.split("=", 1)
+            existing[k.strip()] = v.strip()
+
+    if existing.get(var):
+        return
+
+    donor = (existing.get("EMAIL_TO")
+             or existing.get("EMAIL_TO_DAILY")
+             or existing.get("EMAIL_TO_WEEKLY")
+             or fallback_email.strip())
+    if not donor:
+        app.logger.warning("ensure_email_env_var: no address available for %s/%s", user_dir.name, var)
+        return
+
+    if content and not content.endswith("\n"):
+        content += "\n"
+    env_path.write_text(content + f"{var}={donor}\n", encoding="utf-8")
+    app.logger.info("ensure_email_env_var: added %s to %s/.env", var, user_dir.name)
+
+
 def _send_feedback_notification(slug: str, feedback_text: str) -> None:
     if not _SMTP_USER or not _SMTP_PASSWORD:
         return
@@ -672,6 +711,12 @@ def manage_update_frequency():
             profile_path.write_text(
                 json.dumps(profile, indent=2, ensure_ascii=False), encoding="utf-8"
             )
+            # Keep .env in sync: an enabled frequency needs its address var,
+            # which signup only wrote for the frequencies chosen back then.
+            if daily_digest:
+                _ensure_email_env_var(profile_path.parent, "EMAIL_TO_DAILY", email)
+            if weekly_digest:
+                _ensure_email_env_var(profile_path.parent, "EMAIL_TO_WEEKLY", email)
     except (json.JSONDecodeError, OSError) as e:
         app.logger.error("manage_update_frequency: %s", e)
         return {"status": "error", "message": "Failed to update profile."}, 500
