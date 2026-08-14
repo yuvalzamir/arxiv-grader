@@ -1,6 +1,6 @@
 # Incoming Science — Knowledge Vault
 
-> AI-powered daily arXiv digest system. ~37 users, ~$0.05/user/day. Live at [incomingscience.xyz](https://incomingscience.xyz).
+> AI-powered daily arXiv digest system. ~54 users, ~$0.05/user/day. Live at [incomingscience.xyz](https://incomingscience.xyz).
 
 ---
 
