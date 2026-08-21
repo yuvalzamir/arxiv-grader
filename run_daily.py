@@ -33,6 +33,7 @@ import shutil
 import smtplib
 import subprocess
 import sys
+import time
 from datetime import date, datetime, timedelta
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -89,6 +90,31 @@ def run(cmd: list[str], step: str) -> None:
 # Email delivery
 # ---------------------------------------------------------------------------
 
+def _smtp_send_with_retry(from_addr: str, to_addr: list, msg_string: str,
+                          attempts: int = 3, backoff_s: int = 30) -> None:
+    """Open an SMTP session and send, retrying on transient failures.
+
+    Gmail throws '421 Temporary System Problem' when many parallel users
+    burst-connect; the whole session (connect/login/send) is retried since
+    the 421 can arrive at any of those stages.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=30) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(_SMTP_USER, _SMTP_PASSWORD)
+                server.sendmail(from_addr, to_addr, msg_string)
+            return
+        except (smtplib.SMTPException, OSError) as e:
+            if attempt == attempts:
+                raise
+            log.warning("SMTP send failed (attempt %d/%d): %s — retrying in %ds",
+                        attempt, attempts, e, backoff_s)
+            time.sleep(backoff_s)
+
+
 def send_no_papers_email(today_str: str, username: str, list_env_var: str = "EMAIL_TO_DAILY") -> None:
     """Send a short notification email when no papers passed triage."""
     raw = os.environ.get(list_env_var) or os.environ.get("EMAIL_TO", "")
@@ -110,12 +136,7 @@ def send_no_papers_email(today_str: str, username: str, list_env_var: str = "EMA
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
 
-    with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=30) as server:
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(_SMTP_USER, _SMTP_PASSWORD)
-        server.sendmail(_EMAIL_FROM, to_addr, msg.as_string())
+    _smtp_send_with_retry(_EMAIL_FROM, to_addr, msg.as_string())
 
     log.info("No-papers notification sent to %s.", to_addr)
 
@@ -128,10 +149,6 @@ def send_email(pdf_path: Path, today_str: str, username: str, list_env_var: str 
         log.error("EMAIL_TO is not set in the user's .env")
         sys.exit(1)
 
-    smtp_host = _SMTP_HOST
-    smtp_port = _SMTP_PORT
-    smtp_user = _SMTP_USER
-    smtp_pass = _SMTP_PASSWORD
     from_addr = _EMAIL_FROM
 
     rating_base = os.getenv("RATING_BASE_URL", "").rstrip("/")
@@ -162,13 +179,8 @@ def send_email(pdf_path: Path, today_str: str, username: str, list_env_var: str 
     )
     msg.attach(attachment)
 
-    log.info("Connecting to SMTP %s:%d...", smtp_host, smtp_port)
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(smtp_user, smtp_pass)
-        server.sendmail(from_addr, to_addr, msg.as_string())
+    log.info("Connecting to SMTP %s:%d...", _SMTP_HOST, _SMTP_PORT)
+    _smtp_send_with_retry(from_addr, to_addr, msg.as_string())
 
     log.info("Email sent to %s.", to_addr)
 

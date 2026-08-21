@@ -40,10 +40,11 @@ Full schema and logic: `create_profile_logic.md`
   ],
   "daily_digest": true,
   "weekly_digest": false,
-  "weekly_day": "friday",
-  "paper_insights": false
+  "weekly_day": "friday"
 }
 ```
+
+(A legacy `"paper_insights"` flag may appear in older profiles — it is ignored; insights scoring is standard for all users.)
 
 ---
 

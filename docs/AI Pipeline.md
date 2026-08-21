@@ -116,9 +116,9 @@ This prevents the model from always seeing the same examples and keeps the conte
 
 ---
 
-## Paper Insights (Opt-In)
+## Paper Insights (All Users)
 
-Users with `"paper_insights": true` in `taste_profile.json` use `prompts/scoring_insights.txt` instead of the standard scoring prompt. This adds an `insights` object to each scored paper:
+Scoring always uses `prompts/scoring_insights.txt` (full rollout confirmed by design 2026-08-21; the legacy `"paper_insights"` flag in `taste_profile.json` is ignored). This adds an `insights` object to each scored paper:
 
 ```json
 "insights": {

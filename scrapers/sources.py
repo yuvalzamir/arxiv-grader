@@ -47,6 +47,7 @@ _CLOUDFLARE_HOSTS = frozenset({
     "onlinelibrary.wiley.com",
     "www.journals.uchicago.edu",
     "pubs.acs.org",
+    "dl.acm.org",
 })
 
 _FLARESOLVERR_URL = os.environ.get("FLARESOLVERR_URL", "http://localhost:8191/v1")

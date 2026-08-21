@@ -285,6 +285,7 @@ New CLI flag: `--max-publisher-workers N` (default 8).
 | music-theory | 6 | openalex |
 | comparative-literature | 6 | openalex |
 | ai-speech | 2 | springer, ieee |
+| library-science | 23 | plos, muse, elsevier_general, oup, wiley, sage, tandfonline, openalex, springer (added 2026-08-21) |
 
 ### Publisher Blocklist
 

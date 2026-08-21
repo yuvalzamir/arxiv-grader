@@ -62,6 +62,7 @@ Existing tree paths for reference:
 - `["Natural Sciences", "Physics", "Classical Physics", "Fluid Dynamics"]`
 - `["Natural Sciences", "Biology", "Computational Biology", "Systems Biology"]`
 - `["Natural Sciences", "Computer Science", "AI", "Vision"]`
+- `["Social Sciences", "Library & Information Science", "Librarianship & Archives", "Library Science & Archival Studies"]`
 
 **Key decisions:**
 

@@ -22,8 +22,8 @@ A personal arXiv digest tool for researchers. Every day it fetches the latest pa
 ## How it works
 
 1. **Fetch** — pulls the arXiv RSS feed and scrapes journals across multiple fields each morning
-2. **Triage** — Claude Haiku filters ~80–120 papers down to the ~30 most likely to be relevant (15 arXiv + 15 journal cap)
-3. **Score** — Claude Sonnet scores each surviving paper 1–10 with a one-line justification
+2. **Triage** — Claude Haiku filters ~80–120 papers down to the ~20 most likely to be relevant (10 arXiv + 10 journal cap)
+3. **Score** — Claude Sonnet scores each surviving paper 1–10 with a structured insights analysis
 4. **Deliver** — a ranked PDF digest is emailed to you as an attachment
 5. **Rate** — tap Excellent / Good / Irrelevant buttons in the PDF; ratings are recorded
 6. **Refine** — once a month, Claude Sonnet reviews your rating history and updates your taste profile
@@ -124,7 +124,7 @@ Each call has its own pair of cache entries (system prompt + papers block), both
 - **Input per call:** Papers list (cached) + lean profile — keywords, areas, authors only (no liked papers, no narrative)
 - **Task:** Rank papers best-first and classify each as high / medium / low
 - **Medium threshold:** Requires at least one concrete anchor — a keyword hit, an author match, or subcategory match with clear topic overlap. Pure thematic adjacency without any profile anchor → low.
-- **Caps:** Top 15 arXiv + top 15 journal papers forwarded to scoring (independent hard caps)
+- **Caps:** Top 10 arXiv + top 10 journal papers forwarded to scoring (independent hard caps)
 - **Results written to:** `users/<name>/data/DATE/filtered_papers.json`
 
 **Rate limit and parallelism:** The cached API has a 50k input-token/minute limit shared across all calls. Each user's triage thread launches `i × 61s` apart so no two cached calls overlap within the same 60-second window. Batch calls run concurrently in the background (no rate limit applies). Within each thread, the cached call always fires before the Batch call to hit the cache while it is still warm. Token counts are estimated per call (chars/4) against a 40k safety threshold; if arXiv or journals individually exceeds 40k, or both combined exceed 40k, the larger pool is automatically routed to Batch.

@@ -118,8 +118,8 @@ H1: `run_daily.py` now sweeps dedup+archive over the last 3 days (Monday covers 
 
 ## Medium severity
 
-- **M1. `paper_insights` opt-in does not exist in code** — `run_pipeline.py:776` hardcodes `scoring_insights.txt` for every user; no `.py` file references the flag. Either an undocumented full rollout (CLAUDE.md + [[Paper Insights]] stale) or a lost feature. **Needs user ruling before fixing docs or code.**
-- **M2. Triage caps are 10+10, not the documented 15+15** — `run_pipeline.py:35-36` vs CLAUDE.md/TODO.md. **Needs user ruling** (intentional tuning with stale docs?).
+- **M1. `paper_insights` opt-in does not exist in code** — `run_pipeline.py:776` hardcodes `scoring_insights.txt` for every user; no `.py` file references the flag. **RESOLVED 2026-08-21: user ruled full rollout is by design.** Docs updated (CLAUDE.md, [[AI Pipeline]], [[Cost Model]], [[Daily Digest]], [[Taste Profile]], [[Home]]); code unchanged; legacy flag ignored.
+- **M2. Triage caps are 10+10, not the documented 15+15** — `run_pipeline.py:35-36` vs CLAUDE.md/TODO.md. **RESOLVED 2026-08-21: user ruled 10+10 (code) is correct.** CLAUDE.md, README.md, TODO.md corrected.
 - **M3. Scoring join crashes on malformed entry** — `run_pipeline.py:688` `item["arxiv_id"]` raises KeyError if one returned score entry lacks the key; one bad entry kills the run post-billing. Use `.get()` + warn.
 - **M4.** *(unverified — from agent trace)* Triage batch-timeout fallback never writes `batch_fallback.json` (`run_pipeline.py:479-513`) — only scoring does — so the alert-email scan misses triage fallbacks (silent 2× cost).
 - **M5.** *(unverified — from agent trace)* Scoring fallback fires only on `BatchTimeoutError`; a batch ending `errored`/`expired` hits `sys.exit(1)` (`run_pipeline.py:403-416`) without trying the direct API that is the documented recovery.

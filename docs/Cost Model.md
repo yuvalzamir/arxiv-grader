@@ -58,10 +58,10 @@ Each new user profile creation: **~$0.05–0.08**
 
 ---
 
-## Paper Insights (Opt-In Premium)
+## Paper Insights (All Users)
 
-Users with `paper_insights: true` add ~2–3× output tokens for scoring:
-- Standard scoring: ~$0.018/day
+Insights scoring (standard for everyone since 2026-05-28) costs ~2–3× the output tokens of plain scoring:
+- Plain scoring (historical baseline): ~$0.018/day
 - With insights: ~$0.030–0.040/day
 
 ---

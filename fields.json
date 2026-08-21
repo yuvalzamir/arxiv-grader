@@ -2639,5 +2639,157 @@
       "Quantum Physics",
       "Quantum Phenomena"
     ]
+  },
+  "library-science": {
+    "arxiv_categories": ["cs.DL"],
+    "description": "Library and information science, academic librarianship, and archival studies — collections, cataloging and metadata, scholarly communication, information literacy, library technology, and archival practice",
+    "journals": [
+      {
+        "name": "CollegeResearchLibraries",
+        "url": "https://crl.acrl.org/index.php/crl/gateway/plugin/WebFeedGatewayPlugin/rss2",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "PortalLibrariesAcademy",
+        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=159",
+        "publisher": "muse",
+        "tag_filter": null
+      },
+      {
+        "name": "JAcademicLibrarianship",
+        "url": "https://rss.sciencedirect.com/publication/science/00991333",
+        "publisher": "elsevier_general",
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
+      },
+      {
+        "name": "LibraryQuarterly",
+        "url": "https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=lq",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "LibraryTrends",
+        "url": "https://muse.jhu.edu/feeds/latest_articles?jid=334",
+        "publisher": "muse",
+        "tag_filter": null
+      },
+      {
+        "name": "EBLIP",
+        "url": "https://journals.library.ualberta.ca/eblip/index.php/EBLIP/gateway/plugin/WebFeedGatewayPlugin/rss2",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "JMLA",
+        "url": "https://jmla.pitt.edu/ojs/jmla/gateway/plugin/WebFeedGatewayPlugin/rss2",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "JASIST",
+        "url": "https://onlinelibrary.wiley.com/feed/23301643/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "LISResearch",
+        "url": "https://rss.sciencedirect.com/publication/science/07408188",
+        "publisher": "elsevier_general",
+        "tag_filter": null,
+        "id_pattern": "pii/S(\\d+)"
+      },
+      {
+        "name": "JDocumentation",
+        "openalex_issn": "0022-0418",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "JLibrarianshipInfoSci",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=lis",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "JInformationScience",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=jis",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "IFLAJournal",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=ifl",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "CatalogingClassificationQ",
+        "url": "https://www.tandfonline.com/feed/rss/wccq20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "JLSC",
+        "openalex_issn": "2162-3309",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "Code4Lib",
+        "url": "https://journal.code4lib.org/feed",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "LeadPipe",
+        "url": "https://www.inthelibrarywiththeleadpipe.org/feed/",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "ReferenceServicesReview",
+        "openalex_issn": "0090-7324",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "LibraryHiTech",
+        "openalex_issn": "0737-8831",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "LIBERQuarterly",
+        "openalex_issn": "2213-056X",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "ArchivalScience",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10502&query=*&content-type=Article",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "Archivaria",
+        "url": "https://archivaria.ca/index.php/archivaria/gateway/plugin/WebFeedGatewayPlugin/rss2",
+        "publisher": "plos",
+        "tag_filter": null
+      },
+      {
+        "name": "ArchivesRecords",
+        "openalex_issn": "2325-7962",
+        "publisher": "openalex",
+        "tag_filter": null
+      }
+    ],
+    "tree_path": [
+      "Social Sciences",
+      "Library & Information Science",
+      "Librarianship & Archives",
+      "Library Science & Archival Studies"
+    ]
   }
 }

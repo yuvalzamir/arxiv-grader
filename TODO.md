@@ -6,10 +6,6 @@
 
 Three high-severity bugs from this audit were fixed 2026-07-20 (Friday-ratings archiving, malformed-profile crash, archive corruption wipe). Remaining, in priority order:
 
-**Needs a decision first:**
-- [ ] **`paper_insights` opt-in doesn't exist in code** — `run_pipeline.py:776` hardcodes the insights prompt for every user; no `.py` references the flag. Decide: full rollout (fix CLAUDE.md + vault) or restore the opt-in (fix code).
-- [ ] **Triage caps 10+10 in code vs 15+15 in all docs** (`run_pipeline.py:35-36`). Decide which is right, fix the other.
-
 **Crash-proofing (small fixes):**
 - [ ] Scoring join: `item["arxiv_id"]` KeyError on one malformed model entry kills the run post-billing (`run_pipeline.py:688`) — use `.get()` + warning.
 - [ ] `feedparser.parse()` timeout fix never landed in `fetch_papers.py:138` / `fetch_preprints.py:106,179` — still can hang the pipeline.
@@ -71,8 +67,8 @@ scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log
 ## Known rough edges (monitor, no action needed now)
 
 - Cron changed to Mon–Fri 05:30 UTC (was Tue–Sat) — Friday arXiv data now delivered Monday
-- On Mondays, arXiv feed has 120–165 papers due to weekend accumulation — triage cap of 15 handles this
-- Scoring agent `max_tokens=16000` — sufficient for up to ~30 filtered papers (cap 15+15)
+- On Mondays, arXiv feed has 120–165 papers due to weekend accumulation — triage cap of 10 handles this
+- Scoring agent `max_tokens=16000` — sufficient for up to ~30 filtered papers (well above the 10+10 cap)
 - Cron: system timezone set to `America/New_York` (`timedatectl set-timezone`); crontab runs at 00:30 ET daily, 01:30 ET monthly refiner — DST handled automatically
 - Anthropic Batch API (Sonnet) can get stuck during incidents — use `--no-batch` flag as fallback
 
@@ -80,14 +76,11 @@ scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log
 
 ## Backlog
 
-### New fields
-- [ ] **Review library-science field plan** — full plan drafted 2026-07-28 in `docs/plan_library_science_field.md`: 22 journals (academic librarianship, LIS research, cataloging/metadata/scholarly-comm, archival studies), arXiv `cs.DL`, no new scrapers needed (OJS journals reuse `plos`, Emerald via `openalex` ISSN, Cloudflare hosts via existing FlareSolverr). Open items before implementation: resolve Library Trends' MUSE jid; verify OJS gateway feeds (EBLIP, JMLA, Archivaria) and OpenAlex ISSNs in the Step-10 test run; provide `ANTHROPIC_API_KEY_LIBRARY_SCIENCE`.
-
 ### Funding & sustainability
 - [ ] **Sponsorship / small grant** (#42) — Apply for small grants (Sloan Foundation, NSF CAREER supplements, EU Open Science) to fund the service as public scientific infrastructure. No billing complexity, keeps it free for users. One grant typically covers 1–2 years of operating costs.
 
 ### Failure recovery
-- [ ] **ACM TOSEM feed parse error daily** — `dl.acm.org` not in `_CLOUDFLARE_HOSTS`; try adding it so TOSEM goes through FlareSolverr.
+- [ ] **Verify 2026-08-21 fixes in next daily log** — SMTP 421 retry (`run_daily.py`, `run_weekly_digest.py`) and TOSEM via FlareSolverr (`scrapers/sources.py`) deployed 2026-08-21. In the Fri 2026-08-22 daily.log: TOSEM should yield papers (or at least stop erroring); any `421` should show a `SMTP send failed (attempt 1/3)` warning followed by success, not a FAILED user.
 - [ ] **IEEE SPL: 0 papers, whole feed "skipped at or before watermark" daily** — SPL's watermark advances daily while every entry is skipped, which is contradictory; suspect feed entries carry a feed-build date so nothing is ever "new". Investigate `fetch_from_rss` date handling for the ieeexplore.ieee.org feed. (TSE recovered on its own 2026-08-17: 17 articles, watermark advanced — its stall was just no new feed content.)
 - [ ] **Retry SMTP 421 in send_email** — Gmail throws transient `421 Temporary System Problem` when 54 parallel users burst-connect to smtp.gmail.com; ~17 send failures in the week of Aug 10–14, 5 more on Mon 2026-08-17 (see `docs/runs/`). Daily sends auto-recover via the retry pass, but weekly-only send failures don't (see next item's sibling bug in the audit backlog). Add retry-with-backoff (e.g. 3 attempts, 30s apart) around `server.sendmail()` in `run_daily.py` and `run_weekly_digest.py`.
 - [ ] **Watermark auto-restore on total field failure** (#2) — If every user in a field failed triage, automatically restore `journal_watermarks.json` from the per-run snapshot. Currently requires manual `cp` command. Rare but high-stakes when it happens.
@@ -107,6 +100,8 @@ scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log
   - `literature-and-culture`: JModernJewishStudies, JewishCultureHistory
 
   Also relevant for Elsevier social-science journals with same Nov-2024 restriction (elsevier_general): EconEdReview, TeachingTeacherEdu, EarlyChildhoodResQ, IntJEdDevelopment, ComputersEdu (edu-policy field).
+
+  Also relevant for `library-science` (added 2026-08-21): JAcademicLibrarianship + LISResearch (elsevier_general, 43/61 and 5/8 abstracts missing in verification) and JLSC (OA but platform is Anubis-bot-walled; OpenAlex has no abstracts — CORE should, since it's OA).
 
 ### Discovery
 - Deferred to `docs/scaling_analysis.md` — need more users per field first.

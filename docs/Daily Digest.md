@@ -57,9 +57,9 @@ The server (`server.py /rate`) auto-decodes percent-encoded query parameters via
 
 ---
 
-## Paper Insights (Opt-In)
+## Paper Insights (All Users)
 
-When `paper_insights: true` in `taste_profile.json`, scored papers include an `insights` object:
+Scored papers include an `insights` object (standard for all users; the legacy `paper_insights` profile flag is ignored):
 ```json
 "insights": {
   "claim": "What the paper claims",

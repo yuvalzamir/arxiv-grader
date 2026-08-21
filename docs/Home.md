@@ -25,7 +25,7 @@
 - [[Profile Edit Skill]] — free-text user feedback → manual profile patch (`.claude/skills/edit-profile.md`)
 - [[Check Log Skill]] — diagnose a failed daily run: download log, match known bugs, recommend recovery (`.claude/skills/check-log.md`)
 - [[Manage Profile]] — `/manage` self-service page: frequency toggles, interest feedback, email lookup
-- [[Paper Insights]] — opt-in deep-analysis feature (`paper_insights: true`)
+- [[Paper Insights]] — deep-analysis scoring output (standard for all users)
 
 ### Infrastructure & Ops
 - [[Infrastructure]] — VPS, Caddy, Gunicorn, cron schedule
@@ -120,3 +120,4 @@ Journals ───┘                                              │
 - `systems_biology_plan.md` — systems-biology field (Cell, PLOS, PNAS scrapers)
 - `new_field_ai_vision.md` — ai-vision field (IEEE, Springer scrapers needed)
 - `plan_music_theory_field.md` — music-theory field (journals-only, OpenAlex)
+- `plan_library_science_field.md` — library-science field (23 journals + cs.DL; implemented 2026-08-21, server verification pending)
