@@ -34,6 +34,8 @@ LIKED_SAMPLE_SIZE  = 10  # how many archive entries to randomly sample from
 IRRELEVANT_MAX     = 3   # negative examples shown to scoring agent
 MAX_TRIAGE_PASS         = 10  # hard cap on arXiv papers forwarded to scoring
 MAX_TRIAGE_PASS_JOURNAL = 10  # hard cap on journal papers forwarded to scoring
+SCORING_MAX_TOKENS = 24000  # insights output runs ~500-800 tokens/paper; a full
+                            # 20-paper batch hit the old 16000 cap (2026-08-25)
 
 BATCH_POLL_INTERVAL = 15   # seconds between batch status checks
 BATCH_TIMEOUT       = 1200 # give up after 20 minutes
@@ -661,14 +663,14 @@ def run_scoring(filtered_papers: list[dict], profile: dict, system_prompt: str, 
     try:
         if use_batch:
             response = _submit_and_poll(
-                client, "scoring", SCORING_MODEL, 16000, system_prompt, user_message, "Scoring",
+                client, "scoring", SCORING_MODEL, SCORING_MAX_TOKENS, system_prompt, user_message, "Scoring",
             )
         else:
-            response = _call_direct(client, SCORING_MODEL, 16000, system_prompt, user_message, "Scoring")
+            response = _call_direct(client, SCORING_MODEL, SCORING_MAX_TOKENS, system_prompt, user_message, "Scoring")
     except BatchTimeoutError:
         log.warning("Scoring: batch timed out — retrying with direct API...")
         try:
-            response = _call_direct(client, SCORING_MODEL, 16000, system_prompt, user_message, "Scoring")
+            response = _call_direct(client, SCORING_MODEL, SCORING_MAX_TOKENS, system_prompt, user_message, "Scoring")
             no_batch_succeeded = True
         except Exception as e:
             no_batch_succeeded = False

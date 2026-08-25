@@ -5,6 +5,8 @@
 **Server:** Hetzner CX23 — `116.203.255.222`
 **Domain:** `incomingscience.xyz`
 
+**Claude access policy (2026-08-25):** Claude may run `scp` *downloads* from the server directly (pulling logs, data, configs). Uploads, ssh commands, and pipeline/refiner runs remain operator-only — Claude provides the command, the operator runs it.
+
 ---
 
 ## SSH into the server

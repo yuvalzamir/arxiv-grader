@@ -15,17 +15,15 @@ Use today's date as the run date unless the operator specifies otherwise. Confir
 
 ---
 
-### Step 2 — Offer to download the log
+### Step 2 — Download the log
 
-**Never run scp yourself. Print the command and ask the operator to run it.**
+**Downloads from the server are allowed (policy change 2026-08-25) — run the scp yourself.** Uploads and state-changing ssh commands remain operator-only.
 
 ```
 scp root@116.203.255.222:/var/log/arxiv-grader/daily.log ./debugging/daily_log_MMDD.txt
 ```
 
 (Replace MMDD with today's month and day, e.g. `0603` for June 3.)
-
-Wait for the operator to confirm the download before proceeding.
 
 ---
 

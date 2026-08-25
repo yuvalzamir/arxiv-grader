@@ -166,7 +166,7 @@ The server does **not** pull from git. Files must be copied manually via SCP:
 scp <file1> <file2> root@116.203.255.222:/opt/arxiv-grader/
 ```
 
-**Never SSH into the server or run the pipeline autonomously** — always provide commands for the user to run themselves.
+**Never SSH into the server, upload files, or run the pipeline autonomously** — always provide commands for the user to run themselves. Exception (2026-08-25): `scp` *downloads* from the server (logs, data, configs) may be run directly; allow rules in `.claude/settings.local.json`.
 
 ## Known Constraints
 
