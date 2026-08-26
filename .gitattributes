@@ -1,0 +1,2 @@
+# Shell scripts deployed to the Linux server must keep LF endings on Windows checkouts
+*.sh text eol=lf
