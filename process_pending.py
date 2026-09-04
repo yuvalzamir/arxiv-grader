@@ -11,12 +11,14 @@ Usage:
     python process_pending.py <slug>      # process one submission
     python process_pending.py --all       # process all unprocessed
     python process_pending.py --list      # list pending submissions
+    python process_pending.py --delete <handle>   # delete a pending submission (duplicate signup)
 """
 
 import argparse
 import json
 import logging
 import os
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -72,6 +74,39 @@ def list_pending() -> list[Path]:
         if "processed_at" not in data:
             results.append(d)
     return results
+
+
+# ---------------------------------------------------------------------------
+# Delete a user by handle
+# ---------------------------------------------------------------------------
+
+def delete_pending(slug: str, force: bool = False) -> None:
+    """Remove a users_pending/<slug>/ submission (e.g. an accidental duplicate signup).
+
+    Only touches users_pending/ — never an activated users/ directory.
+    """
+    pending_dir = PENDING_DIR / slug
+    if not pending_dir.exists():
+        log.error("No pending submission found for handle %r.", slug)
+        sys.exit(1)
+
+    # Show what will be deleted, including the registered email if available.
+    email = "?"
+    ob_path = pending_dir / "onboarding.json"
+    if ob_path.exists():
+        email = json.loads(ob_path.read_text(encoding="utf-8")).get("email", email)
+
+    print(f"About to permanently delete pending submission {slug!r} (email: {email}):")
+    print(f"  {pending_dir}")
+
+    if not force:
+        reply = input("Type the handle again to confirm deletion: ").strip()
+        if reply != slug:
+            log.info("Confirmation did not match — aborting. Nothing deleted.")
+            return
+
+    shutil.rmtree(pending_dir)
+    log.info("Deleted %s", pending_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -215,7 +250,13 @@ def main():
     group.add_argument("slug", nargs="?", help="Process a single pending slug.")
     group.add_argument("--all",  action="store_true", help="Process all unprocessed submissions.")
     group.add_argument("--list", action="store_true", help="List unprocessed submissions.")
+    group.add_argument("--delete", metavar="HANDLE", help="Delete a pending submission by handle (users_pending/ only).")
+    parser.add_argument("--force", action="store_true", help="Skip the confirmation prompt for --delete.")
     args = parser.parse_args()
+
+    if args.delete:
+        delete_pending(args.delete, force=args.force)
+        return
 
     if args.list:
         pending = list_pending()

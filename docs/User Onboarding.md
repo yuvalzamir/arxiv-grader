@@ -75,7 +75,10 @@ Step 5 /signup/done     → POSTs to /onboarding/submit → success
 python process_pending.py --list    # show unprocessed submissions
 python process_pending.py --all     # process all pending
 python process_pending.py <slug>    # process one by email slug
+python process_pending.py --delete <handle>   # delete a pending submission (e.g. an accidental duplicate signup)
 ```
+
+`--delete` only removes `users_pending/<handle>/` — it never touches an activated `users/` directory. It prints the handle + registered email and requires re-typing the handle to confirm (`--force` skips the prompt).
 
 **What it does:**
 1. Loads `users_pending/<slug>/onboarding.json`
