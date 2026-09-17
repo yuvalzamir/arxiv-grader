@@ -2,7 +2,7 @@
 
 Investigation 2026-09-17 (re-examination of the parked `feature/ssrn-integration` branch, 2026-04-30). Verdict: **discovery is now solved** via an undocumented JSON API; **abstracts remain the hard part** (FlareSolverr required); **licensing exposure is Elsevier-class** (user accepted 2026-09-17).
 
-**Status: IMPLEMENTED 2026-09-17** in `fetch_preprints.py` (`fetch_ssrn_preprints`), not the old branch — see [[Preprint Sources]] for the operational details (config schema, watermark format, enabled fields, shared-source cache). Awaiting server-side verification (below) and first production run.
+**Status: DEPLOYED 2026-09-17** in `fetch_preprints.py` (`fetch_ssrn_preprints`), not the old branch — see [[Preprint Sources]] for the operational details (config schema, watermark format, enabled fields, shared-source cache). All server-side verification passed same day: listing via FlareSolverr XML fallback, session-based abstract scraping (43–45/46 on WGSRN test runs), prefetch cache consumed by the fetch path in seconds. Prefetch cron (Sun–Thu 22:30 ET) installed and cache warmed for all six networks. Remaining: confirm SSRN lines in the first production daily log (2026-09-18), then routine.
 
 ## History
 

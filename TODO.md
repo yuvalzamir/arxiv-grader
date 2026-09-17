@@ -65,6 +65,8 @@ scp root@116.203.255.222:/var/log/arxiv-grader/server.log ./debugging/server_log
 
 ## Known rough edges (monitor, no action needed now)
 
+- **SSRN went live 2026-09-17** (6 networks, prefetch cron 22:30 ET; see `docs/SSRN Access.md`) — check the 2026-09-18 daily log for `SSRN <net>: N new papers`, `served from prefetch cache`, and `Field '<f>': X arXiv + Y preprints + ...` lines, plus the one-time triage cache rewrite cost; then delete this item. Also expect `NBER: shared source — reusing` (starvation fix) — econ-education/econ-political get NBER/CEPR again.
+
 - Cron changed to Mon–Fri 05:30 UTC (was Tue–Sat) — Friday arXiv data now delivered Monday
 - On Mondays, arXiv feed has 120–165 papers due to weekend accumulation — triage cap of 10 handles this
 - Scoring agent `max_tokens` raised 16000 → 24000 on 2026-08-25 (`SCORING_MAX_TOKENS`) after a full 20-paper insights batch hit the old cap (15,671 tokens, ruihaoliu). Headroom now ~50% over worst observed.
