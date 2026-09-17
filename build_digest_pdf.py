@@ -36,6 +36,8 @@ from reportlab.platypus import (
     HRFlowable, KeepTogether, PageBreak,
 )
 
+from fetch_preprints import PREPRINT_SOURCES
+
 # ── Rating endpoint — overridden by --base-url and --user CLI flags ──────────
 RATE_BASE_URL = "https://your-server.com/rate"
 RATE_USER     = ""   # set from --user flag; embedded in every rating URL
@@ -485,14 +487,21 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_pat
     all_papers = json.loads(Path(papers_path).read_text(encoding="utf-8"))
     if journals_path:
         all_papers += json.loads(Path(journals_path).read_text(encoding="utf-8"))
-    all_journals = [p for p in all_papers if p.get("source")]
-    all_arxiv    = [p for p in all_papers if not p.get("source")]
+    def _is_journal(p: dict) -> bool:
+        return bool(p.get("source")) and p["source"] not in PREPRINT_SOURCES
+
+    all_journals = [p for p in all_papers if _is_journal(p)]
+    all_arxiv    = [p for p in all_papers if not _is_journal(p)]
 
     scored_ids = {p["arxiv_id"] for p in scored}
 
-    # Split scored into journal and arXiv (already sorted by score desc)
-    scored_journals = [p for p in scored if p.get("source")]
-    scored_arxiv    = [p for p in scored if not p.get("source")]
+    # Split scored into journal and preprint pools (already sorted by score desc)
+    scored_journals = [p for p in scored if _is_journal(p)]
+    scored_arxiv    = [p for p in scored if not _is_journal(p)]
+
+    # Pool header: "arXiv" for pure-arXiv fields, "Preprints" once other
+    # platforms (SSRN, bioRxiv, medRxiv) are mixed in.
+    preprint_label = "Preprints" if any(p.get("source") for p in all_arxiv) else "arXiv"
 
     # Unscored: everything not in scored
     unscored_journals = [p for p in all_journals if p["arxiv_id"] not in scored_ids]
@@ -534,7 +543,7 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_pat
             story.append(scored_block(paper, d.isoformat(), styles))
 
     if scored_arxiv:
-        story.append(KeepTogether(subsection_divider("arXiv", len(scored_arxiv), styles)))
+        story.append(KeepTogether(subsection_divider(preprint_label, len(scored_arxiv), styles)))
         for paper in scored_arxiv:
             story.append(scored_block(paper, d.isoformat(), styles))
 
@@ -570,7 +579,7 @@ def build_pdf(scored_path: str, papers_path: str, output_path: str, journals_pat
     if unscored_arxiv:
         first = unscored_block(unscored_arxiv[0], d.isoformat(), styles)
         header = _browse_header if not unscored_journals else []
-        story.append(KeepTogether(header + subsection_divider("arXiv", len(unscored_arxiv), styles) + [first]))
+        story.append(KeepTogether(header + subsection_divider(preprint_label, len(unscored_arxiv), styles) + [first]))
         for paper in unscored_arxiv[1:]:
             story.append(unscored_block(paper, d.isoformat(), styles))
 

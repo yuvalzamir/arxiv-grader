@@ -454,6 +454,12 @@
             ).join('');
         }
 
+        if (data.ssrn_networks && data.ssrn_networks.length) {
+            chipsHtml += data.ssrn_networks.map(n =>
+                `<span class="px-4 py-1.5 bg-secondary-fixed text-on-secondary-fixed rounded-full text-[10px] font-bold tracking-wider uppercase">SSRN · ${n.name}</span>`
+            ).join('');
+        }
+
         categoryChips.innerHTML = chipsHtml;
 
         const uniqueNames = [...new Set(data.journals.map(j => j.name))];

@@ -37,6 +37,9 @@ System timezone is `America/New_York` → DST-aware automatically.
 
 # Monthly refiner: 16th of month 01:30 ET (mid-month run)
 30 1 16 * *   cd /opt/arxiv-grader && python run_all_users.py --refine >> /var/log/arxiv-grader/refiner.log 2>&1
+
+# SSRN abstract prefetch: Sun–Thu 22:30 ET, warms ssrn_abstract_cache.json for the next 00:30 run (see [[Preprint Sources]])
+30 22 * * 0-4 /opt/arxiv-grader/venv/bin/python /opt/arxiv-grader/fetch_preprints.py --prefetch-ssrn >> /var/log/arxiv-grader/prefetch.log 2>&1
 ```
 
 ---

@@ -243,7 +243,9 @@ def run_preprint_scrape(date_str: str, active_fields: list[str], shared_data_dir
     """
     fields_with_preprints = [
         f for f in active_fields
-        if fields_data.get(f, {}).get("preprints") or fields_data.get(f, {}).get("preprint_categories")
+        if fields_data.get(f, {}).get("preprints")
+        or fields_data.get(f, {}).get("preprint_categories")
+        or fields_data.get(f, {}).get("ssrn_networks")
     ]
     if not fields_with_preprints:
         return

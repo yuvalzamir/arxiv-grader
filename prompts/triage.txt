@@ -25,6 +25,14 @@ SIGNALS — what counts as a concrete anchor
 3. Subcategory + topic — the paper's subcategory matches a monitored category AND the topic clearly overlaps with a grade 1–4 research area → sufficient for "medium" only
 4. Topic adjacency alone (no keyword hit, no author, no subcategory match) → always "low", regardless of how related the broader field seems
 
+PAPER SOURCES
+=============
+Most papers in this pool are arXiv preprints with subcategory tags. Some come from
+other preprint servers (SSRN, bioRxiv, medRxiv working papers) — these have no
+subcategories, so signal 3 cannot apply to them; judge them on keyword and author
+anchors alone. All are unreviewed preprints — apply the same classification rules
+regardless of platform.
+
 OUTPUT
 ======
 Return one line per paper. Output them in order of relevance — most relevant first.

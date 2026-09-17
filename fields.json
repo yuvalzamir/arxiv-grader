@@ -1323,6 +1323,12 @@
       "econ.TH"
     ],
     "description": "Political economy, media economics, and applied microeconomics",
+    "ssrn_networks": [
+      {
+        "name": "PSN",
+        "binding_id": 998398
+      }
+    ],
     "journals": [
       {
         "name": "AER",
@@ -1637,6 +1643,12 @@
   "music-theory": {
     "arxiv_categories": [],
     "description": "Music theory, computational musicology, and music cognition â€” harmonic analysis, music perception, empirical musicology, and quantitative approaches to musical structure",
+    "ssrn_networks": [
+      {
+        "name": "MRCN",
+        "binding_id": 1800906
+      }
+    ],
     "journals": [
       {
         "name": "MusicPerception",
@@ -1685,6 +1697,12 @@
   "comparative-literature": {
     "arxiv_categories": [],
     "description": "Comparative literature, literary theory, and world literature â€” cross-cultural literary analysis, narratology, literary history, and the theory and history of criticism",
+    "ssrn_networks": [
+      {
+        "name": "LIT",
+        "binding_id": 948057
+      }
+    ],
     "journals": [
       {
         "name": "ComparativeLiterature",
@@ -1733,6 +1751,12 @@
   "gender-studies": {
     "arxiv_categories": [],
     "description": "Gender studies, feminist theory, and women's studies â€” intersectionality, feminist philosophy, queer theory, and the sociology of gender across cultural, political, and social contexts",
+    "ssrn_networks": [
+      {
+        "name": "WGSRN",
+        "binding_id": 948113
+      }
+    ],
     "journals": [
       {
         "name": "GenderSociety",
@@ -1952,6 +1976,12 @@
   "literature-and-culture": {
     "arxiv_categories": [],
     "description": "Literary and cultural history â€” 19th-century American literature, transcendentalism, confessional poetry, 20th-century Polish literature, interwar Polish history, narrative theory, cultural studies, secular Jewish identity",
+    "ssrn_networks": [
+      {
+        "name": "LIT",
+        "binding_id": 948057
+      }
+    ],
     "journals": [
       {
         "name": "AmericanLiterature",
@@ -2081,6 +2111,12 @@
       "econ.LM"
     ],
     "description": "Economics of education, human capital, resource allocation in schools, and labor market returns to schooling",
+    "ssrn_networks": [
+      {
+        "name": "EduRN",
+        "binding_id": 3118597
+      }
+    ],
     "journals": [
       {
         "name": "EconEdReview",
@@ -2252,6 +2288,12 @@
   "edu-policy": {
     "arxiv_categories": [],
     "description": "Education policy, school governance, teacher workforce, equity and access, and evidence-based reform â€” research for national and regional policymakers",
+    "ssrn_networks": [
+      {
+        "name": "EduRN",
+        "binding_id": 3118597
+      }
+    ],
     "journals": [
       {
         "name": "EducationalPolicy",
@@ -2643,6 +2685,12 @@
   "library-science": {
     "arxiv_categories": ["cs.DL"],
     "description": "Library and information science, academic librarianship, and archival studies — collections, cataloging and metadata, scholarly communication, information literacy, library technology, and archival practice",
+    "ssrn_networks": [
+      {
+        "name": "InfoSciRN",
+        "binding_id": 3468872
+      }
+    ],
     "journals": [
       {
         "name": "CollegeResearchLibraries",

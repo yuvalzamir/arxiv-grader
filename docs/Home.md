@@ -16,6 +16,7 @@
 ### Data & Ingestion
 - [[Journal Scrapers]] — publisher scrapers, watermarks, fields.json
 - [[Preprint Sources]] — bioRxiv/medRxiv (date watermarked) + NBER/CEPR (ID watermarked); triage routing
+- [[SSRN Access]] — 2026-09-17 re-examination: metadata via unauthenticated api.ssrn.com bindings API (works); abstracts need FlareSolverr; Elsevier licensing exposure
 - [[Abstract Enrichment]] — per-publisher fallback chain (OpenAlex → S2 → CORE)
 
 ### User & Profile

@@ -83,6 +83,7 @@ python server.py
 1. `deduplicate_ratings.py` — keep latest rating per paper per day
 2. `archive.py` — append deduplicated ratings to `users/<name>/archive.json`
 3. `fetch_papers.py` — fetch arXiv RSS → `today_papers.json`
+3b. `fetch_preprints.py` — NBER/CEPR, bioRxiv/medRxiv, and SSRN networks (via api.ssrn.com + FlareSolverr; abstracts pre-warmed by the 22:30 ET `--prefetch-ssrn` cron) → merged into the preprint pool
 4. `fetch_journals.py` — scrape 11 top journals → append to today_papers
 5. `run_pipeline.py` — two-stage AI grading via Anthropic Batch API
 6. `build_digest_pdf.py` — generate PDF with embedded rating hyperlinks
@@ -155,6 +156,7 @@ pip install -r requirements.txt
 - **Web**: Caddy reverse proxy + HTTPS (Let's Encrypt) → Gunicorn (systemd)
 - **Cron (system TZ=America/New_York, DST-aware)**:
   - Mon–Fri 00:30 ET → daily pipeline
+  - Sun–Thu 22:30 ET → SSRN abstract prefetch (warms `ssrn_abstract_cache.json`)
   - 2nd of month 01:30 ET → monthly refiner
 - **Logs**: `/var/log/arxiv-grader/daily.log`, `/var/log/arxiv-grader/refiner.log`
 

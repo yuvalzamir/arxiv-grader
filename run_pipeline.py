@@ -24,6 +24,8 @@ from pathlib import Path
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
+from fetch_preprints import PREPRINT_SOURCES
+
 load_dotenv()  # root .env
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
@@ -107,7 +109,9 @@ def _paper_block(i: int, paper: dict, include_triage: bool = False) -> str:
     lines = [f"[{i}]"]
     if include_triage:
         lines.append(f"triage: {paper.get('triage', 'unknown')}")
-        if paper.get("source"):
+        # Preprint platforms (bioRxiv/medRxiv/SSRN) set 'source' too — only
+        # peer-reviewed journal papers get the "source: journal" signal.
+        if paper.get("source") and paper["source"] not in PREPRINT_SOURCES:
             lines.append("source: journal")
     abstract_quality = paper.get("abstract_quality")
     lines += [
@@ -312,14 +316,20 @@ def _record_fallback(debug_dir: Path, stage: str, no_batch_succeeded: bool) -> N
 
 def _call_direct(client: Anthropic, model: str, max_tokens: int,
                  system: str, user_message: str, label: str):
-    """Call the messages API directly (synchronous, no batch queue). Used for scoring fallback."""
+    """Call the messages API directly (synchronous, no batch queue). Used for scoring fallback.
+
+    Streams the response: the SDK rejects non-streaming requests whose max_tokens
+    implies >10 minutes of generation, which SCORING_MAX_TOKENS=24000 exceeds
+    ("Streaming is required for operations that may take longer than 10 minutes").
+    """
     log.info("%s: calling API directly (no-batch mode)...", label)
-    msg = client.messages.create(
+    with client.messages.stream(
         model=model,
         max_tokens=max_tokens,
         system=system,
         messages=[{"role": "user", "content": user_message}],
-    )
+    ) as stream:
+        msg = stream.get_final_message()
     log.info("%s done. (input: %d tokens, output: %d tokens)",
              label, msg.usage.input_tokens, msg.usage.output_tokens)
     return msg
@@ -566,7 +576,6 @@ def run_triage(
     is_first_user: True for the first user in a field (cache_write cost), False for
     subsequent users (cache_read, free ITPM).
     """
-    PREPRINT_SOURCES = {"bioRxiv", "medRxiv"}
     arxiv_papers   = [p for p in papers if not p.get("source") or p.get("source") in PREPRINT_SOURCES]
     journal_papers = [p for p in papers if p.get("source") and p.get("source") not in PREPRINT_SOURCES]
 

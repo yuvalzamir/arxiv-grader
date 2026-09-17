@@ -32,7 +32,7 @@ SOURCE FIELD
 ============
 Some papers include "source: journal" — these are published, peer-reviewed articles.
 Peer review is a mild positive signal: all else equal, a journal paper may be slightly more polished or impactful than a preprint on the same topic.
-However, a highly relevant arXiv paper can easily outscore a journal paper on a less relevant topic — profile relevance is always the primary driver.
+However, a highly relevant preprint (arXiv, SSRN, bioRxiv/medRxiv) can easily outscore a journal paper on a less relevant topic — profile relevance is always the primary driver.
 Do not adjust scores based on which journal the paper came from; only the peer-reviewed/preprint distinction matters.
 
 TAGS — assign all that apply
