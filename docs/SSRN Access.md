@@ -30,12 +30,12 @@ Binding id = SSRN research-network id. Found on each network landing page (`www.
 | Women & Gender Studies (WGSRN) | `wgsrn` | 948113 | 42k | ~10–20/day |
 | Political Science (PSN) | `psn` | 998398 | 356k | ~30–70/day |
 | Economics (ERN) | `ern` | 205 | 717k | high |
-| Law (LSN) | `lsn` | 201 | — | — |
+| Law (LSN) | `lsn` | 201 | 431k | ~90/day (measured 2026-09-17; superseded 2026-09-18 by per-eJournal bindings for `international-law` and `tech-law`) |
 | Financial Economics (FEN) | — | 203 | 277k | high |
 | Accounting (ARN) | — | 204 | 60k | — |
 
-- **eJournal-level ids mostly do NOT work** as bindings (`total: 0` for legacy ids like Pedagogy 312293); newer eJournals do (Coronavirus eJournal 3526423 works). Practical granularity is the **network level**, filtered downstream by triage — volumes are comparable to the arXiv daily feed, so existing caps handle it.
-- `www.ssrn.com/rest/rn/subject-areas/{id}` lists a network's eJournal names/urls (no auth) but those ids are display groupings, not usable bindings.
+- **CORRECTION 2026-09-18: eJournal-level ids DO work as bindings** — the 2026-09-17 test hit a dead legacy EduRN id (Pedagogy 312293) and over-generalized. All 26 LSN eJournal ids tested on 2026-09-18 return live papers via the same bindings API, including old ids (Cyberspace Law, id 225). Both law fields now use targeted eJournal bindings instead of whole-LSN (201): `international-law` 9 eJournals (~9 unique papers/day vs ~90), `tech-law` 6 eJournals (~29/day). Ids and weekly volumes in [[Preprint Sources]].
+- eJournal ids are discovered via `www.ssrn.com/rest/rn/subject-areas/{subject_area_id}` (no auth) — note the id is NOT the binding id: it's in the `data-url` of the network landing page (LSN → 267308). Each listed eJournal's `journal_id` **is** usable as a binding id.
 - Watermarking: `approved_date` fits the existing date-watermark pattern ([[Preprint Sources]], bioRxiv-style); the numeric `id` is a usable tiebreaker.
 
 ## Abstracts — the open problem

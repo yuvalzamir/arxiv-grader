@@ -136,14 +136,43 @@ as NBER), `ssrn_id` numeric, `source: "SSRN"` (→ `[SSRN]` PDF badge, arXiv tri
 
 | Field | Network | binding_id | daily volume |
 |---|---|---|---|
-| edu-policy, econ-education | EduRN (Education) | 3118597 | ~25–40 |
-| econ-political | PSN (Political Science) | 998398 | ~30–70 |
-| gender-studies | WGSRN (Women & Gender Studies) | 948113 | ~10–20 |
-| music-theory | MRCN (Music Research & Composition) | 1800906 | ~1–4 |
-| comparative-literature, literature-and-culture | LIT (Literature) | 948057 | ~2–6 |
-| library-science | InfoSciRN (Information & Library Science) | 3468872 | ~20–40 |
+| econ-political | PSN (Political Science) | 998398 | ~86 (remeasured 2026-09-18) |
+| gender-studies | WGSRN (Women & Gender Studies) | 948113 | ~10 |
+| comparative-literature, literature-and-culture | LIT (Literature) | 948057 | ~3 |
+| music-theory | 3 MRCN eJournals (below) | — | ~1–2 |
+| econ-education | 3 EduRN eJournals (below) | — | ~10 |
+| edu-policy | 4 EduRN eJournals (below) | — | ~14 |
+| library-science | 9 InfoSciRN eJournals (below) | — | ~9 |
+| international-law | 9 LSN eJournals (below) | — | ~9/day deduped |
+| tech-law | 6 LSN eJournals (below) | — | ~29/day deduped |
 
-Deliberately excluded: ERN (205) and LSN (201) — 100+/day would swamp triage; SociologyRN
+LSN was originally on the excluded list (high volume, no matching field); added 2026-09-17
+as whole-network binding 201 (~90 papers/day) for `international-law`. **Replaced 2026-09-18
+with per-eJournal bindings** (see [[SSRN Access]] correction — eJournal ids work after all):
+~10× fewer FlareSolverr abstract scrapes and much cleaner triage input. Cross-posted papers
+are deduped per field by `ssrn_id` in `fetch_ssrn_preprints`. The old `ssrn:LSN` watermark
+key is orphaned; new keys start with the standard 2-day lookback.
+
+LSN eJournal bindings (weekly unique volumes measured 2026-09-18):
+- `international-law`: IntlEconLaw 898503 (20/wk), PILHumanRights 2417761 (9), IntlEnvironmentalLaw 1397291 (9), PILSources 2417756 (8), PILCourtsAdjudication 2417733 (5), PILForeignRelations 2417770 (5), IntlCriminalLaw 951682 (2), IntlEmploymentLaborLaw 887064 (2), PILOrganizations 2417749 (2)
+- `tech-law`: AILawPolicyEthics 2874401 (103/wk), AIRoleApplicationsLaw 4860240 (34), CyberspaceLaw 225 (26), CybersecurityDataPrivacy 2704098 (21), InfoPrivacyLaw 1125502 (10), IPCopyrightLaw 1649832 (9)
+
+**2026-09-18: the eJournal maneuver was applied to every SSRN field where the data
+supported it.** Per-network 7-day measurements (whole network vs union of its eJournals)
+decided each case:
+
+Narrowed (eJournal classification near-complete, network broader than field):
+- `music-theory` → MRCN eJournals MusicTheory 1802075 (3/wk), MusicPsychology 1802069 (6), Musicology 1802051 (2). MRCN union == whole network (0 uncategorized); drops off-field Music Education + Compositions.
+- `econ-education` → EduRN eJournals ImpactEvaluation 3122965 (36/wk), SociologyOfEducation 3122892 (21), AdminLeadership 3122920 (17). EduRN is 190/wk whole with only 13/wk uncategorized.
+- `edu-policy` → same three plus TeacherEducation 3128427 (22/wk). Drops Pedagogy (63/wk), EdTech (32), Psych & Cognition (28), discipline-specific teaching eJournals — all off-field for policy.
+- `library-science` → 9 library-focused InfoSciRN eJournals (~63/wk raw, ~9/day unique). Kills the off-field Generative AI (76/wk) + Data Science (47/wk) flood that dominated InfoSciRN (207/wk whole). ~47/wk uncategorized papers are lost — accepted, as the flood suggests they skew data-science too.
+
+Kept whole-network (narrowing would lose coverage):
+- `econ-political` / PSN: only 50 of 600/wk network papers appear in ANY of PSN's 6 eJournals (no "Political Economy" grouping exists) — narrowing would discard 92% of the feed.
+- `gender-studies` / WGSRN: network scope ≈ field scope; nothing to cut.
+- `comparative-literature`, `literature-and-culture` / LIT: 7 of 20/wk papers are in no eJournal (35% loss) and volume is already tiny.
+
+Deliberately excluded: ERN (205) — 100+/day with no matching field; SociologyRN
 (3468848, ~20–40/day) as a weak match for `demography` (mostly off-topic volume);
 CommRN (3390515, ~10–25/day) is a plausible *second* network for econ-political (media/
 communication) — not added, revisit on demand; HistoryRN (3562549, ~8–20/day) likewise

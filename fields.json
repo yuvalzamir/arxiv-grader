@@ -1645,8 +1645,16 @@
     "description": "Music theory, computational musicology, and music cognition â€” harmonic analysis, music perception, empirical musicology, and quantitative approaches to musical structure",
     "ssrn_networks": [
       {
-        "name": "MRCN",
-        "binding_id": 1800906
+        "name": "MRCN-MusicTheory",
+        "binding_id": 1802075
+      },
+      {
+        "name": "MRCN-MusicPsychology",
+        "binding_id": 1802069
+      },
+      {
+        "name": "MRCN-Musicology",
+        "binding_id": 1802051
       }
     ],
     "journals": [
@@ -2113,8 +2121,16 @@
     "description": "Economics of education, human capital, resource allocation in schools, and labor market returns to schooling",
     "ssrn_networks": [
       {
-        "name": "EduRN",
-        "binding_id": 3118597
+        "name": "EduRN-ImpactEvaluation",
+        "binding_id": 3122965
+      },
+      {
+        "name": "EduRN-SociologyOfEducation",
+        "binding_id": 3122892
+      },
+      {
+        "name": "EduRN-AdminLeadership",
+        "binding_id": 3122920
       }
     ],
     "journals": [
@@ -2290,8 +2306,20 @@
     "description": "Education policy, school governance, teacher workforce, equity and access, and evidence-based reform â€” research for national and regional policymakers",
     "ssrn_networks": [
       {
-        "name": "EduRN",
-        "binding_id": 3118597
+        "name": "EduRN-AdminLeadership",
+        "binding_id": 3122920
+      },
+      {
+        "name": "EduRN-ImpactEvaluation",
+        "binding_id": 3122965
+      },
+      {
+        "name": "EduRN-SociologyOfEducation",
+        "binding_id": 3122892
+      },
+      {
+        "name": "EduRN-TeacherEducation",
+        "binding_id": 3128427
       }
     ],
     "journals": [
@@ -2687,8 +2715,40 @@
     "description": "Library and information science, academic librarianship, and archival studies — collections, cataloging and metadata, scholarly communication, information literacy, library technology, and archival practice",
     "ssrn_networks": [
       {
-        "name": "InfoSciRN",
-        "binding_id": 3468872
+        "name": "InfoSciRN-InfoTheoryResearch",
+        "binding_id": 3507073
+      },
+      {
+        "name": "InfoSciRN-InfoPolicyEthicsAccess",
+        "binding_id": 3507039
+      },
+      {
+        "name": "InfoSciRN-LibrariesInfoTech",
+        "binding_id": 3507097
+      },
+      {
+        "name": "InfoSciRN-InfoCurationMgmt",
+        "binding_id": 3507003
+      },
+      {
+        "name": "InfoSciRN-LibraryMgmtOps",
+        "binding_id": 3507633
+      },
+      {
+        "name": "InfoSciRN-LibraryServices",
+        "binding_id": 3507148
+      },
+      {
+        "name": "InfoSciRN-ILSEducation",
+        "binding_id": 3507704
+      },
+      {
+        "name": "InfoSciRN-LibrariesMedia",
+        "binding_id": 3507139
+      },
+      {
+        "name": "InfoSciRN-SpecialCollectionsArchives",
+        "binding_id": 3506932
       }
     ],
     "journals": [
@@ -2838,6 +2898,298 @@
       "Library & Information Science",
       "Librarianship & Archives",
       "Library Science & Archival Studies"
+    ]
+  },
+  "international-law": {
+    "arxiv_categories": [],
+    "description": "Public and private international law — human rights, humanitarian and international criminal law, international economic law, trade and investment disputes, law of the sea, and the law of international organizations, courts and tribunals",
+    "ssrn_networks": [
+      {
+        "name": "LSN-IntlEconLaw",
+        "binding_id": 898503
+      },
+      {
+        "name": "LSN-IntlEmploymentLaborLaw",
+        "binding_id": 887064
+      },
+      {
+        "name": "LSN-IntlEnvironmentalLaw",
+        "binding_id": 1397291
+      },
+      {
+        "name": "LSN-IntlCriminalLaw",
+        "binding_id": 951682
+      },
+      {
+        "name": "LSN-PILCourtsAdjudication",
+        "binding_id": 2417733
+      },
+      {
+        "name": "LSN-PILSources",
+        "binding_id": 2417756
+      },
+      {
+        "name": "LSN-PILOrganizations",
+        "binding_id": 2417749
+      },
+      {
+        "name": "LSN-PILHumanRights",
+        "binding_id": 2417761
+      },
+      {
+        "name": "LSN-PILForeignRelations",
+        "binding_id": 2417770
+      }
+    ],
+    "journals": [
+      {
+        "name": "AJIL",
+        "url": "https://www.cambridge.org/core/rss/product/id/3CCFB3BC2DB31CE79FBA01995D5B6028",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "EJIL",
+        "url": "https://academic.oup.com/rss/site_5452/advanceAccess_3313.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "ICLQ",
+        "url": "https://www.cambridge.org/core/rss/product/id/9D97A65DF810EA31FF7D83F3354AC3B7",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "LeidenJIL",
+        "url": "https://www.cambridge.org/core/rss/product/id/12CB3893744F52A4503D96E7E69DB060",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "JIntEconLaw",
+        "url": "https://academic.oup.com/rss/site_5203/advanceAccess_3068.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "JIntCriminalJustice",
+        "url": "https://academic.oup.com/rss/site_5201/advanceAccess_3066.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "HumanRightsLawRev",
+        "url": "https://academic.oup.com/rss/site_5167/advanceAccess_3031.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "JIntDisputeSettlement",
+        "url": "https://academic.oup.com/rss/site_5202/advanceAccess_3067.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "ICSIDReview",
+        "url": "https://academic.oup.com/rss/site_5464/advanceAccess_3325.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "ChineseJIL",
+        "url": "https://academic.oup.com/rss/site_5151/advanceAccess_3014.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "IntlRevRedCross",
+        "url": "https://www.cambridge.org/core/rss/product/id/C2A38F4072C3CE37F96B9EC80AD43B44",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "WorldTradeReview",
+        "url": "https://www.cambridge.org/core/rss/product/id/7EE127C511C14A82BA08BEA2A16C6103",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "GermanLawJournal",
+        "url": "https://www.cambridge.org/core/rss/product/id/216EC1F34F21A53889D071D0ED339F3D",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "IntlOrganization",
+        "url": "https://www.cambridge.org/core/rss/product/id/146C8B1E6606CE283EBC5B10B255F4C0",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "HumanRightsQuarterly",
+        "openalex_issn": "0275-0392",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "NetherlandsILR",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=40802",
+        "publisher": "springer",
+        "tag_filter": null
+      }
+    ],
+    "tree_path": [
+      "Social Sciences",
+      "Law",
+      "International Law",
+      "International Law"
+    ]
+  },
+  "tech-law": {
+    "arxiv_categories": ["cs.CY"],
+    "description": "Technology law with emphasis on AI — AI regulation and governance, algorithmic accountability, data protection and privacy law, liability for autonomous and algorithmic systems, platform regulation, IP and copyright in machine learning, and cybersecurity law",
+    "ssrn_networks": [
+      {
+        "name": "LSN-CyberspaceLaw",
+        "binding_id": 225
+      },
+      {
+        "name": "LSN-AILawPolicyEthics",
+        "binding_id": 2874401
+      },
+      {
+        "name": "LSN-AIRoleApplicationsLaw",
+        "binding_id": 4860240
+      },
+      {
+        "name": "LSN-CybersecurityDataPrivacy",
+        "binding_id": 2704098
+      },
+      {
+        "name": "LSN-InfoPrivacyLaw",
+        "binding_id": 1125502
+      },
+      {
+        "name": "LSN-IPCopyrightLaw",
+        "binding_id": 1649832
+      }
+    ],
+    "journals": [
+      {
+        "name": "CLSR",
+        "crossref_issn": "2212-473X",
+        "publisher": "elsevier_general",
+        "tag_filter": null
+      },
+      {
+        "name": "IJLIT",
+        "url": "https://academic.oup.com/rss/site_5171/advanceAccess_3035.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "IntlDataPrivacyLaw",
+        "url": "https://academic.oup.com/rss/site_5169/advanceAccess_3033.xml",
+        "publisher": "oup",
+        "tag_filter": null
+      },
+      {
+        "name": "AIandLaw",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10506",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "AISociety",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=146",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "AIandEthics",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=43681",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "EthicsInfoTech",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=10676",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "IIC",
+        "url": "https://link.springer.com/search.rss?facet-journal-id=40319",
+        "publisher": "springer",
+        "tag_filter": null
+      },
+      {
+        "name": "LawInnovationTech",
+        "url": "https://www.tandfonline.com/feed/rss/rlit20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "IntRevLawCompTech",
+        "url": "https://www.tandfonline.com/feed/rss/cirl20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "InfoCommsTechLaw",
+        "url": "https://www.tandfonline.com/feed/rss/cict20",
+        "publisher": "tandfonline",
+        "tag_filter": null
+      },
+      {
+        "name": "CambridgeForumAILaw",
+        "url": "https://www.cambridge.org/core/rss/product/id/15FFE998B9F3F9F3CBC85104BDF010C1",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "EJRiskRegulation",
+        "url": "https://www.cambridge.org/core/rss/product/id/E7CF439A143CB3442C1C7985F9F2008F",
+        "publisher": "cambridge",
+        "tag_filter": null
+      },
+      {
+        "name": "BigDataSociety",
+        "url": "https://journals.sagepub.com/action/showFeed?ui-bandeau-element=journalFeed&type=etoc&feed=rss&jc=bdsa",
+        "publisher": "sage",
+        "tag_filter": null
+      },
+      {
+        "name": "RegulationGovernance",
+        "url": "https://onlinelibrary.wiley.com/feed/17485991/most-recent",
+        "publisher": "wiley",
+        "tag_filter": null
+      },
+      {
+        "name": "InternetPolicyReview",
+        "openalex_issn": "2197-6775",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "TechnologyAndRegulation",
+        "openalex_issn": "2666-139X",
+        "publisher": "openalex",
+        "tag_filter": null
+      },
+      {
+        "name": "EDPL",
+        "openalex_issn": "2364-2831",
+        "publisher": "openalex",
+        "tag_filter": null
+      }
+    ],
+    "tree_path": [
+      "Social Sciences",
+      "Law",
+      "Technology Law",
+      "Technology & AI Law"
     ]
   }
 }

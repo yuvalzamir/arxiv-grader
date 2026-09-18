@@ -39,7 +39,6 @@
       "WebFetch(domain:anthropic.com)",
       "Bash(curl -s \"https://docs.anthropic.com/en/api/messages-batch\" 2>/dev/null | head -200)",
       "Bash(curl -s \"https://www.anthropic.com/pricing\" 2>/dev/null | head -300)",
-      "Bash(scp /z/arxiv_grader/build_digest_pdf.py /z/arxiv_grader/run_pipeline.py /z/arxiv_grader/run_all_users.py /z/arxiv_grader/docs/server_access.md root@116.203.255.222:/opt/arxiv-grader/)",
       "WebFetch(domain:journals.aps.org)",
       "WebFetch(domain:www.science.org)",
       "WebFetch(domain:pubs.acs.org)",
@@ -345,7 +344,18 @@
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(python3 -)",
-      "Bash(/c/Users/yzamir/miniconda3/envs/arxiv-grader/python -)"
+      "Bash(/c/Users/yzamir/miniconda3/envs/arxiv-grader/python -)",
+      "Bash(python *)",
+      "PowerShell(Get-Content debugging\\\\yuval_week\\\\2026-07-13\\\\triage_journals_input.txt -TotalCount 40; '---ARXIV---'; Get-Content debugging\\\\yuval_week\\\\2026-07-13\\\\triage_arxiv_input.txt -TotalCount 25)",
+      "PowerShell($j = Get-Content debugging\\\\yuval_week\\\\2026-07-13\\\\filtered_papers.json -Raw -Encoding utf8 | ConvertFrom-Json; $j[0] | Format-List; \\($j | Get-Member -MemberType NoteProperty\\).Name -join ', ')",
+      "PowerShell(python -c \"import json; f=json.load\\(open\\('fields.json',encoding='utf-8'\\)\\); print\\(list\\(f.keys\\(\\)\\)\\)\")",
+      "PowerShell(\\(Get-Item Z:\\\\arxiv_grader\\\\debugging\\\\daily_log_0817.txt\\).Length; \\(Get-Content Z:\\\\arxiv_grader\\\\debugging\\\\daily_log_0817.txt | Measure-Object -Line\\).Lines)",
+      "Bash(scp root@116.203.255.222:*)",
+      "Bash(scp -r root@116.203.255.222:*)",
+      "PowerShell(scp root@116.203.255.222:*)",
+      "PowerShell(scp -r root@116.203.255.222:*)",
+      "PowerShell(Get-ChildItem *)",
+      "Bash(scp root@116.203.255.222:/var/log/arxiv-grader/daily.log ./debugging/daily_log_0910.txt)"
     ]
   }
 }

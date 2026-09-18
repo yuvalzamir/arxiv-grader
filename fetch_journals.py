@@ -48,7 +48,7 @@ def _configure_logging():
 
 
 def _load_fields(fields_path: Path) -> dict:
-    with open(fields_path) as f:
+    with open(fields_path, encoding="utf-8") as f:
         return json.load(f)
 
 
