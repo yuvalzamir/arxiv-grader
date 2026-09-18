@@ -142,25 +142,28 @@ Find the journal's ISSN (print or electronic) via a web search or OpenAlex. This
 
 ---
 
-### Step 8b — Check for relevant SSRN research networks
+### Step 8b — Check for relevant SSRN eJournals
 
-SSRN (Elsevier's preprint repository) covers the social sciences, humanities, law, economics, finance, and accounting. For a field in any of those domains, check whether an SSRN research network should feed the field's preprint pool. Natural-science and CS fields normally skip this step (arXiv/bioRxiv/medRxiv cover them).
+SSRN (Elsevier's preprint repository) covers the social sciences, humanities, law, economics, finance, and accounting. For a field in any of those domains, check whether SSRN should feed the field's preprint pool. Natural-science and CS fields normally skip this step (arXiv/bioRxiv/medRxiv cover them).
 
-1. Read `docs/SSRN Access.md` first — it has the API details, verified binding ids, measured volumes, and licensing notes. If the field matches a network already listed there, reuse that binding id.
-2. Otherwise find the network: SSRN network landing pages live at `https://www.ssrn.com/index.cfm/en/<slug>/` (reachable via plain fetch, no Cloudflare). The **binding id** is in the `data-url` attribute of `<div id="network-papers">` on that page.
-3. **Prefer eJournal-level bindings over the whole network** (correction 2026-09-18 — eJournal ids DO work as bindings; see `docs/SSRN Access.md`). Discover them: the network landing page's `subject-areas` `data-url` gives a subject-area id; `www.ssrn.com/rest/rn/subject-areas/{subject_area_id}` lists eJournals whose `journal_id`s are usable binding ids. Before narrowing, measure 7-day volume of the whole network vs the union of candidate eJournals — keep the whole network when the eJournals cover only a fraction of it (e.g. PSN: 8%) or the network scope ≈ field scope (e.g. WGSRN); narrow when classification is near-complete and the network is broader than the field (LSN, EduRN, InfoSciRN, MRCN). See the 2026-09-18 decisions in `docs/Preprint Sources.md`.
-4. Verify the id and gauge volume:
+**The unit to add is the eJournal, NOT the whole research network.** A network (LSN, EduRN, …) spans an entire discipline and is almost always far broader than a field; its topical eJournals are what map to a field. Adding a whole network is the measured *exception*, allowed only when point 4's numbers justify it.
+
+1. Read `docs/SSRN Access.md` first — it has the API details, verified binding ids, measured volumes, and licensing notes. `docs/Preprint Sources.md` lists the eJournal bindings already in production — reuse ids where the field overlaps.
+2. Find the parent network: landing pages live at `https://www.ssrn.com/index.cfm/en/<slug>/` (reachable via plain fetch, no Cloudflare). The page's `data-url` attributes give both the network's binding id (`api.ssrn.com/content/v1/bindings/<id>/papers`) and its subject-area id (`www.ssrn.com/rest/rn/subject-areas/<id>`).
+3. List the network's eJournals via the subject-areas URL — each eJournal's `journal_id` is itself a usable binding id (verified 2026-09-18; the older "eJournal ids don't work" note was wrong). Select the eJournals matching the field description.
+4. Measure before deciding — 7-day volume of each candidate eJournal, their union, and the whole network (paginate the bindings API below, count `approved_date` within the window). Default to the eJournal set. Fall back to the whole network only when the data says so: the eJournals cover only a fraction of the network's papers (e.g. PSN: 8% — most papers sit in no eJournal) or the network's scope ≈ the field's scope anyway (e.g. WGSRN for gender-studies). Record the measured volumes in the plan; see the 2026-09-18 decisions in `docs/Preprint Sources.md` for worked examples.
    ```
    GET https://api.ssrn.com/content/v1/bindings/{binding_id}/papers?index=0&count=100&sort=0
    ```
-   (browser User-Agent required; works from residential IPs — the server side falls back to FlareSolverr automatically). Use the `approved_date` spread across the first page to estimate papers/day and record that estimate in the plan.
-5. Config — add to the field's entry in fields.json:
+   (browser User-Agent required; works from residential IPs — the server side falls back to FlareSolverr automatically.)
+5. Config — add to the field's entry in fields.json, one entry per eJournal, named `<Network>-<EJournal>` so watermark keys stay readable:
    ```json
    "ssrn_networks": [
-     {"name": "<NetworkAbbrev>", "binding_id": <id>}
+     {"name": "LSN-CyberspaceLaw", "binding_id": 225},
+     {"name": "LSN-InfoPrivacyLaw", "binding_id": 1125502}
    ]
    ```
-   No per-network cap (by design) — triage's forward cap of 10 is the only selection bound.
+   Cross-posted papers are deduped per field by `ssrn_id`; eJournals shared between fields are fetched once per run (shared-source cache keys on the `name`, so reuse the exact same name string across fields). No per-eJournal cap (by design) — triage's forward cap of 10 is the only selection bound.
 6. Note in the plan: SSRN abstracts are scraped via FlareSolverr (Elsevier-class licensing exposure, accepted 2026-09-17) and pre-warmed by the nightly 22:30 ET `--prefetch-ssrn` cron, which automatically covers every network configured in fields.json — no extra per-field setup or deployment step beyond shipping fields.json.
 
 ---
