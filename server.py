@@ -118,6 +118,10 @@ daily (or weekly) digests helpful in the never-ending chase after the academic w
 Your request will be processed soon — probably by tomorrow you'll receive your first email
 (according to the schedule you chose).</p>
 
+<p><strong>Please check your spam folder for the first few digests</strong> — until your mail
+provider learns that our emails are wanted, they may land there. Marking one as "not spam"
+(or moving it to your inbox) makes sure the following ones arrive properly.</p>
+
 <p><strong>Quick How-To (1 minute read)</strong></p>
 <ul>
   <li>The digests look like the image below. Notice the paper score — this is the main feature. 

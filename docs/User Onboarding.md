@@ -67,6 +67,11 @@ Step 5 /signup/done     → POSTs to /onboarding/submit → success
 4. Sends signup notification email to operator
 5. Sends welcome email to user (with digest example image inline)
 
+The welcome email body (`_send_welcome_email` in `server.py`) covers: what to expect and when,
+a bolded **check your spam folder for the first few digests** warning with a "mark as not spam"
+instruction (added 2026-09-22 — new users were missing early digests to spam filtering),
+the score scale, the rating panel and the ~$1/month/user operating cost note.
+
 ---
 
 ## Processing Pending Signups
