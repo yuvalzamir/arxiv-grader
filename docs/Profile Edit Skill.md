@@ -61,6 +61,8 @@ Extracts topics, techniques, and authors not already in the profile. Assigns gra
 
 New authors are appended after the existing lowest rank.
 
+Authors **not named in the feedback** may also be added when they are central to a topic the feedback introduces; each is flagged `(suggested — not in feedback)` in the summary for individual operator approval. Obvious author-name typos may be corrected (`~ corrected`). (Rule added 2026-09-23 — first used for zerui-qian: Jie Shan, Liang Fu added for a new tMoTe2 FCI direction; "Kim Fai Mak" → "Kin Fai Mak".)
+
 ### B. Grade adjustments to existing items
 
 Only adjusts items **explicitly mentioned** in the feedback. Maximum shift ±3, clamped to 1–7. Shift size reflects phrasing strength:
@@ -84,7 +86,7 @@ Appends **only the genuinely new content** from the feedback (not verbatim repet
 
 ## Key Design Principles
 
-- **Additive by default** — existing keywords, areas, and authors are never touched unless explicitly mentioned in the feedback
+- **Additive by default** — existing keywords, areas, and authors are never touched unless explicitly mentioned in the feedback (exception: author-name typo fixes)
 - **Conservative on grade shifts** — operator guidance may further restrict changes when feedback is known to be heavily duplicative of existing content
 - **Human confirmation before write** — full change summary is printed and confirmed before any file is modified
 - **Server copy is authoritative** — always pull from server before editing (refiner may have updated the profile between sessions)

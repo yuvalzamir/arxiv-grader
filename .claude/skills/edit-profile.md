@@ -71,6 +71,8 @@ Extract topics, techniques, authors, and phenomena mentioned in the feedback tha
   - "curious about / tangentially relevant" → grade 4
   - "mentioned in passing / not sure yet" → grade 5
 - New authors: rank them after the existing lowest rank (append to end)
+- **Authors not named in the feedback may also be added** when they are central to a topic the feedback introduces (e.g. the leading groups on a new research direction). Mark each one `(suggested — not in feedback)` in the Step 6 summary so the operator can accept or drop it individually. Keep it to a few clearly central names.
+- **Obvious author-name typos** (e.g. "Kim Fai Mak" → "Kin Fai Mak") may be corrected, listed in the summary as `~ corrected`, since a misspelled name never matches paper author lists.
 
 **B. Grade adjustments to existing items**
 
@@ -125,6 +127,8 @@ RESEARCH AREAS
 
 AUTHORS
   + added:   "Jun Ye"                                       rank 30 (appended)
+  + added:   "Liang Fu"                                     rank 31 (suggested — not in feedback)
+  ~ corrected: "Kim Fai Mak" → "Kin Fai Mak"
 
 INTERESTS DESCRIPTION
   ~ appended [2026-05-27] block (verbatim feedback, N chars)
