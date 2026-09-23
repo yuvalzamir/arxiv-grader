@@ -23,7 +23,7 @@
 - [[Taste Profile]] — profile schema, grade system, liked_papers
 - [[User Onboarding]] — web signup, process_pending.py, create_profile.py
 - [[Monthly Refiner]] — rating analysis, keyword/area grade changes, area management
-- [[Profile Edit Skill]] — free-text user feedback → manual profile patch (`.claude/skills/edit-profile.md`)
+- [[Profile Edit Skill]] — free-text user feedback → manual profile patch (`.claude/skills/edit-profile.md`; `/manage` submissions via `edit-profile-from-file.md`)
 - [[Check Log Skill]] — diagnose a failed daily run: download log, match known bugs, recommend recovery (`.claude/skills/check-log.md`)
 - [[Manage Profile]] — `/manage` self-service page: frequency toggles, interest feedback, email lookup
 - [[Paper Insights]] — deep-analysis scoring output (standard for all users)

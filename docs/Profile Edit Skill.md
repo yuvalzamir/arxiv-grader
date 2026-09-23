@@ -1,8 +1,8 @@
 # Profile Edit Skill
 
-[[Home]] | [[Taste Profile]] | [[Monthly Refiner]] | [[User Onboarding]]
+[[Home]] | [[Taste Profile]] | [[Monthly Refiner]] | [[User Onboarding]] | [[Manage Profile]]
 
-Skill file: `.claude/skills/edit-profile.md`
+Skill files: `.claude/skills/edit-profile.md` · `.claude/skills/edit-profile-from-file.md` (variant — see [[#Variant: edit-profile-from-file]])
 
 ---
 
@@ -22,6 +22,7 @@ A Claude Code skill for incorporating free-text user feedback into a `taste_prof
 | User's ratings are drifting from their scores | [[Monthly Refiner]] (automatic) |
 | Brand-new user being set up | [[User Onboarding]] |
 | Profile feels stale after a topic pivot | This skill |
+| User submitted feedback via the `/manage` page | `edit-profile-from-file` variant |
 
 The key difference from the monthly refiner: **this skill takes explicit user input** (their words), while the refiner infers from implicit behavior (paper ratings vs scores).
 
@@ -127,3 +128,36 @@ The monthly refiner and this skill are **complementary, not competing**:
 Both update `keywords`, `research_areas`, `authors`, and `area_keyword_map`. Neither touches `liked_papers`.
 
 If a user's topic pivot is large enough that the monthly refiner would take months to catch up, use this skill first to realign the profile, then let the refiner maintain it from there.
+
+---
+
+## Variant: edit-profile-from-file
+
+Skill file: `.claude/skills/edit-profile-from-file.md` · invoke: `/edit-profile-from-file <slug>`
+
+For feedback submitted through the [[Manage Profile]] page (`/manage/submit-feedback`), which appends timestamped blocks to `users/<slug>/pending_profile_update.txt` on the server.
+
+**Flow:**
+```
+1. Identify slug (from command, or Glob users/*/pending_profile_update.txt and ask)
+2. Operator SCPs down taste_profile.json + pending_profile_update.txt
+3. Read profile
+4. Read pending file — all [ISO-timestamp] blocks concatenated; newest block wins on contradiction
+5. Patch (same A/B/D logic as above)
+6. Change summary → operator confirms
+7. Write profile
+8. Operator SCPs profile up, then deletes the pending file on server + locally
+```
+
+**Differences from `/edit-profile`:**
+- Feedback source is always the pending file (no pasted text).
+- **Interests description: appends the raw feedback verbatim** under a `---` / `[YYYY-MM-DD]` separator, rather than distilling only the new content.
+- **Extra cleanup step**: deleting `pending_profile_update.txt` on the server clears the "feedback pending" notice on `/manage` and resets the 24h submission rate-limit anchor. Skipping it leaves the user seeing "pending" indefinitely.
+
+**Plain `/edit-profile` for `/manage` feedback:** `/edit-profile` can also fetch the pending file (Step 4 fallback), but it does not include the server-side delete. Use it that way only if you then delete the file by hand.
+
+---
+
+## Invocation caveat
+
+Both skills (plus `check-log.md`, `new-field.md`) are flat files in `.claude/skills/`. Claude Code only registers skills stored as `.claude/skills/<name>/SKILL.md`, so these do **not** show up as `/` commands. For now, invoke them by asking Claude to "follow `.claude/skills/<file>.md`". (Noted 2026-09-23.)
